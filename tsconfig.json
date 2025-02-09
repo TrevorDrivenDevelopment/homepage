@@ -23,7 +23,7 @@
     "types": [
       "jest",
       "@testing-library/jest-dom"
-    ]
+    ],
   },
   "include": [
     "src"

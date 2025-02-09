@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: 'Roboto', sans-serif;
-    background-color: #121212; /* Dark background color */
+    background-color: #1B3A57; /* Dark background color */
     color: #ffffff; /* Light text color */
 }
 
@@ -22,15 +22,11 @@ body {
 }
 
 .App-header {
-    background-color: #1e1e1e; /* Darker header background */
+    background-color: #2C3E50; /* Darker header background */
     color: white;
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 20px;
-}
-
-.App-link {
-  color: #61dafb;
 }
 
 @keyframes App-logo-spin {
