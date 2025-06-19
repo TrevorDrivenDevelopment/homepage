@@ -42,17 +42,26 @@ Create an IAM user with the following permissions policy:
 }
 ```
 
-### 2. Configure GitHub Secrets and Variables
+### 2. Configure GitHub Environment and Secrets
 
-Go to your GitHub repository → Settings → Secrets and variables → Actions:
+#### Step 2a: Create Production Environment
+1. Go to your GitHub repository → Settings → Environments
+2. Click "New environment"
+3. Name it `prod`
+4. (Optional) Add protection rules:
+   - Required reviewers for production deployments
+   - Restrict to main branch only
+   - Wait timer before deployment
 
-**Add these Secrets:**
+#### Step 2b: Add Environment Secrets
+In the `prod` environment you just created, add these secrets:
 - `AWS_ACCESS_KEY_ID`: Your IAM user's access key ID
 - `AWS_SECRET_ACCESS_KEY`: Your IAM user's secret access key
 - `AWS_REGION`: Your AWS region (e.g., `us-east-1`)
 - `S3_BUCKET_NAME`: Your S3 bucket name
 
-**Add these Variables (optional for CloudFront):**
+#### Step 2c: Add Environment Variables (optional for CloudFront)
+In the same `prod` environment, add these variables:
 - `CLOUDFRONT_DISTRIBUTION_ID`: Your CloudFront distribution ID
 
 ### 3. S3 Bucket Configuration
@@ -112,13 +121,15 @@ You can modify the workflow file (`.github/workflows/deploy.yml`) to:
 
 Before deploying, you can verify your AWS credentials are working correctly:
 
-1. Configure your GitHub secrets (see step 2 above)
-2. Push any change to the `main` or `develop` branch
+1. Configure your GitHub `prod` environment and secrets (see step 2 above)
+2. Push any change to the `main` branch (uses prod environment) or `develop` branch (no environment)
 3. The "Verify AWS Credentials" workflow will run automatically and test:
    - AWS credentials are valid
    - S3 bucket exists and is accessible  
    - CloudFront distribution is accessible (if configured)
 4. Check the Actions tab to see if verification passed
+
+**Note:** When pushing to `main`, the workflow will use the `prod` environment secrets. For other branches, it will use repository-level secrets (if any).
 
 ### Full Deployment Testing
 

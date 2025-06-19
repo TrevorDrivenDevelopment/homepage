@@ -10,6 +10,7 @@ on:
 jobs:
   verify-aws:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'prod' || '' }}
     
     steps:
     - name: Configure AWS credentials
