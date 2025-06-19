@@ -108,7 +108,21 @@ You can modify the workflow file (`.github/workflows/deploy.yml`) to:
 
 ## Testing
 
-To test the deployment:
+### Quick AWS Credentials Verification
+
+Before deploying, you can verify your AWS credentials are working correctly:
+
+1. Configure your GitHub secrets (see step 2 above)
+2. Push any change to the `main` or `develop` branch
+3. The "Verify AWS Credentials" workflow will run automatically and test:
+   - AWS credentials are valid
+   - S3 bucket exists and is accessible  
+   - CloudFront distribution is accessible (if configured)
+4. Check the Actions tab to see if verification passed
+
+### Full Deployment Testing
+
+To test the full deployment:
 1. Make sure all secrets are configured
 2. Push a change to the main branch
 3. Check the Actions tab in your GitHub repository to see the deployment progress

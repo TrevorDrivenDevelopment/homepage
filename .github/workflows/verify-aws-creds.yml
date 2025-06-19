@@ -1,0 +1,59 @@
+name: Verify AWS Credentials
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify-aws:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Verify AWS Identity
+      run: |
+        echo "✅ AWS credentials configured successfully"
+        echo "Current AWS identity:"
+        aws sts get-caller-identity
+        
+    - name: Test S3 Bucket Access (Read-only)
+      run: |
+        echo "✅ Testing S3 bucket access..."
+        echo "Bucket: ${{ secrets.S3_BUCKET_NAME }}"
+        echo "Region: ${{ secrets.AWS_REGION }}"
+        
+        # Test if bucket exists and we have access (without listing contents)
+        if aws s3api head-bucket --bucket "${{ secrets.S3_BUCKET_NAME }}" 2>/dev/null; then
+          echo "✅ S3 bucket access verified - bucket exists and is accessible"
+        else
+          echo "❌ S3 bucket access failed"
+          exit 1
+        fi
+        
+    - name: Test CloudFront Access (if configured)
+      if: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+      run: |
+        echo "✅ Testing CloudFront distribution access..."
+        echo "Distribution ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+        
+        # Get distribution info (read-only operation)
+        if aws cloudfront get-distribution --id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" >/dev/null 2>&1; then
+          echo "✅ CloudFront distribution access verified"
+        else
+          echo "❌ CloudFront distribution access failed"
+          exit 1
+        fi
+        
+    - name: Summary
+      run: |
+        echo "🎉 All AWS credential verifications passed!"
+        echo "Ready for deployment to S3"
