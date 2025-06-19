@@ -1,7 +1,10 @@
-import { Container, Typography, Link, Box, Grid } from '@mui/material';
+import { Container, Typography, Link, Box } from '@mui/material';
 import './App.css';
 import { getAssetPath } from './utils/assetPath';
 import React from "react";
+import { BrowserRouter, Routes, Route, Link as RouterLink } from 'react-router-dom';
+import PersonalApplications from './apps/PersonalApplications';
+import QuestionSelector from './apps/personality-test/QuestionSelector';
 
 interface GridItem {
   title: string;
@@ -9,6 +12,7 @@ interface GridItem {
   linkText: string;
   linkUrl: string;
   description: string;
+  isInternal?: boolean;
 }
 
 const gridItems: GridItem[] = [
@@ -39,10 +43,18 @@ const gridItems: GridItem[] = [
     linkText: 'projects',
     linkUrl: 'https://github.com/trevordrivendevelopment',
     description: 'Check out some of my'
+  },
+  {
+    title: 'Side projects',
+    icon: '/static/github.png',
+    linkText: 'Side projects',
+    linkUrl: '/applications',
+    description: 'Explore my',
+    isInternal: true
   }
 ];
 
-const App = () => {
+const HomePage = () => {
   const gridColors = {
     panel: '#4A6E8D',
     linkColor: '#7CE2FF',
@@ -68,9 +80,15 @@ const App = () => {
       </Typography>
       <Typography variant="body1" gutterBottom>
         {item.description}{' '}
-        <Link sx={{color: gridColors.linkColor}} href={item.linkUrl} target="_blank" rel="noopener noreferrer">
-          {item.linkText}
-        </Link>
+        {item.isInternal ? (
+          <Link component={RouterLink} to={item.linkUrl} sx={{color: gridColors.linkColor}}>
+            {item.linkText}
+          </Link>
+        ) : (
+          <Link sx={{color: gridColors.linkColor}} href={item.linkUrl} target="_blank" rel="noopener noreferrer">
+            {item.linkText}
+          </Link>
+        )}
       </Typography>
     </Box>
   );
@@ -83,14 +101,26 @@ const App = () => {
         </Typography>
       </header>
 
-      <Grid container spacing={2}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {gridItems.map((item, index) => (
-          <Grid item xs={12} sm={6} key={index}>
+          <Box key={index} sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' } }}>
             <GridItemComponent item={item} />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Container>
+  );
+};
+
+const App = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/applications" element={<PersonalApplications />} />
+        <Route path="/questions" element={<QuestionSelector />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
