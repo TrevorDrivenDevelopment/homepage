@@ -1,8 +1,9 @@
-import React from 'react';
 import { Box, Button, Paper, Switch, Typography } from '@mui/material';
-import { CognitiveFunction } from '../mbti';
+import React from 'react';
 import { functionDescriptions } from '../data/mbtiData';
 import { useResponsiveInfo } from '../hooks/useResponsiveInfo';
+import { CognitiveFunction } from '../mbti';
+import { GridColors, MBTI_ANIMATIONS, MBTI_STYLES, getAnimatedStyles } from '../theme/mbtiTheme';
 import InfoModal from './InfoModal';
 import ResponsiveInfoIcon from './ResponsiveInfoIcon';
 
@@ -10,11 +11,7 @@ interface FunctionStackEditorProps {
   functionStack: CognitiveFunction[];
   onToggleFunction: (index: number) => void;
   onSwapFunctions: (index1: number, index2: number) => void;
-  gridColors: {
-    panel: string;
-    linkColor: string;
-    selectedPanel: string;
-  };
+  gridColors: GridColors;
 }
 
 const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
@@ -35,12 +32,9 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
         {functionStack.map((func, index) => (
           <Paper key={index} sx={{ 
             p: 2, 
-            bgcolor: func.isAnimating ? '#5A8DB5' : gridColors.panel,
             width: '100%',
             position: 'relative',
-            transition: 'all 0.3s ease-in-out',
-            transform: func.isAnimating ? 'scale(1.02)' : 'scale(1)',
-            boxShadow: func.isAnimating ? '0 8px 25px rgba(0,0,0,0.3)' : '0 2px 10px rgba(0,0,0,0.1)',
+            ...getAnimatedStyles(func.isAnimating || false),
           }}>
             {/* Up arrow on top left */}
             {index > 0 && (
@@ -51,17 +45,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
                   position: 'absolute',
                   top: 8,
                   left: 8,
-                  color: gridColors.linkColor,
-                  minWidth: 'auto',
-                  p: 0.5,
-                  fontSize: '1.2rem',
-                  height: '32px',
-                  width: '32px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                    backgroundColor: 'rgba(124, 226, 255, 0.1)'
-                  }
+                  ...MBTI_STYLES.navigationArrow
                 }}
                 title="Move up"
               >
@@ -78,17 +62,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
                   position: 'absolute',
                   bottom: 8,
                   right: 8,
-                  color: gridColors.linkColor,
-                  minWidth: 'auto',
-                  p: 0.5,
-                  fontSize: '1.2rem',
-                  height: '32px',
-                  width: '32px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                    backgroundColor: 'rgba(124, 226, 255, 0.1)'
-                  }
+                  ...MBTI_STYLES.navigationArrow
                 }}
                 title="Move down"
               >
@@ -98,7 +72,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
             
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography variant="h6" sx={{ 
-                transition: 'all 0.3s ease',
+                transition: MBTI_ANIMATIONS.transition.default,
                 opacity: func.isAnimating ? 0.7 : 1 
               }}>
                 Function {index + 1}
@@ -110,7 +84,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
                 <Typography sx={{ 
                   minWidth: '30px', 
                   textAlign: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: MBTI_ANIMATIONS.transition.default,
                   opacity: func.isAnimating ? 0.7 : 1 
                 }}>
                   {func.introverted}
@@ -127,13 +101,8 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
                 checked={func.isExtroverted}
                 onChange={() => onToggleFunction(index)}
                 sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: gridColors.linkColor,
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: gridColors.linkColor,
-                  },
-                  transition: 'all 0.3s ease',
+                  ...MBTI_STYLES.switchComponent,
+                  transition: MBTI_ANIMATIONS.transition.default,
                   opacity: func.isAnimating ? 0.7 : 1
                 }}
               />
@@ -141,7 +110,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
                 <Typography sx={{ 
                   minWidth: '30px', 
                   textAlign: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: MBTI_ANIMATIONS.transition.default,
                   opacity: func.isAnimating ? 0.7 : 1 
                 }}>
                   {func.extroverted}
@@ -159,8 +128,8 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
             <Typography variant="body2" sx={{ 
               textAlign: 'center', 
               mt: 1, 
-              color: '#B0BEC5',
-              transition: 'all 0.3s ease',
+              ...MBTI_STYLES.secondaryText,
+              transition: MBTI_ANIMATIONS.transition.default,
               opacity: func.isAnimating ? 0.7 : 1 
             }}>
               {func.isExtroverted ? func.extroverted : func.introverted}
@@ -169,7 +138,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
         ))}
       </Box>
 
-      <Box sx={{ mt: 3, p: 2, bgcolor: gridColors.selectedPanel, borderRadius: 2 }}>
+      <Box sx={{ mt: 3, ...MBTI_STYLES.panelSelected }}>
         <Typography variant="body1">
           <strong>Current Stack:</strong> {functionStack.map(f => f.isExtroverted ? f.extroverted : f.introverted).join(', ')}
         </Typography>

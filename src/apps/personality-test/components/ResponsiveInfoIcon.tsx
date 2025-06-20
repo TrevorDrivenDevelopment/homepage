@@ -1,6 +1,7 @@
-import React from 'react';
-import { IconButton, Tooltip } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
+import { IconButton, Tooltip } from '@mui/material';
+import React from 'react';
+import { MBTI_COLORS } from '../theme/mbtiTheme';
 
 interface ResponsiveInfoIconProps {
   title: string;
@@ -13,7 +14,7 @@ interface ResponsiveInfoIconProps {
 const ResponsiveInfoIcon: React.FC<ResponsiveInfoIconProps> = ({
   title,
   description,
-  color = '#7CE2FF',
+  color = MBTI_COLORS.primary,
   isMobile,
   onShowInfo
 }) => {

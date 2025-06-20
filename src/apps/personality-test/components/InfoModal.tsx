@@ -1,14 +1,15 @@
-import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  IconButton
-} from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography
+} from '@mui/material';
+import React from 'react';
+import { MBTI_STYLES } from '../theme/mbtiTheme';
 
 interface InfoModalProps {
   open: boolean;
@@ -30,12 +31,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
       maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: {
-          borderRadius: 2,
-          bgcolor: '#1E1E1E',
-          color: '#FFFFFF',
-          border: '1px solid #333'
-        }
+        sx: MBTI_STYLES.modalPaper
       }}
     >
       <DialogTitle sx={{ 
@@ -43,7 +39,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
         justifyContent: 'space-between', 
         alignItems: 'center',
         pb: 1,
-        borderBottom: '1px solid #333'
+        ...MBTI_STYLES.modalDivider
       }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
           {title}
@@ -51,12 +47,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
         <IconButton
           onClick={onClose}
           size="small"
-          sx={{ 
-            color: '#7CE2FF',
-            '&:hover': {
-              backgroundColor: 'rgba(124, 226, 255, 0.1)'
-            }
-          }}
+          sx={MBTI_STYLES.iconButton}
         >
           <CloseIcon />
         </IconButton>
@@ -72,13 +63,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
         <Button 
           onClick={onClose}
           variant="contained"
-          sx={{
-            bgcolor: '#7CE2FF',
-            color: '#000',
-            '&:hover': {
-              bgcolor: '#5DCBF0'
-            }
-          }}
+          sx={MBTI_STYLES.primaryButton}
         >
           Got it
         </Button>

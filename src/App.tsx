@@ -1,10 +1,10 @@
-import { Container, Typography, Link, Box } from '@mui/material';
+import { Box, Container, Link, Typography } from '@mui/material';
+import { BrowserRouter, Route, Link as RouterLink, Routes } from 'react-router-dom';
 import './App.css';
-import { getAssetPath } from './utils/assetPath';
-import React from "react";
-import { BrowserRouter, Routes, Route, Link as RouterLink } from 'react-router-dom';
 import PersonalApplications from './apps/PersonalApplications';
 import QuestionSelector from './apps/personality-test/QuestionSelector';
+import { defaultGridColors } from './apps/personality-test/theme/mbtiTheme';
+import { getAssetPath } from './utils/assetPath';
 
 interface GridItem {
   title: string;
@@ -47,18 +47,15 @@ const gridItems: GridItem[] = [
   {
     title: 'Side projects',
     icon: '/static/github.png',
-    linkText: 'Side projects',
+    linkText: 'side projects live',
     linkUrl: '/applications',
-    description: 'Explore my',
+    description: 'See my',
     isInternal: true
   }
 ];
 
 const HomePage = () => {
-  const gridColors = {
-    panel: '#4A6E8D',
-    linkColor: '#7CE2FF',
-  };
+  const gridColors = defaultGridColors;
 
   const GridItemComponent = ({ item }: { item: GridItem }) => (
     <Box 

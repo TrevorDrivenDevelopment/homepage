@@ -100,7 +100,7 @@ The workflow triggers on:
 
 The deployment process:
 1. Checks out your code
-2. Sets up Node.js 22.12.0 (matching your volta config)
+2. Sets up Node.js matching the packageManager in package.json
 3. Installs dependencies with Yarn
 4. Builds the React app
 5. Configures AWS credentials

@@ -1,377 +1,342 @@
-import { Question, MBTITypeInfo } from '../mbti';
+import { CognitiveFunctionName, CognitiveFunctionType, MBTIType, MBTITypeInfo, Question, QuestionCategory } from '../mbti';
 
 export const questions: Question[] = [
   // Intuition Function Questions (Ni vs Ne)
   { 
-    id: '1', 
-    text: 'When brainstorming, how do you prefer to approach ideas?', 
-    optionA: 'Explore many different possibilities and connections with others',
-    optionB: 'Focus deeply on one compelling insight or vision',
-    functionType: 'Ni/Ne',
-    category: 'function-preference'
+    text: 'When coming up with solutions, you tend to:', 
+    extroverted: 'Brainstorm lots of different ideas and bounce them off others',
+    introverted: 'Think deeply until you have one clear, strong idea',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '2', 
-    text: 'How do you typically envision the future?', 
-    optionA: 'See multiple potential outcomes and love generating new possibilities',
-    optionB: 'Have singular, focused visions about what will happen',
-    functionType: 'Ni/Ne',
-    category: 'function-preference'
+    text: 'When planning ahead, you prefer to:', 
+    extroverted: 'Keep your options open and see what develops',
+    introverted: 'Follow a specific vision of how things should unfold',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   
   // Sensing Function Questions (Si vs Se)
   { 
-    id: '3', 
-    text: 'How do you prefer to respond to situations?', 
-    optionA: 'Live in the present moment and respond to immediate experiences',
-    optionB: 'Compare current situations to past patterns and routines',
-    functionType: 'Si/Se',
-    category: 'function-preference'
+    text: 'When making decisions, you rely most on:', 
+    extroverted: 'What you can see, hear, and experience right now',
+    introverted: 'What has worked well for you in similar situations before',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '4', 
-    text: 'When processing information, what do you focus on?', 
-    optionA: 'What\'s happening right now in my environment',
-    optionB: 'How it relates to my personal history and established methods',
-    functionType: 'Si/Se',
-    category: 'function-preference'
+    text: 'You learn best when you can:', 
+    extroverted: 'Jump in and try things hands-on as you go',
+    introverted: 'Build on what you already know step-by-step',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   
   // Thinking Function Questions (Ti vs Te)
   { 
-    id: '5', 
-    text: 'How do you prefer to approach problem-solving?', 
-    optionA: 'Organize and systematize the external world for efficiency',
-    optionB: 'Analyze concepts internally for logical consistency',
-    functionType: 'Ti/Te',
-    category: 'function-preference'
+    text: 'When solving problems, you focus on:', 
+    extroverted: 'Getting results quickly and efficiently',
+    introverted: 'Making sure you truly understand how it works',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '6', 
-    text: 'When working on solutions, what do you prioritize?', 
-    optionA: 'Practical results and external implementation',
-    optionB: 'Understanding the underlying logical framework',
-    functionType: 'Ti/Te',
-    category: 'function-preference'
+    text: 'You feel most confident when:', 
+    extroverted: 'You can organize people and resources to get things done',
+    introverted: 'You can think through the logic until it makes perfect sense',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   
   // Feeling Function Questions (Fi vs Fe)
   { 
-    id: '7', 
-    text: 'When making decisions, what matters most to you?', 
-    optionA: 'Group harmony and others\' emotional needs',
-    optionB: 'Staying true to my personal values and inner authenticity',
-    functionType: 'Fi/Fe',
-    category: 'function-preference'
+    text: 'When helping others, you focus on:', 
+    extroverted: 'Making sure everyone feels included and comfortable',
+    introverted: 'Being genuine and true to your own values',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '8', 
-    text: 'How do you evaluate your choices?', 
-    optionA: 'Consider how it affects everyone involved',
-    optionB: 'Whether it aligns with my core personal beliefs',
-    functionType: 'Fi/Fe',
-    category: 'function-preference'
+    text: 'You make your best decisions when you:', 
+    extroverted: 'Consider how it will affect the people around you',
+    introverted: 'Listen to what feels right deep down inside',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   
   // Function Order/Strength Questions - More comprehensive
   { 
-    id: '9', 
-    text: 'When facing a major life decision, what do you rely on most?', 
-    optionA: 'Exploring all possibilities and brainstorming creative solutions',
-    optionB: 'Deep reflection and trusting your inner knowing about the right path',
-    functionType: 'Ni/Ne',
-    category: 'function-order'
+    text: 'You feel most energized when:', 
+    extroverted: 'Exploring new possibilities and connecting different ideas',
+    introverted: 'Following your intuition about the right direction to take',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '10', 
-    text: 'What energizes you most in your daily life?', 
-    optionA: 'Logical problem-solving and systematic analysis',
-    optionB: 'Connecting with others and considering emotional impacts',
-    functionType: 'Ti/Te',
-    category: 'function-order'
+    text: 'People often come to you because you\'re good at:', 
+    extroverted: 'Analyzing problems logically and finding efficient solutions',
+    introverted: 'Understanding people\'s feelings and helping them feel better',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '11', 
-    text: 'Which best describes your natural approach to life?', 
-    optionA: 'Intuition-driven, focusing on patterns and future possibilities',
-    optionB: 'Practically-grounded, focusing on concrete facts and experiences',
-    functionType: 'Ni/Ne',
-    category: 'function-order'
+    text: 'You naturally tend to:', 
+    extroverted: 'Look for patterns and imagine future possibilities',
+    introverted: 'Focus on practical details and proven methods',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '12', 
-    text: 'When you\'re at your best, what comes most naturally?', 
-    optionA: 'Strategic thinking and objective decision-making',
-    optionB: 'Understanding people and creating harmony',
-    functionType: 'Ti/Te',
-    category: 'function-order'
+    text: 'You\'re at your best when you can:', 
+    extroverted: 'Make logical decisions and organize systems effectively',
+    introverted: 'Connect with others and create harmony in relationships',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   
   // New comprehensive function ordering questions
   { 
-    id: '22', 
-    text: 'What feels like your core strength?', 
-    optionA: 'Being present and adaptable to immediate circumstances',
-    optionB: 'Learning from experience and maintaining consistent routines',
-    functionType: 'Si/Se',
-    category: 'function-order'
+    text: 'You feel most capable when:', 
+    extroverted: 'Responding quickly to what\'s happening around you',
+    introverted: 'Using tried-and-true methods that you know work',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '23', 
-    text: 'When you\'re stressed, which do you default to?', 
-    optionA: 'Staying authentic to your values, even if it\'s difficult',
-    optionB: 'Trying to maintain group harmony and meet others\' needs',
-    functionType: 'Fi/Fe',
-    category: 'function-order'
+    text: 'When stressed, you tend to:', 
+    extroverted: 'Stick to your personal values even if others disagree',
+    introverted: 'Try to keep everyone happy and avoid conflict',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '24', 
-    text: 'What drives your decision-making process most strongly?', 
-    optionA: 'Connecting dots between ideas and seeing future potential',
-    optionB: 'Having a clear, focused vision of what will happen',
-    functionType: 'Ni/Ne',
-    category: 'function-order'
+    text: 'You make decisions by:', 
+    extroverted: 'Seeing connections and considering what could happen',
+    introverted: 'Having a clear sense of what will work best',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '25', 
-    text: 'Which describes your natural information processing style?', 
-    optionA: 'Quick to act on immediate sensory information',
-    optionB: 'Carefully comparing new info to established knowledge',
-    functionType: 'Si/Se',
-    category: 'function-order'
+    text: 'You prefer to work with information that is:', 
+    extroverted: 'Current, real, and actionable right now',
+    introverted: 'Familiar and connects to your past experience',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '26', 
-    text: 'What comes most effortlessly to you?', 
-    optionA: 'Implementing practical solutions in the external world',
-    optionB: 'Understanding the logical structure behind concepts',
-    functionType: 'Ti/Te',
-    category: 'function-order'
+    text: 'You feel most useful when you\'re:', 
+    extroverted: 'Putting plans into action and getting concrete results',
+    introverted: 'Understanding the deeper logic behind how things work',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '27', 
-    text: 'When making important choices, what feels most natural?', 
-    optionA: 'Considering the emotional climate and impact on relationships',
-    optionB: 'Checking alignment with your core personal beliefs',
-    functionType: 'Fi/Fe',
-    category: 'function-order'
+    text: 'When making important choices, you prioritize:', 
+    extroverted: 'How it will affect the mood and feelings of your group',
+    introverted: 'Whether it aligns with what you believe is right',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '28', 
-    text: 'What represents your dominant way of understanding the world?', 
-    optionA: 'Through immediate sensory engagement and real-time action',
-    optionB: 'Through personal experience and proven methods',
-    functionType: 'Si/Se',
-    category: 'function-order'
+    text: 'You understand the world best through:', 
+    extroverted: 'Direct experience and hands-on interaction',
+    introverted: 'Comparing new situations to what you\'ve learned before',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '29', 
-    text: 'Which describes your primary source of motivation?', 
-    optionA: 'Creating harmony and supporting others\' emotional well-being',
-    optionB: 'Maintaining personal integrity and authentic self-expression',
-    functionType: 'Fi/Fe',
-    category: 'function-order'
+    text: 'What motivates you most is:', 
+    extroverted: 'Helping others feel understood and supported',
+    introverted: 'Being authentic and staying true to yourself',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '30', 
-    text: 'What feels like your most developed mental process?', 
-    optionA: 'Generating innovative ideas and seeing connections everywhere',
-    optionB: 'Having deep insights and a clear sense of direction',
-    functionType: 'Ni/Ne',
-    category: 'function-order'
+    text: 'Your strongest mental skill is:', 
+    extroverted: 'Coming up with creative ideas and seeing possibilities',
+    introverted: 'Having insights about what will happen or work best',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '31', 
-    text: 'When working through complex problems, you naturally:', 
-    optionA: 'Organize external resources and focus on measurable results',
-    optionB: 'Analyze the internal logic until you understand the principles',
-    functionType: 'Ti/Te',
-    category: 'function-order'
+    text: 'When tackling complex problems, you:', 
+    extroverted: 'Organize resources and focus on measurable outcomes',
+    introverted: 'Break it down logically until you understand the principles',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   
   // Dominance pattern questions to better identify primary functions
   { 
-    id: '32', 
-    text: 'People would describe your strongest trait as:', 
-    optionA: 'Being spontaneous and responsive to the moment',
-    optionB: 'Being reliable and consistent in your approach',
-    functionType: 'Si/Se',
-    category: 'function-order'
+    text: 'Others would describe you as someone who:', 
+    extroverted: 'Acts quickly and adapts well to changing situations',
+    introverted: 'Is dependable and follows consistent, proven approaches',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '33', 
-    text: 'Your friends would say you\'re most likely to:', 
-    optionA: 'Put group needs before your own comfort',
-    optionB: 'Stand firm on what you believe is right',
-    functionType: 'Fi/Fe',
-    category: 'function-order'
+    text: 'Your friends rely on you to:', 
+    extroverted: 'Consider everyone\'s needs and keep the group together',
+    introverted: 'Stand up for what\'s right, even when it\'s difficult',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '34', 
-    text: 'When you\'re in your element, you:', 
-    optionA: 'Generate lots of ideas and see possibilities everywhere',
-    optionB: 'Have crystal clear insights about what will work',
-    functionType: 'Ni/Ne',
-    category: 'function-order'
+    text: 'You\'re most confident when you\'re:', 
+    extroverted: 'Brainstorming and exploring lots of different options',
+    introverted: 'Following a clear vision of what needs to happen',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    id: '35', 
-    text: 'Others often rely on you for:', 
-    optionA: 'Getting things done efficiently and systematically', 
-    optionB: 'Understanding complex concepts and finding logical flaws',
-    functionType: 'Ti/Te',
-    category: 'function-order'
+    text: 'People often ask for your help with:', 
+    extroverted: 'Getting things organized and making plans work efficiently', 
+    introverted: 'Figuring out complex ideas and spotting logical problems',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
   
   // Additional balanced questions for better T/F distinction
   { 
-    id: '13', 
-    text: 'When analyzing a problem, what do you prioritize?', 
-    optionA: 'Objective facts and measurable outcomes',
-    optionB: 'Understanding the personal framework behind it',
-    functionType: 'Ti/Te',
-    category: 'function-preference'
+    text: 'When evaluating ideas, you focus on:', 
+    extroverted: 'Whether the facts support it and if it will work in practice',
+    introverted: 'Whether it makes logical sense and fits with your understanding',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '14', 
-    text: 'In group settings, what feels more important?', 
-    optionA: 'Maintaining group cohesion and considering everyone\'s feelings',
-    optionB: 'Staying authentic to my personal values and beliefs',
-    functionType: 'Fi/Fe',
-    category: 'function-preference'
+    text: 'In group discussions, you care most about:', 
+    extroverted: 'Making sure everyone feels heard and the group stays united',
+    introverted: 'Being honest about your views and staying true to your values',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '15', 
-    text: 'When making important decisions, you tend to:', 
-    optionA: 'Seek input from others and consider the social impact',
-    optionB: 'Reflect internally on what feels right for your values',
-    functionType: 'Fi/Fe',
-    category: 'function-preference'
+    text: 'When someone asks for advice, you:', 
+    extroverted: 'Listen to their feelings and help them think through the impact on others',
+    introverted: 'Share your honest thoughts about what you think is right',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '16', 
-    text: 'How do you approach conflict resolution?', 
-    optionA: 'Focus on logical analysis and finding practical solutions',
-    optionB: 'Consider everyone\'s emotional needs and find compromises',
-    functionType: 'Ti/Te',
-    category: 'function-preference'
+    text: 'When there\'s disagreement in your group, you tend to:', 
+    extroverted: 'Look at the facts objectively and find a logical solution',
+    introverted: 'Consider everyone\'s feelings and try to find a compromise',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '17', 
-    text: 'What motivates you most in your work?', 
-    optionA: 'Helping others and making a positive impact on people',
-    optionB: 'Personal growth and staying true to my authentic self',
-    functionType: 'Fi/Fe',
-    category: 'function-preference'
+    text: 'You feel most fulfilled when you can:', 
+    extroverted: 'Make a positive difference in people\'s lives',
+    introverted: 'Live according to your own values and be authentic',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '18', 
-    text: 'When learning something new, you prefer to:', 
-    optionA: 'Jump right in and learn through hands-on experience',
-    optionB: 'Study it carefully and relate it to things you already know',
-    functionType: 'Si/Se',
-    category: 'function-preference'
+    text: 'When starting a new project, you prefer to:', 
+    extroverted: 'Dive in and figure it out through trial and error',
+    introverted: 'Plan carefully based on methods that have worked before',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '19', 
-    text: 'How do you handle criticism?', 
-    optionA: 'Analyze it objectively to see if it\'s logically valid',
-    optionB: 'Consider how it affects relationships and feelings involved',
-    functionType: 'Ti/Te',
-    category: 'function-preference'
+    text: 'When someone criticizes your work, you:', 
+    extroverted: 'Evaluate whether their points are logically valid',
+    introverted: 'Think about how it affects relationships and feelings',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '20', 
-    text: 'When expressing disagreement, you tend to:', 
-    optionA: 'Share your feelings diplomatically to maintain harmony',
-    optionB: 'Stand firm on your principles even if it creates tension',
-    functionType: 'Fi/Fe',
-    category: 'function-preference'
+    text: 'When you disagree with someone, you usually:', 
+    extroverted: 'Express your feelings in a way that maintains the relationship',
+    introverted: 'Speak up for your principles even if it causes tension',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    id: '21', 
-    text: 'In your ideal work environment, you would:', 
-    optionA: 'Have variety and spontaneity in your daily tasks',
-    optionB: 'Follow established routines and proven methods',
-    functionType: 'Si/Se',
-    category: 'function-preference'
+    text: 'Your ideal work style involves:', 
+    extroverted: 'Having variety and being able to respond to changing priorities',
+    introverted: 'Having consistent routines and reliable, proven methods',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
   },
 ];
 
-export const functionDescriptions: Record<string, string> = {
-  'Ni': 'Introverted Intuition - Focuses on internal patterns, future insights, and singular visions',
-  'Ne': 'Extroverted Intuition - Explores external possibilities, connections, and multiple potential outcomes',
-  'Si': 'Introverted Sensing - Compares present experiences to past memories and established routines',
-  'Se': 'Extroverted Sensing - Lives in the present moment, seeks immediate sensory experiences',
-  'Ti': 'Introverted Thinking - Analyzes information internally, seeks logical consistency and understanding',
-  'Te': 'Extroverted Thinking - Organizes external world efficiently, focuses on practical results',
-  'Fi': 'Introverted Feeling - Maintains strong personal values and authentic inner harmony',
-  'Fe': 'Extroverted Feeling - Considers group harmony and others\' emotional needs'
+export const functionDescriptions: Record<CognitiveFunctionName, string> = {
+  [CognitiveFunctionName.NI]: 'Introverted Intuition - Focuses on internal patterns, future insights, and singular visions',
+  [CognitiveFunctionName.NE]: 'Extroverted Intuition - Explores external possibilities, connections, and multiple potential outcomes',
+  [CognitiveFunctionName.SI]: 'Introverted Sensing - Compares present experiences to past memories and established routines',
+  [CognitiveFunctionName.SE]: 'Extroverted Sensing - Lives in the present moment, seeks immediate sensory experiences',
+  [CognitiveFunctionName.TI]: 'Introverted Thinking - Analyzes information internally, seeks logical consistency and understanding',
+  [CognitiveFunctionName.TE]: 'Extroverted Thinking - Organizes external world efficiently, focuses on practical results',
+  [CognitiveFunctionName.FI]: 'Introverted Feeling - Maintains strong personal values and authentic inner harmony',
+  [CognitiveFunctionName.FE]: 'Extroverted Feeling - Considers group harmony and others\' emotional needs'
 };
 
-export const mbtiTypes: Record<string, MBTITypeInfo> = {
-  'INTJ': { 
-    functions: ['Ni', 'Te', 'Fi', 'Se'], 
+export const mbtiTypes: Record<MBTIType, MBTITypeInfo> = {
+  [MBTIType.INTJ]: { 
+    functions: [CognitiveFunctionName.NI, CognitiveFunctionName.TE, CognitiveFunctionName.FI, CognitiveFunctionName.SE], 
     description: 'The Architect - Strategic, innovative, and independent thinkers who see the big picture and work systematically toward their vision.' 
   },
-  'INTP': { 
-    functions: ['Ti', 'Ne', 'Si', 'Fe'], 
+  [MBTIType.INTP]: { 
+    functions: [CognitiveFunctionName.TI, CognitiveFunctionName.NE, CognitiveFunctionName.SI, CognitiveFunctionName.FE], 
     description: 'The Thinker - Logical, analytical, and curious minds who love exploring theoretical concepts and understanding how things work.' 
   },
-  'ENTJ': { 
-    functions: ['Te', 'Ni', 'Se', 'Fi'], 
+  [MBTIType.ENTJ]: { 
+    functions: [CognitiveFunctionName.TE, CognitiveFunctionName.NI, CognitiveFunctionName.SE, CognitiveFunctionName.FI], 
     description: 'The Commander - Natural leaders who are decisive, strategic, and focused on achieving goals and organizing systems efficiently.' 
   },
-  'ENTP': { 
-    functions: ['Ne', 'Ti', 'Fe', 'Si'], 
+  [MBTIType.ENTP]: { 
+    functions: [CognitiveFunctionName.NE, CognitiveFunctionName.TI, CognitiveFunctionName.FE, CognitiveFunctionName.SI], 
     description: 'The Debater - Creative, quick-witted innovators who enjoy exploring ideas, debating concepts, and inspiring others.' 
   },
-  'INFJ': { 
-    functions: ['Ni', 'Fe', 'Ti', 'Se'], 
+  [MBTIType.INFJ]: { 
+    functions: [CognitiveFunctionName.NI, CognitiveFunctionName.FE, CognitiveFunctionName.TI, CognitiveFunctionName.SE], 
     description: 'The Advocate - Insightful, empathetic idealists who are driven to help others and make meaningful positive change.' 
   },
-  'INFP': { 
-    functions: ['Fi', 'Ne', 'Si', 'Te'], 
+  [MBTIType.INFP]: { 
+    functions: [CognitiveFunctionName.FI, CognitiveFunctionName.NE, CognitiveFunctionName.SI, CognitiveFunctionName.TE], 
     description: 'The Mediator - Creative, authentic individuals who value personal growth, harmony, and staying true to their values.' 
   },
-  'ENFJ': { 
-    functions: ['Fe', 'Ni', 'Se', 'Ti'], 
+  [MBTIType.ENFJ]: { 
+    functions: [CognitiveFunctionName.FE, CognitiveFunctionName.NI, CognitiveFunctionName.SE, CognitiveFunctionName.TI], 
     description: 'The Protagonist - Charismatic, inspiring leaders who are passionate about helping others reach their potential.' 
   },
-  'ENFP': { 
-    functions: ['Ne', 'Fi', 'Te', 'Si'], 
+  [MBTIType.ENFP]: { 
+    functions: [CognitiveFunctionName.NE, CognitiveFunctionName.FI, CognitiveFunctionName.TE, CognitiveFunctionName.SI], 
     description: 'The Campaigner - Enthusiastic, creative free spirits who see life as full of possibilities and connections.' 
   },
-  'ISTJ': { 
-    functions: ['Si', 'Te', 'Fi', 'Ne'], 
+  [MBTIType.ISTJ]: { 
+    functions: [CognitiveFunctionName.SI, CognitiveFunctionName.TE, CognitiveFunctionName.FI, CognitiveFunctionName.NE], 
     description: 'The Logistician - Practical, reliable, and methodical individuals who value tradition, duty, and getting things done right.' 
   },
-  'ISFJ': { 
-    functions: ['Si', 'Fe', 'Ti', 'Ne'], 
+  [MBTIType.ISFJ]: { 
+    functions: [CognitiveFunctionName.SI, CognitiveFunctionName.FE, CognitiveFunctionName.TI, CognitiveFunctionName.NE], 
     description: 'The Protector - Warm, conscientious caregivers who are dedicated to supporting and protecting those they care about.' 
   },
-  'ESTJ': { 
-    functions: ['Te', 'Si', 'Ne', 'Fi'], 
+  [MBTIType.ESTJ]: { 
+    functions: [CognitiveFunctionName.TE, CognitiveFunctionName.SI, CognitiveFunctionName.NE, CognitiveFunctionName.FI], 
     description: 'The Executive - Organized, decisive administrators who excel at managing people and projects to achieve concrete results.' 
   },
-  'ESFJ': { 
-    functions: ['Fe', 'Si', 'Ne', 'Ti'], 
+  [MBTIType.ESFJ]: { 
+    functions: [CognitiveFunctionName.FE, CognitiveFunctionName.SI, CognitiveFunctionName.NE, CognitiveFunctionName.TI], 
     description: 'The Consul - Caring, social harmony-seekers who are attentive to others\' needs and excel at bringing people together.' 
   },
-  'ISTP': { 
-    functions: ['Ti', 'Se', 'Ni', 'Fe'], 
+  [MBTIType.ISTP]: { 
+    functions: [CognitiveFunctionName.TI, CognitiveFunctionName.SE, CognitiveFunctionName.NI, CognitiveFunctionName.FE], 
     description: 'The Virtuoso - Practical problem-solvers who are adaptable, hands-on, and skilled at understanding how things work.' 
   },
-  'ISFP': { 
-    functions: ['Fi', 'Se', 'Ni', 'Te'], 
+  [MBTIType.ISFP]: { 
+    functions: [CognitiveFunctionName.FI, CognitiveFunctionName.SE, CognitiveFunctionName.NI, CognitiveFunctionName.TE], 
     description: 'The Adventurer - Gentle, artistic souls who are flexible, open-minded, and guided by their personal values.' 
   },
-  'ESTP': { 
-    functions: ['Se', 'Ti', 'Fe', 'Ni'], 
+  [MBTIType.ESTP]: { 
+    functions: [CognitiveFunctionName.SE, CognitiveFunctionName.TI, CognitiveFunctionName.FE, CognitiveFunctionName.NI], 
     description: 'The Entrepreneur - Energetic, adaptable risk-takers who live in the moment and excel at responding to immediate challenges.' 
   },
-  'ESFP': { 
-    functions: ['Se', 'Fi', 'Te', 'Ni'], 
+  [MBTIType.ESFP]: { 
+    functions: [CognitiveFunctionName.SE, CognitiveFunctionName.FI, CognitiveFunctionName.TE, CognitiveFunctionName.NI], 
     description: 'The Entertainer - Spontaneous, enthusiastic performers who love engaging with others and bringing joy to every situation.' 
   }
 };

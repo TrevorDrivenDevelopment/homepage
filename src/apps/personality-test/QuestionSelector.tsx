@@ -1,41 +1,50 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Box, Button } from '@mui/material';
+import { Box, Button, Container, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Response, CognitiveFunction, FunctionScores } from './mbti';
 import { questions } from './data/mbtiData';
-import { calculateFunctionScores, calculateMBTIFromStack, calculateFunctionStackFromResponses, calculateClosestTypes } from './mbtiCalculations';
+import { CognitiveFunction, CognitiveFunctionName, FunctionScores, Response } from './mbti';
+import { calculateClosestTypes, calculateFunctionScores, calculateFunctionStackFromResponses, calculateMBTIFromStack } from './mbtiCalculations';
+import { defaultGridColors, MBTI_STYLES } from './theme/mbtiTheme';
 
 // Import new components
-import QuestionCard from './components/QuestionCard';
 import CurrentScores from './components/CurrentScores';
 import FunctionStackEditor from './components/FunctionStackEditor';
-import TopTypesDisplay from './components/TopTypesDisplay';
 import MBTIReference from './components/MBTIReference';
+import QuestionCard from './components/QuestionCard';
+import TopTypesDisplay from './components/TopTypesDisplay';
 
 const QuestionSelector: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [functionStack, setFunctionStack] = useState<CognitiveFunction[]>([
-    { introverted: 'Ni', extroverted: 'Ne', isExtroverted: false, isAnimating: false },
-    { introverted: 'Si', extroverted: 'Se', isExtroverted: true, isAnimating: false },
-    { introverted: 'Ti', extroverted: 'Te', isExtroverted: false, isAnimating: false },
-    { introverted: 'Fi', extroverted: 'Fe', isExtroverted: true, isAnimating: false },
+    { introverted: CognitiveFunctionName.NI, extroverted: CognitiveFunctionName.NE, isExtroverted: false, isAnimating: false },
+    { introverted: CognitiveFunctionName.SI, extroverted: CognitiveFunctionName.SE, isExtroverted: true, isAnimating: false },
+    { introverted: CognitiveFunctionName.TI, extroverted: CognitiveFunctionName.TE, isExtroverted: false, isAnimating: false },
+    { introverted: CognitiveFunctionName.FI, extroverted: CognitiveFunctionName.FE, isExtroverted: true, isAnimating: false },
   ]);
 
-  const gridColors = {
-    panel: '#4A6E8D',
-    linkColor: '#7CE2FF',
-    selectedPanel: '#5A7E9D',
-  };
+  const gridColors = defaultGridColors;
 
-  const getCurrentFunctionScores = (): FunctionScores => {
+  const getCurrentFunctionScores = useMemo((): FunctionScores => {
     return calculateFunctionScores(responses);
-  };
+  }, [responses]);
 
-  const getCurrentMBTI = (): string => {
-    return isComplete ? calculateMBTIFromStack(functionStack) : 'XXXX';
-  };
+  // Recalculate top types whenever the function stack or completion status changes
+  const topTypes = useMemo(() => {
+    return isComplete ? calculateClosestTypes(functionStack, responses, isComplete) : [];
+  }, [functionStack, responses, isComplete]);
+
+  // The current MBTI should always be the top-scoring type
+  const getCurrentMBTI = useMemo((): string => {
+    if (!isComplete) return 'XXXX';
+    // If we have top types, use the first one as the current type
+    if (topTypes.length > 0) {
+      return topTypes[0].type;
+    }
+    // Fallback to stack calculation
+    return calculateMBTIFromStack(functionStack);
+  }, [functionStack, isComplete, topTypes]);
 
   const updateFunctionStackFromScores = useCallback(() => {
     if (responses.length >= questions.length) {
@@ -51,9 +60,8 @@ const QuestionSelector: React.FC = () => {
   }, [isComplete, updateFunctionStackFromScores]);
 
   const handleResponse = (value: boolean | null) => {
-    const currentQuestion = questions[currentQuestionIndex];
-    const newResponses = responses.filter(r => r.questionId !== currentQuestion.id);
-    newResponses.push({ questionId: currentQuestion.id, value });
+    const newResponses = responses.filter(r => r.questionIndex !== currentQuestionIndex);
+    newResponses.push({ questionIndex: currentQuestionIndex, value });
     
     setResponses(newResponses);
     
@@ -97,17 +105,16 @@ const QuestionSelector: React.FC = () => {
     setResponses([]);
     setIsComplete(false);
     setFunctionStack([
-      { introverted: 'Ni', extroverted: 'Ne', isExtroverted: false, isAnimating: false },
-      { introverted: 'Si', extroverted: 'Se', isExtroverted: true, isAnimating: false },
-      { introverted: 'Ti', extroverted: 'Te', isExtroverted: false, isAnimating: false },
-      { introverted: 'Fi', extroverted: 'Fe', isExtroverted: true, isAnimating: false },
+      { introverted: CognitiveFunctionName.NI, extroverted: CognitiveFunctionName.NE, isExtroverted: false, isAnimating: false },
+      { introverted: CognitiveFunctionName.SI, extroverted: CognitiveFunctionName.SE, isExtroverted: true, isAnimating: false },
+      { introverted: CognitiveFunctionName.TI, extroverted: CognitiveFunctionName.TE, isExtroverted: false, isAnimating: false },
+      { introverted: CognitiveFunctionName.FI, extroverted: CognitiveFunctionName.FE, isExtroverted: true, isAnimating: false },
     ]);
   };
 
   const currentQuestion = questions[currentQuestionIndex];
-  const currentMBTI = getCurrentMBTI();
-  const functionScores = getCurrentFunctionScores();
-  const topTypes = isComplete ? calculateClosestTypes(functionStack, responses, isComplete) : [];
+  const currentMBTI = getCurrentMBTI;
+  const functionScores = getCurrentFunctionScores;
 
   return (
     <Container className="App">
@@ -149,14 +156,7 @@ const QuestionSelector: React.FC = () => {
               <Button 
                 onClick={resetTest} 
                 variant="outlined" 
-                sx={{ 
-                  color: gridColors.linkColor, 
-                  borderColor: gridColors.linkColor,
-                  '&:hover': {
-                    borderColor: gridColors.linkColor,
-                    backgroundColor: 'rgba(124, 226, 255, 0.1)'
-                  }
-                }}
+                sx={MBTI_STYLES.outlinedButton}
               >
                 Retake Test
               </Button>

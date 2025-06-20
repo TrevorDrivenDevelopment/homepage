@@ -1,15 +1,13 @@
-import React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
-import { mbtiTypes, functionDescriptions } from '../data/mbtiData';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
+import React from 'react';
+import { functionDescriptions, mbtiTypes } from '../data/mbtiData';
+import { CognitiveFunctionName } from '../mbti';
+import { GridColors, MBTI_STYLES, getTypeHighlightStyles } from '../theme/mbtiTheme';
 
 interface MBTIReferenceProps {
   currentType: string;
-  gridColors: {
-    panel: string;
-    linkColor: string;
-    selectedPanel: string;
-  };
+  gridColors: GridColors;
 }
 
 const MBTIReference: React.FC<MBTIReferenceProps> = ({ currentType, gridColors }) => {
@@ -30,7 +28,7 @@ const MBTIReference: React.FC<MBTIReferenceProps> = ({ currentType, gridColors }
       }}>
         {Object.entries(mbtiTypes).map(([type, info]) => (
           <Accordion key={type} sx={{ 
-            bgcolor: gridColors.panel,
+            ...MBTI_STYLES.panel,
             alignSelf: 'start',
             '&.Mui-expanded': {
               margin: 0,
@@ -53,14 +51,11 @@ const MBTIReference: React.FC<MBTIReferenceProps> = ({ currentType, gridColors }
               }}
             >
               <Box>
-                <Typography variant="h6" sx={{ 
-                  color: type === currentType ? gridColors.linkColor : 'inherit', 
-                  fontWeight: type === currentType ? 'bold' : 'normal' 
-                }}>
+                <Typography variant="h6" sx={getTypeHighlightStyles(type === currentType)}>
                   {type}
                   {type === currentType && ' ⭐'}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#B0BEC5' }}>
+                <Typography variant="body2" sx={MBTI_STYLES.secondaryText}>
                   {info.functions.join(' → ')}
                 </Typography>
               </Box>
@@ -69,12 +64,12 @@ const MBTIReference: React.FC<MBTIReferenceProps> = ({ currentType, gridColors }
               <Typography variant="body2" sx={{ mb: 2 }}>
                 {info.description}
               </Typography>
-              <Typography variant="body2" sx={{ color: '#B0BEC5' }}>
+              <Typography variant="body2" sx={MBTI_STYLES.secondaryText}>
                 <strong>Function Stack:</strong>
               </Typography>
               <Box sx={{ mt: 1 }}>
-                {info.functions.map((func: string, index: number) => (
-                  <Typography key={index} variant="body2" sx={{ color: '#B0BEC5', ml: 1 }}>
+                {info.functions.map((func: CognitiveFunctionName, index: number) => (
+                  <Typography key={index} variant="body2" sx={{ ...MBTI_STYLES.secondaryText, ml: 1 }}>
                     {index + 1}. {func} - {functionDescriptions[func]?.split(' - ')[1] || func}
                   </Typography>
                 ))}

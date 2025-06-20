@@ -1,7 +1,8 @@
+import { Box, Container, Link, Typography } from '@mui/material';
 import React from 'react';
-import { Container, Typography, Link, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { getAssetPath } from '../utils/assetPath';
+import { defaultGridColors } from './personality-test/theme/mbtiTheme';
 
 interface ApplicationItem {
   title: string;
@@ -22,10 +23,7 @@ const applications: ApplicationItem[] = [
 ];
 
 const PersonalApplications: React.FC = () => {
-  const gridColors = {
-    panel: '#4A6E8D',
-    linkColor: '#7CE2FF',
-  };
+  const gridColors = defaultGridColors;
 
   const ApplicationItemComponent = ({ item }: { item: ApplicationItem }) => (
     <Box 

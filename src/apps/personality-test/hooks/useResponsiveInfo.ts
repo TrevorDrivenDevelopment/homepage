@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
+import { useState } from 'react';
 
 export const useResponsiveInfo = () => {
   const theme = useTheme();
