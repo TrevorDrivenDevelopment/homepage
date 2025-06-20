@@ -248,13 +248,6 @@ export const calculateClosestTypes = (
   return typeMatchScores.sort((a, b) => b.score - a.score).slice(0, 3);
 };
 
-const createDefaultFunctionStack = (): CognitiveFunction[] => [
-  { introverted: CognitiveFunctionName.NI, extroverted: CognitiveFunctionName.NE, isExtroverted: false, isAnimating: false },
-  { introverted: CognitiveFunctionName.SI, extroverted: CognitiveFunctionName.SE, isExtroverted: true, isAnimating: false },
-  { introverted: CognitiveFunctionName.TI, extroverted: CognitiveFunctionName.TE, isExtroverted: false, isAnimating: false },
-  { introverted: CognitiveFunctionName.FI, extroverted: CognitiveFunctionName.FE, isExtroverted: true, isAnimating: false },
-];
-
 const getFunctionTypeIndex = (functionType: CognitiveFunctionType): number => {
   const mapping: Record<CognitiveFunctionType, number> = {
     [CognitiveFunctionType.INTUITION]: 0,
@@ -265,77 +258,148 @@ const getFunctionTypeIndex = (functionType: CognitiveFunctionType): number => {
   return mapping[functionType];
 };
 
-const calculateFunctionStrengths = (functionScores: FunctionScores) => {
-  return Object.entries(functionScores)
-    .map(([type, score]) => ({
-      type: type as CognitiveFunctionType,
-      strength: Math.abs(score),
-      index: getFunctionTypeIndex(type as CognitiveFunctionType)
-    }))
-    .sort((a, b) => b.strength - a.strength);
-};
-
 export const calculateFunctionStackFromResponses = (responses: Response[]): CognitiveFunction[] => {
   const enhancedScores = calculateEnhancedFunctionScores(responses);
-  const functionStack = createDefaultFunctionStack();
   
-  // Set function orientations based on enhanced responses
-  functionStack[0].isExtroverted = enhancedScores[CognitiveFunctionType.INTUITION] > 0; // Ni vs Ne
-  functionStack[1].isExtroverted = enhancedScores[CognitiveFunctionType.SENSING] > 0; // Si vs Se  
-  functionStack[2].isExtroverted = enhancedScores[CognitiveFunctionType.THINKING] > 0; // Ti vs Te
-  functionStack[3].isExtroverted = enhancedScores[CognitiveFunctionType.FEELING] > 0; // Fi vs Fe
-  
-  // Use MBTI-theory based ordering instead of simple strength ordering
-  return orderFunctionsByMBTIRules(functionStack, enhancedScores);
+  // Calculate function data with scores and orientations
+  const functionData = Object.entries(enhancedScores).map(([type, score]) => ({
+    type: type as CognitiveFunctionType,
+    score,
+    strength: Math.abs(score),
+    isExtroverted: score > 0,
+    index: getFunctionTypeIndex(type as CognitiveFunctionType)
+  })).sort((a, b) => b.strength - a.strength);
+
+  // Apply MBTI theory-based function stack construction
+  return buildMBTIFunctionStack(functionData);
 };
 
-// More sophisticated function stack ordering based on MBTI theory
-const orderFunctionsByMBTIRules = (functionStack: CognitiveFunction[], functionScores: FunctionScores): CognitiveFunction[] => {
-  // Calculate function strengths to determine dominance
-  const functionStrengths = calculateFunctionStrengths(functionScores);
+const buildMBTIFunctionStack = (functionData: Array<{
+  type: CognitiveFunctionType;
+  score: number;
+  strength: number;
+  isExtroverted: boolean;
+  index: number;
+}>): CognitiveFunction[] => {
   
-  // The strongest function becomes dominant
-  const dominantIndex = functionStrengths[0].index;
-  const dominantFunction = functionStack[dominantIndex];
+  // 1. Find dominant function (strongest preference)
+  const dominantData = functionData[0];
+  const dominantFunction = createCognitiveFunction(dominantData);
   
-  // For auxiliary function, we need opposite attitude and different type (perceiving vs judging)
-  const isDominantPerceiving = dominantIndex === 0 || dominantIndex === 1; // Intuition or Sensing
+  // 2. Find auxiliary function (opposite attitude, different category)
+  const isDominantPerceiving = dominantData.type === CognitiveFunctionType.INTUITION || 
+                              dominantData.type === CognitiveFunctionType.SENSING;
   
-  // Find auxiliary: opposite attitude from dominant, different category (P vs J)
-  const auxiliaryOptions = functionStack.filter((func, index) => {
-    if (index === dominantIndex) return false;
-    
-    const isPerceiving = index === 0 || index === 1; // Intuition or Sensing
-    const hasOppositeAttitude = func.isExtroverted !== dominantFunction.isExtroverted;
-    const isDifferentCategory = isPerceiving !== isDominantPerceiving;
-    
-    return hasOppositeAttitude && isDifferentCategory;
+  const auxiliaryData = functionData.find(data => {
+    const isPerceiving = data.type === CognitiveFunctionType.INTUITION || 
+                        data.type === CognitiveFunctionType.SENSING;
+    return data.type !== dominantData.type && 
+           data.isExtroverted !== dominantData.isExtroverted && 
+           isPerceiving !== isDominantPerceiving;
   });
   
-  // Pick the strongest auxiliary option
-  const auxiliaryFunction = auxiliaryOptions.length > 0 ? auxiliaryOptions[0] : functionStack.find((f, i) => i !== dominantIndex);
-  
-  // For tertiary, same category as auxiliary but same attitude as dominant  
-  const tertiaryOptions = functionStack.filter((func, index) => {
-    if (index === dominantIndex || func === auxiliaryFunction) return false;
-    
-    const isPerceiving = index === 0 || index === 1; // Intuition or Sensing
-    const auxIsPerceiving = functionStack.indexOf(auxiliaryFunction!) === 0 || functionStack.indexOf(auxiliaryFunction!) === 1;
-    const hasSameAttitudeAsDominant = func.isExtroverted === dominantFunction.isExtroverted;
-    const isSameCategoryAsAux = isPerceiving === auxIsPerceiving;
-    
-    return hasSameAttitudeAsDominant && isSameCategoryAsAux;
+  // 3. Find tertiary function (same attitude as dominant, different category from auxiliary)
+  const tertiaryData = functionData.find(data => {
+    if (!auxiliaryData || data.type === dominantData.type || data.type === auxiliaryData.type) {
+      return false;
+    }
+    const auxIsPerceiving = auxiliaryData.type === CognitiveFunctionType.INTUITION || 
+                           auxiliaryData.type === CognitiveFunctionType.SENSING;
+    const isPerceiving = data.type === CognitiveFunctionType.INTUITION || 
+                        data.type === CognitiveFunctionType.SENSING;
+    return data.isExtroverted === dominantData.isExtroverted && 
+           isPerceiving !== auxIsPerceiving;
   });
   
-  const tertiaryFunction = tertiaryOptions.length > 0 ? tertiaryOptions[0] : functionStack.find((f, i) => i !== dominantIndex && f !== auxiliaryFunction);
+  // 4. Find inferior function (what's left, opposite attitude from dominant)
+  const usedTypes = [dominantData.type, auxiliaryData?.type, tertiaryData?.type].filter(Boolean);
+  const inferiorData = functionData.find(data => !usedTypes.includes(data.type));
   
-  // Inferior is what's left
-  const inferiorFunction = functionStack.find(f => f !== dominantFunction && f !== auxiliaryFunction && f !== tertiaryFunction);
+  // Create the function stack
+  const functionStack = [dominantFunction];
   
-  return [
-    dominantFunction,
-    auxiliaryFunction!,
-    tertiaryFunction!,
-    inferiorFunction!
-  ].filter(Boolean) as CognitiveFunction[];
+  if (auxiliaryData) {
+    // Ensure auxiliary has opposite attitude from dominant
+    const auxiliaryFunction = createCognitiveFunction({
+      ...auxiliaryData,
+      isExtroverted: !dominantData.isExtroverted
+    });
+    functionStack.push(auxiliaryFunction);
+  }
+  
+  if (tertiaryData && functionStack.length === 2) {
+    // Tertiary has same attitude as dominant  
+    const tertiaryFunction = createCognitiveFunction({
+      ...tertiaryData,
+      isExtroverted: dominantData.isExtroverted
+    });
+    functionStack.push(tertiaryFunction);
+  }
+  
+  if (inferiorData && functionStack.length === 3) {
+    // Inferior has opposite attitude from dominant (same as auxiliary)
+    const inferiorFunction = createCognitiveFunction({
+      ...inferiorData,
+      isExtroverted: !dominantData.isExtroverted
+    });
+    functionStack.push(inferiorFunction);
+  }
+  
+  // Fill any missing functions with defaults if needed
+  return fillMissingFunctions(functionStack, functionData);
+};
+
+const createCognitiveFunction = (data: {
+  type: CognitiveFunctionType;
+  isExtroverted: boolean;
+}): CognitiveFunction => ({
+  introverted: FUNCTION_PAIRS[data.type].introverted,
+  extroverted: FUNCTION_PAIRS[data.type].extroverted,
+  isExtroverted: data.isExtroverted,
+  isAnimating: false
+});
+
+const fillMissingFunctions = (
+  functionStack: CognitiveFunction[], 
+  functionData: Array<{ type: CognitiveFunctionType; isExtroverted: boolean }>
+): CognitiveFunction[] => {
+  if (functionStack.length >= 4) return functionStack;
+  
+  const usedTypes = functionStack.map(f => {
+    return Object.keys(FUNCTION_PAIRS).find(key => {
+      const pair = FUNCTION_PAIRS[key as CognitiveFunctionType];
+      return (f.isExtroverted && pair.extroverted === f.extroverted) ||
+             (!f.isExtroverted && pair.introverted === f.introverted);
+    }) as CognitiveFunctionType;
+  });
+  
+  const allTypes = [
+    CognitiveFunctionType.INTUITION, 
+    CognitiveFunctionType.SENSING, 
+    CognitiveFunctionType.THINKING, 
+    CognitiveFunctionType.FEELING
+  ];
+  
+  const missingTypes = allTypes.filter(type => !usedTypes.includes(type));
+  
+  for (const missingType of missingTypes) {
+    if (functionStack.length >= 4) break;
+    
+    const missingData = functionData.find(d => d.type === missingType);
+    
+    // Apply attitude alternation rule (alternating E/I pattern)
+    const shouldBeExtroverted = functionStack.length % 2 === 1 ? 
+                               !functionStack[0].isExtroverted : 
+                               functionStack[0].isExtroverted;
+    
+    // Use original preference if available, otherwise use calculated pattern
+    const isExtroverted = missingData ? missingData.isExtroverted : shouldBeExtroverted;
+    
+    functionStack.push(createCognitiveFunction({
+      type: missingType,
+      isExtroverted
+    }));
+  }
+  
+  return functionStack;
 };

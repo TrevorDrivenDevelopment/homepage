@@ -1,7 +1,9 @@
 import { CognitiveFunctionName, CognitiveFunctionType, MBTIType, MBTITypeInfo, Question, QuestionCategory } from '../mbti';
 
 export const questions: Question[] = [
-  // Intuition Function Questions (Ni vs Ne)
+  // === INTUITION FUNCTION QUESTIONS (Ni vs Ne) - 8 questions total ===
+  
+  // Ni vs Ne - FUNCTION_PREFERENCE (4 questions)
   { 
     text: 'When coming up with solutions, you tend to:', 
     extroverted: 'Brainstorm lots of different ideas and bounce them off others',
@@ -16,8 +18,54 @@ export const questions: Question[] = [
     functionType: CognitiveFunctionType.INTUITION,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
+  { 
+    text: 'When exploring new concepts, you:', 
+    extroverted: 'Connect them to many different possibilities and share your excitement',
+    introverted: 'Focus deeply on understanding the core meaning and implications',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_PREFERENCE
+  },
+  { 
+    text: 'Your approach to creativity is:', 
+    extroverted: 'Generate many ideas quickly and get input from others',
+    introverted: 'Develop a few ideas deeply through careful reflection',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_PREFERENCE
+  },
   
-  // Sensing Function Questions (Si vs Se)
+  // Ni vs Ne - FUNCTION_ORDER (4 questions)
+  { 
+    text: 'You feel most energized when:', 
+    extroverted: 'Exploring new possibilities and connecting different ideas',
+    introverted: 'Following your intuition about the right direction to take',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'You naturally tend to:', 
+    extroverted: 'Look for patterns and connections between different ideas',
+    introverted: 'Have deep insights about underlying meanings and future outcomes',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'You make decisions by:', 
+    extroverted: 'Seeing connections and considering what could happen',
+    introverted: 'Having a clear sense of what will work best',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'Your strongest mental skill is:', 
+    extroverted: 'Coming up with creative ideas and seeing possibilities',
+    introverted: 'Having insights about what will happen or work best',
+    functionType: CognitiveFunctionType.INTUITION,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+
+  // === SENSING FUNCTION QUESTIONS (Si vs Se) - 8 questions total ===
+  
+  // Si vs Se - FUNCTION_PREFERENCE (4 questions)
   { 
     text: 'When making decisions, you rely most on:', 
     extroverted: 'What you can see, hear, and experience right now',
@@ -32,8 +80,54 @@ export const questions: Question[] = [
     functionType: CognitiveFunctionType.SENSING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
+  { 
+    text: 'When starting a new project, you prefer to:', 
+    extroverted: 'Dive in and figure it out through trial and error',
+    introverted: 'Plan carefully based on methods that have worked before',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
+  },
+  { 
+    text: 'Your ideal work style involves:', 
+    extroverted: 'Having variety and being able to respond to changing priorities',
+    introverted: 'Having consistent routines and reliable, proven methods',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
+  },
   
-  // Thinking Function Questions (Ti vs Te)
+  // Si vs Se - FUNCTION_ORDER (4 questions)
+  { 
+    text: 'You feel most capable when:', 
+    extroverted: 'Responding quickly to what\'s happening around you',
+    introverted: 'Using tried-and-true methods that you know work',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'You prefer to work with information that is:', 
+    extroverted: 'Current, real, and actionable right now',
+    introverted: 'Familiar and connects to your past experience',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'You understand the world best through:', 
+    extroverted: 'Direct experience and hands-on interaction',
+    introverted: 'Comparing new situations to what you\'ve learned before',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'Others would describe you as someone who:', 
+    extroverted: 'Acts quickly and adapts well to changing situations',
+    introverted: 'Is dependable and follows consistent, proven approaches',
+    functionType: CognitiveFunctionType.SENSING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+
+  // === THINKING FUNCTION QUESTIONS (Ti vs Te) - 8 questions total ===
+  
+  // Ti vs Te - FUNCTION_PREFERENCE (4 questions)
   { 
     text: 'When solving problems, you focus on:', 
     extroverted: 'Getting results quickly and efficiently',
@@ -48,8 +142,54 @@ export const questions: Question[] = [
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
+  { 
+    text: 'When evaluating ideas, you focus on:', 
+    extroverted: 'Whether the facts support it and if it will work in practice',
+    introverted: 'Whether it makes logical sense and fits with your understanding',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
+  },
+  { 
+    text: 'When there\'s disagreement in your group, you tend to:', 
+    extroverted: 'Look at the facts objectively and find a practical solution',
+    introverted: 'Step back and analyze the underlying logical principles',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_PREFERENCE
+  },
   
-  // Feeling Function Questions (Fi vs Fe)
+  // Ti vs Te - FUNCTION_ORDER (4 questions)
+  { 
+    text: 'People often come to you because you\'re good at:', 
+    extroverted: 'Analyzing problems logically and finding efficient solutions',
+    introverted: 'Understanding complex systems and spotting logical inconsistencies',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'You\'re at your best when you can:', 
+    extroverted: 'Make logical decisions and organize systems effectively',
+    introverted: 'Think through problems thoroughly until you understand them completely',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'You feel most useful when you\'re:', 
+    extroverted: 'Putting plans into action and getting concrete results',
+    introverted: 'Understanding the deeper logic behind how things work',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'People often ask for your help with:', 
+    extroverted: 'Getting things organized and making plans work efficiently', 
+    introverted: 'Figuring out complex ideas and spotting logical problems',
+    functionType: CognitiveFunctionType.THINKING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+
+  // === FEELING FUNCTION QUESTIONS (Fi vs Fe) - 8 questions total ===
+  
+  // Fi vs Fe - FUNCTION_PREFERENCE (4 questions)
   { 
     text: 'When helping others, you focus on:', 
     extroverted: 'Making sure everyone feels included and comfortable',
@@ -62,147 +202,6 @@ export const questions: Question[] = [
     extroverted: 'Consider how it will affect the people around you',
     introverted: 'Listen to what feels right deep down inside',
     functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
-  },
-  
-  // Function Order/Strength Questions - More comprehensive
-  { 
-    text: 'You feel most energized when:', 
-    extroverted: 'Exploring new possibilities and connecting different ideas',
-    introverted: 'Following your intuition about the right direction to take',
-    functionType: CognitiveFunctionType.INTUITION,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'People often come to you because you\'re good at:', 
-    extroverted: 'Analyzing problems logically and finding efficient solutions',
-    introverted: 'Understanding people\'s feelings and helping them feel better',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You naturally tend to:', 
-    extroverted: 'Look for patterns and imagine future possibilities',
-    introverted: 'Focus on practical details and proven methods',
-    functionType: CognitiveFunctionType.INTUITION,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You\'re at your best when you can:', 
-    extroverted: 'Make logical decisions and organize systems effectively',
-    introverted: 'Connect with others and create harmony in relationships',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  
-  // New comprehensive function ordering questions
-  { 
-    text: 'You feel most capable when:', 
-    extroverted: 'Responding quickly to what\'s happening around you',
-    introverted: 'Using tried-and-true methods that you know work',
-    functionType: CognitiveFunctionType.SENSING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'When stressed, you tend to:', 
-    extroverted: 'Stick to your personal values even if others disagree',
-    introverted: 'Try to keep everyone happy and avoid conflict',
-    functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You make decisions by:', 
-    extroverted: 'Seeing connections and considering what could happen',
-    introverted: 'Having a clear sense of what will work best',
-    functionType: CognitiveFunctionType.INTUITION,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You prefer to work with information that is:', 
-    extroverted: 'Current, real, and actionable right now',
-    introverted: 'Familiar and connects to your past experience',
-    functionType: CognitiveFunctionType.SENSING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You feel most useful when you\'re:', 
-    extroverted: 'Putting plans into action and getting concrete results',
-    introverted: 'Understanding the deeper logic behind how things work',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'When making important choices, you prioritize:', 
-    extroverted: 'How it will affect the mood and feelings of your group',
-    introverted: 'Whether it aligns with what you believe is right',
-    functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You understand the world best through:', 
-    extroverted: 'Direct experience and hands-on interaction',
-    introverted: 'Comparing new situations to what you\'ve learned before',
-    functionType: CognitiveFunctionType.SENSING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'What motivates you most is:', 
-    extroverted: 'Helping others feel understood and supported',
-    introverted: 'Being authentic and staying true to yourself',
-    functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'Your strongest mental skill is:', 
-    extroverted: 'Coming up with creative ideas and seeing possibilities',
-    introverted: 'Having insights about what will happen or work best',
-    functionType: CognitiveFunctionType.INTUITION,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'When tackling complex problems, you:', 
-    extroverted: 'Organize resources and focus on measurable outcomes',
-    introverted: 'Break it down logically until you understand the principles',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  
-  // Dominance pattern questions to better identify primary functions
-  { 
-    text: 'Others would describe you as someone who:', 
-    extroverted: 'Acts quickly and adapts well to changing situations',
-    introverted: 'Is dependable and follows consistent, proven approaches',
-    functionType: CognitiveFunctionType.SENSING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'Your friends rely on you to:', 
-    extroverted: 'Consider everyone\'s needs and keep the group together',
-    introverted: 'Stand up for what\'s right, even when it\'s difficult',
-    functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'You\'re most confident when you\'re:', 
-    extroverted: 'Brainstorming and exploring lots of different options',
-    introverted: 'Following a clear vision of what needs to happen',
-    functionType: CognitiveFunctionType.INTUITION,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  { 
-    text: 'People often ask for your help with:', 
-    extroverted: 'Getting things organized and making plans work efficiently', 
-    introverted: 'Figuring out complex ideas and spotting logical problems',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_ORDER
-  },
-  
-  // Additional balanced questions for better T/F distinction
-  { 
-    text: 'When evaluating ideas, you focus on:', 
-    extroverted: 'Whether the facts support it and if it will work in practice',
-    introverted: 'Whether it makes logical sense and fits with your understanding',
-    functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
@@ -219,47 +218,35 @@ export const questions: Question[] = [
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
+  
+  // Fi vs Fe - FUNCTION_ORDER (4 questions)
   { 
-    text: 'When there\'s disagreement in your group, you tend to:', 
-    extroverted: 'Look at the facts objectively and find a logical solution',
-    introverted: 'Consider everyone\'s feelings and try to find a compromise',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
-  },
-  { 
-    text: 'You feel most fulfilled when you can:', 
-    extroverted: 'Make a positive difference in people\'s lives',
-    introverted: 'Live according to your own values and be authentic',
+    text: 'When stressed, you tend to:', 
+    extroverted: 'Try to keep everyone happy and avoid conflict',
+    introverted: 'Stick to your personal values even if others disagree',
     functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    text: 'When starting a new project, you prefer to:', 
-    extroverted: 'Dive in and figure it out through trial and error',
-    introverted: 'Plan carefully based on methods that have worked before',
-    functionType: CognitiveFunctionType.SENSING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
-  },
-  { 
-    text: 'When someone criticizes your work, you:', 
-    extroverted: 'Evaluate whether their points are logically valid',
-    introverted: 'Think about how it affects relationships and feelings',
-    functionType: CognitiveFunctionType.THINKING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
-  },
-  { 
-    text: 'When you disagree with someone, you usually:', 
-    extroverted: 'Express your feelings in a way that maintains the relationship',
-    introverted: 'Speak up for your principles even if it causes tension',
+    text: 'When making important choices, you prioritize:', 
+    extroverted: 'How it will affect the mood and feelings of your group',
+    introverted: 'Whether it aligns with what you believe is right',
     functionType: CognitiveFunctionType.FEELING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
+    category: QuestionCategory.FUNCTION_ORDER
   },
   { 
-    text: 'Your ideal work style involves:', 
-    extroverted: 'Having variety and being able to respond to changing priorities',
-    introverted: 'Having consistent routines and reliable, proven methods',
-    functionType: CognitiveFunctionType.SENSING,
-    category: QuestionCategory.FUNCTION_PREFERENCE
+    text: 'What motivates you most is:', 
+    extroverted: 'Helping others feel understood and supported',
+    introverted: 'Being authentic and staying true to yourself',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_ORDER
+  },
+  { 
+    text: 'Your friends rely on you to:', 
+    extroverted: 'Consider everyone\'s needs and keep the group together',
+    introverted: 'Stand up for what\'s right, even when it\'s difficult',
+    functionType: CognitiveFunctionType.FEELING,
+    category: QuestionCategory.FUNCTION_ORDER
   },
 ];
 
