@@ -1,4 +1,4 @@
-import { CognitiveFunctionName, CognitiveFunctionType, MBTIType, MBTITypeInfo, Question, QuestionCategory } from '../mbti';
+import { CognitiveFunctionName, CognitiveFunctionType, MBTIType, MBTITypeInfo, Question, QuestionCategory } from '../types';
 
 export const questions: Question[] = [
   // === INTUITION FUNCTION QUESTIONS (Ni vs Ne) - 8 questions total ===
@@ -6,29 +6,29 @@ export const questions: Question[] = [
   // Ni vs Ne - FUNCTION_PREFERENCE (4 questions)
   { 
     text: 'When coming up with solutions, you tend to:', 
-    extroverted: 'Brainstorm lots of different ideas and bounce them off others',
-    introverted: 'Think deeply until you have one clear, strong idea',
+    extroverted: 'Generate multiple creative alternatives and explore various approaches',
+    introverted: 'Focus on one comprehensive solution that addresses the core issue',
     functionType: CognitiveFunctionType.INTUITION,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'When planning ahead, you prefer to:', 
-    extroverted: 'Keep your options open and see what develops',
-    introverted: 'Follow a specific vision of how things should unfold',
+    extroverted: 'Keep multiple options open and adapt your approach as you learn more',
+    introverted: 'Have a clear long-term vision and work steadily toward that specific goal',
     functionType: CognitiveFunctionType.INTUITION,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'When exploring new concepts, you:', 
-    extroverted: 'Connect them to many different possibilities and share your excitement',
-    introverted: 'Focus deeply on understanding the core meaning and implications',
+    extroverted: 'Immediately see connections to other ideas and want to discuss possibilities with others',
+    introverted: 'Prefer to understand the deeper meaning and implications before sharing your insights',
     functionType: CognitiveFunctionType.INTUITION,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'Your approach to creativity is:', 
-    extroverted: 'Generate many ideas quickly and get input from others',
-    introverted: 'Develop a few ideas deeply through careful reflection',
+    extroverted: 'Brainstorm rapidly with others and build on diverse input and feedback',
+    introverted: 'Develop insights through quiet reflection and internal synthesis',
     functionType: CognitiveFunctionType.INTUITION,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
@@ -130,29 +130,29 @@ export const questions: Question[] = [
   // Ti vs Te - FUNCTION_PREFERENCE (4 questions)
   { 
     text: 'When solving problems, you focus on:', 
-    extroverted: 'Getting results quickly and efficiently',
-    introverted: 'Making sure you truly understand how it works',
+    extroverted: 'Getting results quickly and efficiently using proven methods',
+    introverted: 'Understanding the underlying logic and principles first, even if it takes longer',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'You feel most confident when:', 
-    extroverted: 'You can organize people and resources to get things done',
-    introverted: 'You can think through the logic until it makes perfect sense',
+    extroverted: 'You can organize people and resources to execute a clear plan',
+    introverted: 'You can analyze a complex system until you completely understand how it works',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
-    text: 'When evaluating ideas, you focus on:', 
-    extroverted: 'Whether the facts support it and if it will work in practice',
-    introverted: 'Whether it makes logical sense and fits with your understanding',
+    text: 'When evaluating ideas, you prioritize:', 
+    extroverted: 'Whether it can be implemented effectively and will produce measurable results',
+    introverted: 'Whether the logic is internally consistent and the reasoning is sound',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'When there\'s disagreement in your group, you tend to:', 
-    extroverted: 'Look at the facts objectively and find a practical solution',
-    introverted: 'Step back and analyze the underlying logical principles',
+    extroverted: 'Take charge and establish clear facts and action steps to resolve it',
+    introverted: 'Withdraw to think through the logical flaws in each position',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
@@ -160,29 +160,29 @@ export const questions: Question[] = [
   // Ti vs Te - FUNCTION_ORDER (4 questions)
   { 
     text: 'People often come to you because you\'re good at:', 
-    extroverted: 'Analyzing problems logically and finding efficient solutions',
-    introverted: 'Understanding complex systems and spotting logical inconsistencies',
+    extroverted: 'Making decisions quickly and organizing systems to get results',
+    introverted: 'Debugging complex problems and spotting logical inconsistencies',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_ORDER
   },
   { 
     text: 'You\'re at your best when you can:', 
-    extroverted: 'Make logical decisions and organize systems effectively',
-    introverted: 'Think through problems thoroughly until you understand them completely',
+    extroverted: 'Lead a team and implement efficient systems and processes',
+    introverted: 'Think deeply about abstract concepts without time pressure',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_ORDER
   },
   { 
     text: 'You feel most useful when you\'re:', 
-    extroverted: 'Putting plans into action and getting concrete results',
-    introverted: 'Understanding the deeper logic behind how things work',
+    extroverted: 'Taking charge of projects and making sure deadlines are met',
+    introverted: 'Understanding complex theories and figuring out how things really work',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_ORDER
   },
   { 
     text: 'People often ask for your help with:', 
-    extroverted: 'Getting things organized and making plans work efficiently', 
-    introverted: 'Figuring out complex ideas and spotting logical problems',
+    extroverted: 'Organizing projects, making plans, and managing deadlines', 
+    introverted: 'Solving puzzles, understanding difficult concepts, and finding logical flaws',
     functionType: CognitiveFunctionType.THINKING,
     category: QuestionCategory.FUNCTION_ORDER
   },
@@ -193,28 +193,28 @@ export const questions: Question[] = [
   { 
     text: 'When helping others, you focus on:', 
     extroverted: 'Making sure everyone feels included and comfortable',
-    introverted: 'Being genuine and true to your own values',
+    introverted: 'Staying true to your deep emotional values and personal feelings',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'You make your best decisions when you:', 
     extroverted: 'Consider how it will affect the people around you',
-    introverted: 'Listen to what feels right deep down inside',
+    introverted: 'Listen to your emotional instincts about what feels personally meaningful',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'In group discussions, you care most about:', 
     extroverted: 'Making sure everyone feels heard and the group stays united',
-    introverted: 'Being honest about your views and staying true to your values',
+    introverted: 'Being emotionally honest about your personal feelings and convictions',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
   { 
     text: 'When someone asks for advice, you:', 
     extroverted: 'Listen to their feelings and help them think through the impact on others',
-    introverted: 'Share your honest thoughts about what you think is right',
+    introverted: 'Share what you personally feel is morally right based on your heart',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_PREFERENCE
   },
@@ -223,31 +223,93 @@ export const questions: Question[] = [
   { 
     text: 'When stressed, you tend to:', 
     extroverted: 'Try to keep everyone happy and avoid conflict',
-    introverted: 'Stick to your personal values even if others disagree',
+    introverted: 'Stick to your deep personal feelings even if others disagree',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_ORDER
   },
   { 
     text: 'When making important choices, you prioritize:', 
     extroverted: 'How it will affect the mood and feelings of your group',
-    introverted: 'Whether it aligns with what you believe is right',
+    introverted: 'Whether it aligns with what feels emotionally meaningful to you personally',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_ORDER
   },
   { 
     text: 'What motivates you most is:', 
     extroverted: 'Helping others feel understood and supported',
-    introverted: 'Being authentic and staying true to yourself',
+    introverted: 'Staying true to your deepest feelings and what emotionally matters to you',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_ORDER
   },
   { 
     text: 'Your friends rely on you to:', 
     extroverted: 'Consider everyone\'s needs and keep the group together',
-    introverted: 'Stand up for what\'s right, even when it\'s difficult',
+    introverted: 'Stand up for what you feel is morally right, even when it\'s difficult',
     functionType: CognitiveFunctionType.FEELING,
     category: QuestionCategory.FUNCTION_ORDER
   },
+
+  // === TRADITIONAL DICHOTOMY QUESTIONS - 8 questions total ===
+  
+  // extroversion vs Introversion - TRADITIONAL_DICHOTOMY (4 questions)
+  { 
+    text: 'After a long day, you prefer to recharge by:', 
+    extroverted: 'Going out with friends or engaging in social activities',
+    introverted: 'Spending quiet time alone or with one close person',
+    functionType: CognitiveFunctionType.EXTROVERSION_INTROVERSION,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  { 
+    text: 'When working on a project, you tend to:', 
+    extroverted: 'Think out loud and discuss your ideas with others frequently',
+    introverted: 'Work through ideas in your head before sharing them',
+    functionType: CognitiveFunctionType.EXTROVERSION_INTROVERSION,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  { 
+    text: 'At social gatherings, you typically:', 
+    extroverted: 'Enjoy meeting new people and engaging in multiple conversations',
+    introverted: 'Prefer deeper conversations with a few people you know well',
+    functionType: CognitiveFunctionType.EXTROVERSION_INTROVERSION,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  { 
+    text: 'Your communication style is usually:', 
+    extroverted: 'Expressive and spontaneous - you share thoughts as they come to mind',
+    introverted: 'More reserved and thoughtful - you consider your words carefully before speaking',
+    functionType: CognitiveFunctionType.EXTROVERSION_INTROVERSION,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  
+  // Judging vs Perceiving - TRADITIONAL_DICHOTOMY (4 questions)
+  { 
+    text: 'Your ideal work environment has:', 
+    extroverted: 'Clear deadlines, structured schedules, and definite closure on projects',
+    introverted: 'Flexible timelines, adaptable schedules, and freedom to explore different approaches',
+    functionType: CognitiveFunctionType.JUDGING_PERCEIVING,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  { 
+    text: 'When making plans for the weekend, you prefer to:', 
+    extroverted: 'Decide in advance and stick to a clear schedule of activities',
+    introverted: 'Keep options open and see what you feel like doing when the time comes',
+    functionType: CognitiveFunctionType.JUDGING_PERCEIVING,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  { 
+    text: 'Your approach to deadlines is typically:', 
+    extroverted: 'Start early and work steadily toward completion well before the due date',
+    introverted: 'Work best under pressure and often produce your best results close to the deadline',
+    functionType: CognitiveFunctionType.JUDGING_PERCEIVING,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  },
+  { 
+    text: 'You feel most comfortable when:', 
+    extroverted: 'Decisions are made and you can move forward with a clear plan',
+    introverted: 'Options remain open and you can adapt your approach as new information emerges',
+    functionType: CognitiveFunctionType.JUDGING_PERCEIVING,
+    category: QuestionCategory.TRADITIONAL_DICHOTOMY
+  }
 ];
 
 export const functionDescriptions: Record<CognitiveFunctionName, string> = {

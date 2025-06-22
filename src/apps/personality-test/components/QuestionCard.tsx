@@ -1,6 +1,6 @@
 import { Box, Button, Paper, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-import { Question } from '../mbti';
+import { Question } from '../types';
 import { GridColors, MBTI_COLORS, MBTI_STYLES } from '../theme/mbtiTheme';
 
 interface QuestionCardProps {

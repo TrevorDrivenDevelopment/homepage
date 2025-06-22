@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
-import { mbtiTypes } from '../data/mbtiData';
-import { TypeResult } from '../mbti';
+import { mbtiTypes } from '../calculation/mbtiData';
+import { TypeResult } from '../types';
 import { GridColors, MBTI_STYLES, getMatchBorderStyles } from '../theme/mbtiTheme';
 
 interface TopTypesDisplayProps {

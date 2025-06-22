@@ -1,8 +1,8 @@
 import { Box, Button, Paper, Switch, Typography } from '@mui/material';
 import React from 'react';
-import { functionDescriptions } from '../data/mbtiData';
+import { functionDescriptions } from '../calculation/mbtiData';
 import { useResponsiveInfo } from '../hooks/useResponsiveInfo';
-import { CognitiveFunction } from '../mbti';
+import { CognitiveFunction } from '../types';
 import { GridColors, MBTI_ANIMATIONS, MBTI_STYLES, getAnimatedStyles } from '../theme/mbtiTheme';
 import InfoModal from './InfoModal';
 import ResponsiveInfoIcon from './ResponsiveInfoIcon';

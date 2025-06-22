@@ -1,17 +1,16 @@
 import { Box, Button, Container, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { questions } from './data/mbtiData';
-import { CognitiveFunction, CognitiveFunctionName, FunctionScores, Response } from './mbti';
-import { calculateClosestTypes, calculateFunctionScores, calculateFunctionStackFromResponses, calculateMBTIFromStack } from './mbtiCalculations';
-import { defaultGridColors, MBTI_STYLES } from './theme/mbtiTheme';
-
-// Import new components
+import { MBTICalculatorFactory } from './calculation';
+import { CalculationResult } from './calculation/interfaces';
+import { questions } from './calculation/mbtiData';
 import CurrentScores from './components/CurrentScores';
 import FunctionStackEditor from './components/FunctionStackEditor';
 import MBTIReference from './components/MBTIReference';
 import QuestionCard from './components/QuestionCard';
 import TopTypesDisplay from './components/TopTypesDisplay';
+import { defaultGridColors, MBTI_STYLES } from './theme/mbtiTheme';
+import { CognitiveFunction, CognitiveFunctionName, CognitiveFunctionType, FunctionScores, Response, TypeResult } from './types';
 
 const QuestionSelector: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -24,34 +23,65 @@ const QuestionSelector: React.FC = () => {
     { introverted: CognitiveFunctionName.FI, extroverted: CognitiveFunctionName.FE, isExtroverted: true, isAnimating: false },
   ]);
 
+  // Initialize MBTI Calculator
+  const calculator = useMemo(() => MBTICalculatorFactory.createAccurateCalculator(), []);
+
   const gridColors = defaultGridColors;
 
-  const getCurrentFunctionScores = useMemo((): FunctionScores => {
-    return calculateFunctionScores(responses);
-  }, [responses]);
+  // Calculate current MBTI result using the calculator
+  const currentResult = useMemo((): CalculationResult | null => {
+    if (responses.length === 0) return null;
+    
+    try {
+      return calculator.calculate(responses);
+    } catch (error) {
+      return null;
+    }
+  }, [responses, calculator]);
 
-  // Recalculate top types whenever the function stack or completion status changes
-  const topTypes = useMemo(() => {
-    return isComplete ? calculateClosestTypes(functionStack, responses, isComplete) : [];
-  }, [functionStack, responses, isComplete]);
+  const getCurrentFunctionScores = useMemo((): FunctionScores => {
+    if (!currentResult) {
+      return {
+        [CognitiveFunctionType.INTUITION]: 0,
+        [CognitiveFunctionType.SENSING]: 0,
+        [CognitiveFunctionType.THINKING]: 0,
+        [CognitiveFunctionType.FEELING]: 0
+      };
+    }
+
+    // Convert DetailedFunctionScores to FunctionScores format
+    const detailedScores = currentResult.scores;
+    return {
+      [CognitiveFunctionType.INTUITION]: detailedScores.Ne - detailedScores.Ni,
+      [CognitiveFunctionType.SENSING]: detailedScores.Se - detailedScores.Si,
+      [CognitiveFunctionType.THINKING]: detailedScores.Te - detailedScores.Ti,
+      [CognitiveFunctionType.FEELING]: detailedScores.Fe - detailedScores.Fi
+    };
+  }, [currentResult]);
+
+  // Get top types from calculation result
+  const topTypes = useMemo((): TypeResult[] => {
+    if (!isComplete || !currentResult || !currentResult.alternativeTypes) return [];
+    
+    // Convert TypeMatchResult to TypeResult format
+    return currentResult.alternativeTypes.slice(0, 3).map((matchResult: any, index: number) => ({
+      type: matchResult.type,
+      score: matchResult.score,
+      match: index === 0 ? 'Primary Type' : `${Math.round(matchResult.confidence)}% match`
+    }));
+  }, [currentResult, isComplete]);
 
   // The current MBTI should always be the top-scoring type
   const getCurrentMBTI = useMemo((): string => {
-    if (!isComplete) return 'XXXX';
-    // If we have top types, use the first one as the current type
-    if (topTypes.length > 0) {
-      return topTypes[0].type;
-    }
-    // Fallback to stack calculation
-    return calculateMBTIFromStack(functionStack);
-  }, [functionStack, isComplete, topTypes]);
+    if (!isComplete || !currentResult) return 'XXXX';
+    return currentResult.type;
+  }, [currentResult, isComplete]);
 
   const updateFunctionStackFromScores = useCallback(() => {
-    if (responses.length >= questions.length) {
-      const newStack = calculateFunctionStackFromResponses(responses);
-      setFunctionStack(newStack);
+    if (responses.length >= questions.length && currentResult) {
+      setFunctionStack(currentResult.stack);
     }
-  }, [responses]);
+  }, [responses, currentResult]);
 
   useEffect(() => {
     if (isComplete) {

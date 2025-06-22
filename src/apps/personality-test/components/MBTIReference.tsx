@@ -1,8 +1,8 @@
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from '@mui/material';
 import React from 'react';
-import { functionDescriptions, mbtiTypes } from '../data/mbtiData';
-import { CognitiveFunctionName } from '../mbti';
+import { functionDescriptions, mbtiTypes } from '../calculation/mbtiData';
+import { CognitiveFunctionName } from '../types';
 import { GridColors, MBTI_STYLES, getTypeHighlightStyles } from '../theme/mbtiTheme';
 
 interface MBTIReferenceProps {

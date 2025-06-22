@@ -2,7 +2,9 @@ export enum CognitiveFunctionType {
   INTUITION = 'intuition',
   SENSING = 'sensing', 
   THINKING = 'thinking',
-  FEELING = 'feeling'
+  FEELING = 'feeling',
+  EXTROVERSION_INTROVERSION = 'extroversion-introversion',
+  JUDGING_PERCEIVING = 'judging-perceiving'
 }
 
 export enum CognitiveFunctionName {
@@ -22,7 +24,8 @@ export enum CognitiveFunctionName {
 
 export enum QuestionCategory {
   FUNCTION_PREFERENCE = 'function-preference',
-  FUNCTION_ORDER = 'function-order'
+  FUNCTION_ORDER = 'function-order',
+  TRADITIONAL_DICHOTOMY = 'traditional-dichotomy'
 }
 
 export enum MBTIType {
