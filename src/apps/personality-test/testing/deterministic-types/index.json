@@ -1,0 +1,86 @@
+{
+  "generated": "2025-06-22T22:04:21.926Z",
+  "description": "Deterministic response patterns for all 16 MBTI types",
+  "files": [
+    {
+      "type": "INTJ",
+      "filename": "intj_responses.json",
+      "description": "Responses designed to produce INTJ classification"
+    },
+    {
+      "type": "INTP",
+      "filename": "intp_responses.json",
+      "description": "Responses designed to produce INTP classification"
+    },
+    {
+      "type": "ENTJ",
+      "filename": "entj_responses.json",
+      "description": "Responses designed to produce ENTJ classification"
+    },
+    {
+      "type": "ENTP",
+      "filename": "entp_responses.json",
+      "description": "Responses designed to produce ENTP classification"
+    },
+    {
+      "type": "INFJ",
+      "filename": "infj_responses.json",
+      "description": "Responses designed to produce INFJ classification"
+    },
+    {
+      "type": "INFP",
+      "filename": "infp_responses.json",
+      "description": "Responses designed to produce INFP classification"
+    },
+    {
+      "type": "ENFJ",
+      "filename": "enfj_responses.json",
+      "description": "Responses designed to produce ENFJ classification"
+    },
+    {
+      "type": "ENFP",
+      "filename": "enfp_responses.json",
+      "description": "Responses designed to produce ENFP classification"
+    },
+    {
+      "type": "ISTJ",
+      "filename": "istj_responses.json",
+      "description": "Responses designed to produce ISTJ classification"
+    },
+    {
+      "type": "ISFJ",
+      "filename": "isfj_responses.json",
+      "description": "Responses designed to produce ISFJ classification"
+    },
+    {
+      "type": "ESTJ",
+      "filename": "estj_responses.json",
+      "description": "Responses designed to produce ESTJ classification"
+    },
+    {
+      "type": "ESFJ",
+      "filename": "esfj_responses.json",
+      "description": "Responses designed to produce ESFJ classification"
+    },
+    {
+      "type": "ISTP",
+      "filename": "istp_responses.json",
+      "description": "Responses designed to produce ISTP classification"
+    },
+    {
+      "type": "ISFP",
+      "filename": "isfp_responses.json",
+      "description": "Responses designed to produce ISFP classification"
+    },
+    {
+      "type": "ESTP",
+      "filename": "estp_responses.json",
+      "description": "Responses designed to produce ESTP classification"
+    },
+    {
+      "type": "ESFP",
+      "filename": "esfp_responses.json",
+      "description": "Responses designed to produce ESFP classification"
+    }
+  ]
+}

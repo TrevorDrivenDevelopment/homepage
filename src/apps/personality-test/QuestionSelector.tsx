@@ -3,14 +3,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MBTICalculatorFactory } from './calculation';
 import { CalculationResult } from './calculation/interfaces';
-import { questions } from './calculation/mbtiData';
+import { questions, mbtiTypes } from './calculation/mbtiData';
 import CurrentScores from './components/CurrentScores';
 import FunctionStackEditor from './components/FunctionStackEditor';
 import MBTIReference from './components/MBTIReference';
 import QuestionCard from './components/QuestionCard';
 import TopTypesDisplay from './components/TopTypesDisplay';
 import { defaultGridColors, MBTI_STYLES } from './theme/mbtiTheme';
-import { CognitiveFunction, CognitiveFunctionName, CognitiveFunctionType, FunctionScores, Response, TypeResult } from './types';
+import { CognitiveFunction, CognitiveFunctionName, CognitiveFunctionType, FunctionScores, Response, TypeResult, MBTIType } from './types';
 
 const QuestionSelector: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -27,6 +27,22 @@ const QuestionSelector: React.FC = () => {
   const calculator = useMemo(() => MBTICalculatorFactory.createAccurateCalculator(), []);
 
   const gridColors = defaultGridColors;
+
+  // Function to calculate MBTI type from function stack
+  const getTypeFromFunctionStack = useCallback((stack: CognitiveFunction[]): MBTIType | null => {
+    // Get the actual function names from the stack
+    const stackFunctions = stack.map(func => 
+      func.isExtroverted ? func.extroverted : func.introverted
+    );
+
+    // Find the matching MBTI type
+    for (const [type, info] of Object.entries(mbtiTypes)) {
+      if (JSON.stringify(info.functions) === JSON.stringify(stackFunctions)) {
+        return type as MBTIType;
+      }
+    }
+    return null;
+  }, []);
 
   // Calculate current MBTI result using the calculator
   const currentResult = useMemo((): CalculationResult | null => {
@@ -71,11 +87,23 @@ const QuestionSelector: React.FC = () => {
     }));
   }, [currentResult, isComplete]);
 
-  // The current MBTI should always be the top-scoring type
+  // The current MBTI should be based on the current function stack (if edited) or quiz result
   const getCurrentMBTI = useMemo((): string => {
-    if (!isComplete || !currentResult) return 'XXXX';
-    return currentResult.type;
-  }, [currentResult, isComplete]);
+    if (!isComplete) return 'XXXX';
+    
+    // If test is complete, first try to get type from current function stack
+    const typeFromStack = getTypeFromFunctionStack(functionStack);
+    if (typeFromStack) {
+      return typeFromStack;
+    }
+    
+    // Fallback to quiz result if stack doesn't match any type
+    if (currentResult) {
+      return currentResult.type;
+    }
+    
+    return 'XXXX';
+  }, [currentResult, isComplete, functionStack, getTypeFromFunctionStack]);
 
   const updateFunctionStackFromScores = useCallback(() => {
     if (responses.length >= questions.length && currentResult) {
@@ -106,6 +134,7 @@ const QuestionSelector: React.FC = () => {
     const newStack = [...functionStack];
     newStack[index].isExtroverted = !newStack[index].isExtroverted;
     setFunctionStack(newStack);
+    // Type will automatically update via getCurrentMBTI useMemo dependency on functionStack
   };
 
   const handleSwapFunctions = (index1: number, index2: number) => {
@@ -126,6 +155,7 @@ const QuestionSelector: React.FC = () => {
         newStack[index1].isAnimating = false;
         newStack[index2].isAnimating = false;
         setFunctionStack([...newStack]);
+        // Type will automatically update via getCurrentMBTI useMemo dependency on functionStack
       }, 100);
     }, 150);
   };

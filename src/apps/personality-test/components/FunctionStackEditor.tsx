@@ -75,7 +75,7 @@ const FunctionStackEditor: React.FC<FunctionStackEditorProps> = ({
                 transition: MBTI_ANIMATIONS.transition.default,
                 opacity: func.isAnimating ? 0.7 : 1 
               }}>
-                Function {index + 1}
+                {index === 0 ? 'Dominant' : index === 1 ? 'Auxiliary' : index === 2 ? 'Tertiary' : 'Inferior'}
               </Typography>
             </Box>
             
