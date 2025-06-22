@@ -83,9 +83,22 @@ export abstract class ScoringStrategy implements IScoringStrategy {
     // Si gets P bonus (more common in IP types like INTP, ISFP)  
     scores.Si = scores.Si * (1 + introversionBonus + perceivingBonus);
     
-    // Ti and Fi get P bonus for IP types
-    scores.Ti = scores.Ti * (1 + introversionBonus + perceivingBonus);
-    scores.Fi = scores.Fi * (1 + introversionBonus + perceivingBonus);
+    // Ti and Fi - use traditional preferences to help break ties
+    // For strong P preference, slightly favor Ti over Fi for NT types
+    // For strong F preference, slightly favor Fi over Ti for NF types
+    const tiMultiplier = 1 + introversionBonus + perceivingBonus;
+    const fiMultiplier = 1 + introversionBonus + perceivingBonus;
+    
+    // If there's a strong auxiliary Ne preference, give slight edge to Ti (INTP pattern)
+    const neStrengthRatio = scores.Ne / (scores.Ne + scores.Ni + 0.1); // Avoid division by zero
+    if (neStrengthRatio > 0.6 && perceivingBonus > judgingBonus) {
+      // Strong Ne + P preference suggests INTP over INFP
+      scores.Ti = scores.Ti * (tiMultiplier + 0.02); // Small boost for Ti
+      scores.Fi = scores.Fi * fiMultiplier;
+    } else {
+      scores.Ti = scores.Ti * tiMultiplier;
+      scores.Fi = scores.Fi * fiMultiplier;
+    }
     
     return scores;
   }

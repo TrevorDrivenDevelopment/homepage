@@ -131,9 +131,9 @@ export class MBTICalculatorFactory {
    */
   static createAccurateCalculator(): MBTICalculator {
     const calculator = new MBTICalculator();
-    calculator.setScoringStrategy(new EnhancedScoringStrategy());
+    calculator.setScoringStrategy(new StackAwareScoringStrategy()); // Use StackAware instead of Enhanced
     calculator.setStackBuildingStrategy(new TheoryBasedStackBuildingStrategy());
-    calculator.setTypeMatchingStrategy(new FlexibleMatchStrategy());
+    calculator.setTypeMatchingStrategy(new ExactMatchStrategy()); // Use ExactMatch instead of Flexible
     return calculator;
   }
   
