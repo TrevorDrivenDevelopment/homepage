@@ -100,23 +100,22 @@ Create an IAM user with the following permissions policy for CDK deployment:
 
 ### 2. Configure GitHub Environments and Secrets
 
-The deployment workflow uses three GitHub environments with approval gates:
+The deployment workflow uses a single `prod` environment with approval gates:
 
-#### Step 2a: Create GitHub Environments
+#### Step 2a: Create GitHub Environment
 1. Go to your GitHub repository → **Settings** → **Environments**
-2. Create these three environments:
-   - `aws-verification`
-   - `frontend-deploy` 
-   - `backend-deploy`
+2. Create the `prod` environment:
+   - This single environment handles all secrets and deployment approvals
+   - Each deployment step (AWS verification, frontend, backend) requires approval
 
 #### Step 2b: Configure Environment Protection Rules
-For each environment:
+For the `prod` environment:
 1. Enable **Required reviewers** and add yourself (or team members)
 2. (Optional) Set **Wait timer** for additional safety
 3. (Optional) Restrict to **main branch** only
 
-#### Step 2c: Add Repository Secrets
-Go to **Settings** → **Secrets and variables** → **Actions** → **Repository secrets**:
+#### Step 2c: Add Environment Secrets
+In the `prod` environment, go to **Secrets** section and add:
 
 **Required Secrets:**
 - `AWS_ACCESS_KEY_ID`: Your IAM user's access key ID
@@ -127,8 +126,8 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Repositor
 - `ALPHA_VANTAGE_API_KEY`: For live stock data in options calculator
 - `MARKET_DATA_API_KEY`: Alternative market data source
 
-#### Step 2d: Add Repository Variables
-Go to **Settings** → **Secrets and variables** → **Actions** → **Variables**:
+#### Step 2d: Add Environment Variables
+In the `prod` environment, go to **Variables** section and add:
 
 **Optional Variables:**
 - `CLOUDFRONT_DISTRIBUTION_ID`: Your CloudFront distribution ID (enables cache invalidation)

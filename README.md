@@ -234,18 +234,18 @@ CORS_ORIGIN              # Frontend domain for CORS (optional)
 
 ### GitHub Environment Setup
 
-For production deployments with approvals, set up these GitHub environments:
+For production deployments with approvals, configure your `prod` environment:
 
 1. **Repository Settings** → **Environments** → **New environment**
-2. Create these environments:
-   - `aws-verification` - Requires approval before AWS access
-   - `frontend-deploy` - Requires approval before frontend deployment
-   - `backend-deploy` - Requires approval before backend deployment
+2. Create the `prod` environment:
+   - This single environment handles all secrets and approvals
+   - Each deployment step (AWS verification, frontend, backend) requires approval
 
-3. **For each environment:**
+3. **Configure the `prod` environment:**
    - Enable "Required reviewers" 
    - Add yourself/team members as reviewers
    - Optionally restrict to `main` branch only
+   - Set wait timer if desired (e.g., 5 minutes)
 
 ### AWS Setup
 

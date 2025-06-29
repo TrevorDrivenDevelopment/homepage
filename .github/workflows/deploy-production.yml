@@ -14,7 +14,7 @@ jobs:
   verify-aws-credentials:
     name: "🔐 Verify AWS Credentials & Permissions"
     runs-on: ubuntu-latest
-    environment: aws-verification  # Requires approval
+    environment: prod  # Access secrets from prod environment + requires approval
     outputs:
       aws-verified: ${{ steps.verify.outputs.verified }}
     
@@ -173,7 +173,7 @@ jobs:
   deploy-frontend:
     name: "🎨 Deploy Frontend"
     runs-on: ubuntu-latest
-    environment: frontend-deploy  # Requires approval
+    environment: prod  # Access secrets from prod environment + requires approval
     needs: [verify-aws-credentials, build-and-test]
     if: needs.build-and-test.outputs.frontend-ready == 'true'
     outputs:
@@ -232,7 +232,7 @@ jobs:
   deploy-backend:
     name: "📡 Deploy Backend & Infrastructure"
     runs-on: ubuntu-latest
-    environment: backend-deploy  # Requires approval
+    environment: prod  # Access secrets from prod environment + requires approval
     needs: [verify-aws-credentials, build-and-test]
     if: needs.build-and-test.outputs.backend-ready == 'true'
     outputs:
