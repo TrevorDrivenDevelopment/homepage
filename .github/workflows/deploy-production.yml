@@ -50,11 +50,23 @@ jobs:
         
         # Test S3 write permissions
         echo "Testing S3 write permissions..."
-        if aws s3 cp /dev/null s3://${{ secrets.S3_BUCKET_NAME }}/test-write-access.txt 2>/dev/null; then
-          aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }}/test-write-access.txt 2>/dev/null
+        echo "Attempting to write test file to S3 bucket in region ${{ env.AWS_REGION }}..."
+        
+        # Create a test file
+        echo "test" > /tmp/test-write-access.txt
+        
+        # Try to upload with explicit region and verbose output
+        if aws s3 cp /tmp/test-write-access.txt s3://${{ secrets.S3_BUCKET_NAME }}/test-write-access.txt --region ${{ env.AWS_REGION }}; then
+          echo "✅ S3 write test successful, cleaning up..."
+          aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }}/test-write-access.txt --region ${{ env.AWS_REGION }}
           echo "✅ S3 write permissions verified"
         else
           echo "❌ S3 write permissions failed"
+          echo "Debug: Checking bucket policy and permissions..."
+          aws s3api get-bucket-location --bucket "${{ secrets.S3_BUCKET_NAME }}" || echo "Could not get bucket location"
+          aws s3api get-bucket-policy --bucket "${{ secrets.S3_BUCKET_NAME }}" 2>/dev/null || echo "No bucket policy found or access denied"
+          echo "Current AWS user permissions:"
+          aws iam get-user 2>/dev/null || echo "Cannot retrieve user info"
           exit 1
         fi
         
@@ -205,7 +217,7 @@ jobs:
       id: frontend-deploy
       run: |
         echo "🚀 Deploying frontend to S3..."
-        aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }} --delete --exact-timestamps
+        aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }} --delete --exact-timestamps --region ${{ env.AWS_REGION }}
         
         # Get S3 website URL or CloudFront URL
         if [ "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" != "" ]; then
