@@ -230,7 +230,7 @@ class MBTIQualityAssurance {
     const pattern2 = this.patternGenerator.generateSophisticatedPattern(type2);
     
     // Mix the two patterns - 50% from each type
-    return pattern1.map((response1, index) => {
+    const mixed = pattern1.map((response1, index) => {
       const response2 = pattern2[index];
       
       // Randomly choose between the two responses
@@ -240,6 +240,8 @@ class MBTIQualityAssurance {
         return response2;
       }
     });
+    // Filter out any undefined values to ensure the result is Response[]
+    return mixed.filter((r): r is Response => r !== undefined);
   }
 
   // Print methods for results

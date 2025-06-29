@@ -71,6 +71,10 @@ class InteractiveTestRunner {
 
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
+      if (!question) {
+        console.warn(`Warning: Question at index ${i} is undefined. Skipping.`);
+        continue;
+      }
       questionTexts.push(question.text);
       
       console.log(`\n--- Question ${i + 1} of ${questions.length} ---`);
@@ -123,6 +127,10 @@ class InteractiveTestRunner {
     
     data.responses.forEach((response, index) => {
       const question = questions[response.questionIndex];
+      if (!question) {
+        console.warn(`Warning: Question at index ${response.questionIndex} is undefined. Skipping.`);
+        return;
+      }
       const chosen = response.value ? question.extroverted : question.introverted;
       const chosenLetter = response.value ? 'A' : 'B';
       
