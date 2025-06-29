@@ -1,0 +1,17 @@
+[install]
+# Configure bun install behavior
+cache = true
+# auto option removed - not needed for Bun
+
+[install.scopes]
+# Configure package scopes if needed
+
+[run]
+# Configure bun run behavior
+
+[test]
+# Configure bun test
+root = "./src"
+
+[build]
+# Configure bun build if needed

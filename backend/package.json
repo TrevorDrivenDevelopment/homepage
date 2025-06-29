@@ -1,0 +1,44 @@
+{
+    "name": "homepage-backend",
+    "version": "1.0.0",
+    "description": "Backend API services for homepage applications",
+    "main": "index.js",
+    "type": "module",
+    "packageManager": "bun@1.2.17",
+    "scripts": {
+        "build": "bun run build:tsc",
+        "build:tsc": "tsc",
+        "build:bun": "bun build src/index.ts --outdir dist --target node",
+        "deploy": "bun run cdk deploy",
+        "deploy:cdk": "bun run cdk deploy",
+        "destroy": "bun run cdk destroy",
+        "local": "sam local start-api",
+        "dev": "bun --watch src/index.ts",
+        "test": "bun test",
+        "lint": "eslint src/**/*.ts",
+        "type-check": "tsc --noEmit",
+        "cdk": "cdk",
+        "cdk:deploy": "cdk deploy",
+        "cdk:destroy": "cdk destroy",
+        "cdk:diff": "cdk diff",
+        "cdk:synth": "cdk synth",
+        "cdk:bootstrap": "cdk bootstrap"
+    },
+    "dependencies": {
+        "@aws-sdk/client-ssm": "^3.470.0",
+        "axios": "^1.6.2",
+        "aws-cdk-lib": "^2.156.0",
+        "constructs": "^10.3.0"
+    },
+    "devDependencies": {
+        "@aws-sdk/types": "^3.470.0",
+        "@types/aws-lambda": "^8.10.131",
+        "@types/bun": "^1.1.18",
+        "@types/node": "^20.9.0",
+        "@typescript-eslint/eslint-plugin": "^6.12.0",
+        "@typescript-eslint/parser": "^6.12.0",
+        "aws-cdk": "^2.156.0",
+        "eslint": "^8.54.0",
+        "typescript": "^5.2.2"
+    }
+}

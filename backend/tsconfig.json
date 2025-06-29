@@ -1,0 +1,32 @@
+{
+    "extends": "../tsconfig.base.json",
+    "compilerOptions": {
+        "module": "ESNext",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "declaration": true,
+        "declarationMap": true,
+        "removeComments": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        },
+        "types": [
+            "bun-types",
+            "@types/aws-lambda",
+            "@types/node"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "tests",
+        "**/*.test.ts",
+        "**/*.spec.ts"
+    ]
+}

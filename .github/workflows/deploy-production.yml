@@ -1,0 +1,372 @@
+name: Production Deployment with Approvals
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  BUN_VERSION: '1.2.17'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  # Step 1: AWS Credential Verification with IAM Permission Checks
+  verify-aws-credentials:
+    name: "🔐 Verify AWS Credentials & Permissions"
+    runs-on: ubuntu-latest
+    environment: aws-verification  # Requires approval
+    outputs:
+      aws-verified: ${{ steps.verify.outputs.verified }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Verify AWS Identity & Basic Permissions
+      id: verify
+      run: |
+        echo "✅ AWS credentials configured successfully"
+        echo "Current AWS identity:"
+        aws sts get-caller-identity
+        
+        # Test basic IAM permissions
+        echo "🔍 Testing IAM permissions..."
+        
+        # Test S3 permissions
+        echo "Testing S3 bucket access..."
+        if aws s3api head-bucket --bucket "${{ secrets.S3_BUCKET_NAME }}" 2>/dev/null; then
+          echo "✅ S3 bucket access verified"
+        else
+          echo "❌ S3 bucket access failed - check bucket name and permissions"
+          exit 1
+        fi
+        
+        # Test S3 write permissions
+        echo "Testing S3 write permissions..."
+        if aws s3 cp /dev/null s3://${{ secrets.S3_BUCKET_NAME }}/test-write-access.txt 2>/dev/null; then
+          aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }}/test-write-access.txt 2>/dev/null
+          echo "✅ S3 write permissions verified"
+        else
+          echo "❌ S3 write permissions failed"
+          exit 1
+        fi
+        
+        # Test CloudFormation permissions (required for CDK)
+        echo "Testing CloudFormation permissions..."
+        if aws cloudformation describe-stacks --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "✅ CloudFormation read access verified"
+        else
+          echo "❌ CloudFormation access failed"
+          exit 1
+        fi
+        
+        # Test Lambda permissions
+        echo "Testing Lambda permissions..."
+        if aws lambda list-functions --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "✅ Lambda access verified"
+        else
+          echo "❌ Lambda access failed"
+          exit 1
+        fi
+        
+        # Test API Gateway permissions
+        echo "Testing API Gateway permissions..."
+        if aws apigateway get-rest-apis --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "✅ API Gateway access verified"
+        else
+          echo "❌ API Gateway access failed"
+          exit 1
+        fi
+        
+        # Test CloudFront permissions (if configured)
+        if [ "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" != "" ]; then
+          echo "Testing CloudFront permissions..."
+          if aws cloudfront get-distribution --id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" >/dev/null 2>&1; then
+            echo "✅ CloudFront distribution access verified"
+          else
+            echo "❌ CloudFront distribution access failed"
+            exit 1
+          fi
+        fi
+        
+        # Test CDK bootstrap status
+        echo "Checking CDK bootstrap status..."
+        if aws cloudformation describe-stacks --stack-name CDKToolkit --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "✅ CDK is bootstrapped"
+        else
+          echo "⚠️ CDK not bootstrapped - will bootstrap during deployment"
+        fi
+        
+        echo "verified=true" >> $GITHUB_OUTPUT
+        echo "🎉 All AWS credential and permission verifications passed!"
+
+  # Step 2: Build and Test Both Frontend and Backend
+  build-and-test:
+    name: "🏗️ Build & Test"
+    runs-on: ubuntu-latest
+    needs: verify-aws-credentials
+    if: needs.verify-aws-credentials.outputs.aws-verified == 'true'
+    outputs:
+      frontend-ready: ${{ steps.frontend.outputs.ready }}
+      backend-ready: ${{ steps.backend.outputs.ready }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ env.BUN_VERSION }}
+        
+    - name: Install workspace dependencies
+      run: bun install
+        
+    - name: Frontend build and test
+      id: frontend
+      working-directory: ./frontend
+      run: |
+        echo "🎨 Testing frontend build process..."
+        bun run type-check
+        bun run build
+        
+        # Verify build artifacts
+        if [ -d "../build" ] && [ -f "../build/index.html" ]; then
+          echo "✅ Frontend build artifacts verified"
+          echo "ready=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Frontend build artifacts missing"
+          exit 1
+        fi
+        
+    - name: Backend build and test
+      id: backend
+      working-directory: ./backend
+      run: |
+        echo "📡 Testing backend build process..."
+        bun run lint || echo "⚠️ Linting issues found"
+        bun run type-check
+        bun run build:tsc
+        
+        # Verify build artifacts
+        if [ -d "dist" ] && [ -f "dist/handlers/health.js" ]; then
+          echo "✅ Backend build artifacts verified"
+          echo "ready=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Backend build artifacts missing"
+          exit 1
+        fi
+        
+        # Test CDK synthesis
+        echo "🔍 Testing CDK synthesis..."
+        bun run cdk synth >/dev/null
+        echo "✅ CDK synthesis successful"
+
+  # Step 3: Deploy Frontend (Manual approval required)
+  deploy-frontend:
+    name: "🎨 Deploy Frontend"
+    runs-on: ubuntu-latest
+    environment: frontend-deploy  # Requires approval
+    needs: [verify-aws-credentials, build-and-test]
+    if: needs.build-and-test.outputs.frontend-ready == 'true'
+    outputs:
+      frontend-url: ${{ steps.frontend-deploy.outputs.url }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ env.BUN_VERSION }}
+        
+    - name: Install dependencies and build
+      working-directory: ./frontend
+      run: |
+        bun install
+        bun run build
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Deploy frontend to S3
+      id: frontend-deploy
+      run: |
+        echo "🚀 Deploying frontend to S3..."
+        aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }} --delete --exact-timestamps
+        
+        # Get S3 website URL or CloudFront URL
+        if [ "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" != "" ]; then
+          FRONTEND_URL="https://${{ vars.CLOUDFRONT_DOMAIN || secrets.S3_BUCKET_NAME }}.cloudfront.net"
+        else
+          FRONTEND_URL="https://${{ secrets.S3_BUCKET_NAME }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com"
+        fi
+        
+        echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+        echo "✅ Frontend deployed to: $FRONTEND_URL"
+        
+    - name: Invalidate CloudFront cache
+      if: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+      run: |
+        echo "🌐 Invalidating CloudFront cache..."
+        INVALIDATION_ID=$(aws cloudfront create-invalidation \
+          --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
+          --paths "/*" \
+          --query 'Invalidation.Id' \
+          --output text)
+        echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+
+  # Step 4: Deploy Backend with CDK (Manual approval required)
+  deploy-backend:
+    name: "📡 Deploy Backend & Infrastructure"
+    runs-on: ubuntu-latest
+    environment: backend-deploy  # Requires approval
+    needs: [verify-aws-credentials, build-and-test]
+    if: needs.build-and-test.outputs.backend-ready == 'true'
+    outputs:
+      api-url: ${{ steps.backend-deploy.outputs.api-url }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ env.BUN_VERSION }}
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Build and deploy backend with CDK
+      id: backend-deploy
+      working-directory: ./backend
+      run: |
+        echo "🏗️ Building backend..."
+        bun install
+        bun run build:tsc
+        
+        echo "🔄 Bootstrapping CDK (if needed)..."
+        if ! aws cloudformation describe-stacks --stack-name CDKToolkit --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "📦 Bootstrapping CDK..."
+          bun run cdk bootstrap
+        else
+          echo "✅ CDK already bootstrapped"
+        fi
+        
+        echo "🚀 Deploying backend infrastructure with CDK..."
+        bun run cdk deploy HomepageStack \
+          --require-approval never \
+          --context environment=prod \
+          --context corsOrigin="${{ vars.CORS_ORIGIN || '*' }}" \
+          --context alphaVantageApiKey="${{ secrets.ALPHA_VANTAGE_API_KEY || '' }}" \
+          --context marketDataApiKey="${{ secrets.MARKET_DATA_API_KEY || '' }}" \
+          --outputs-file cdk-outputs.json
+        
+        # Extract API URL from CDK outputs
+        if [ -f "cdk-outputs.json" ]; then
+          API_URL=$(cat cdk-outputs.json | jq -r '.HomepageStack.ApiGatewayUrl // empty')
+          if [ -n "$API_URL" ]; then
+            echo "api-url=$API_URL" >> $GITHUB_OUTPUT
+            echo "✅ Backend deployed to: $API_URL"
+          else
+            echo "❌ Could not extract API URL from CDK outputs"
+            exit 1
+          fi
+        else
+          echo "❌ CDK outputs file not found"
+          exit 1
+        fi
+        
+    - name: Test API health endpoint
+      run: |
+        API_URL="${{ steps.backend-deploy.outputs.api-url }}"
+        echo "🔍 Testing API health endpoint: $API_URL/api/health"
+        
+        # Wait for API to be available
+        sleep 15
+        
+        # Retry health check up to 3 times
+        for i in {1..3}; do
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/api/health")
+          if [ "$response" = "200" ]; then
+            echo "✅ API health check passed (attempt $i)"
+            break
+          else
+            echo "⚠️ API health check failed with status: $response (attempt $i/3)"
+            if [ $i -eq 3 ]; then
+              echo "❌ API health check failed after 3 attempts"
+              exit 1
+            fi
+            sleep 10
+          fi
+        done
+
+  # Step 5: Deployment Summary
+  deployment-summary:
+    name: "📋 Deployment Summary"
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend, deploy-backend]
+    if: always() && (needs.deploy-frontend.result == 'success' || needs.deploy-backend.result == 'success')
+    
+    steps:
+    - name: Create deployment summary
+      run: |
+        echo "# 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Status:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.deploy-frontend.result }}" == "success" ]; then
+          echo "## ✅ Frontend Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ needs.deploy-frontend.outputs.frontend-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **S3 Bucket:** ${{ secrets.S3_BUCKET_NAME }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" != "" ]; then
+            echo "- **CloudFront:** Cache invalidated" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ Frontend Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Failed or skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.deploy-backend.result }}" == "success" ]; then
+          echo "## ✅ Backend Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- **API URL:** ${{ needs.deploy-backend.outputs.api-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Technology:** AWS CDK (Lambda + API Gateway)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Available Endpoints:**" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`GET /api/health\` - Health check" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`GET /api/options/stock/{symbol}\` - Stock quotes" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`GET /api/options/chain/{symbol}\` - Options chains" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`POST /api/calculator/options\` - Options calculations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ Backend Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Failed or skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "## 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "1. Test the deployed applications" >> $GITHUB_STEP_SUMMARY
+        echo "2. Monitor AWS CloudWatch logs for any issues" >> $GITHUB_STEP_SUMMARY
+        echo "3. Update frontend environment variables if backend URL changed" >> $GITHUB_STEP_SUMMARY
+        echo "4. Verify all integrations are working correctly" >> $GITHUB_STEP_SUMMARY

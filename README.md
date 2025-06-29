@@ -1,46 +1,395 @@
-# Getting Started with Create React App
+# Trevor Driven Development Homepage
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern full-stack monorepo built with **React**, **RSBuild**, **Bun**, and **AWS CDK**. Features a personal portfolio with interactive applications including an MBTI personality test and options calculator.
 
-## Available Scripts
+## 🚀 Quick Start
 
-In the project directory, you can run:
+### Prerequisites
+- [Bun](https://bun.sh) (v1.2.17+) - Fast JavaScript runtime and package manager
+- [mise](https://mise.run) - Tool version management (recommended)
+- [AWS CDK CLI](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) - For backend deployment (optional)
 
-### `yarn start`
+### 1. Clone the Repository
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```bash
+git clone https://github.com/your-username/homepage.git
+cd homepage
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### 2. Install Bun and mise
 
-### `yarn test`
+#### Option A: Automated Setup with mise (Recommended)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+# Install mise for automatic tool version management
+curl https://mise.run | sh
 
-### `yarn build`
+# Add to your shell (e.g., ~/.zshrc or ~/.bashrc)
+echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
+source ~/.zshrc
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Navigate to project - mise will auto-install Bun v1.2.17
+cd homepage
+mise install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### Option B: Manual Bun Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+# Install Bun directly
+curl -fsSL https://bun.sh/install | bash
 
-### `yarn eject`
+# Verify correct version (should be 1.2.17)
+bun --version
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 3. Install Dependencies
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+# Install all workspace dependencies
+bun install
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### 4. Local Development
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+#### Full-Stack Development (Recommended)
+```bash
+# Start both frontend and backend servers
+bun run dev:full
+```
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
 
-## Learn More
+#### Individual Services
+```bash
+# Frontend only (React app)
+bun run dev
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Backend only (Lambda functions locally)
+bun run dev:backend
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🛠 Technology Stack
+
+### Frontend
+- **React 19** with TypeScript
+- **RSBuild** - Fast build tool (Webpack/Vite alternative)
+- **Material-UI** - React component library
+- **React Router** - Client-side routing
+
+### Backend
+- **Bun** - Fast JavaScript runtime (development)
+- **AWS Lambda** - Serverless functions (production)
+- **AWS API Gateway** - REST API management
+- **AWS CDK** - Infrastructure as Code
+- **TypeScript** - Type-safe backend development
+
+### DevOps
+- **GitHub Actions** - CI/CD pipeline with approval gates
+- **AWS S3** - Static website hosting
+- **AWS CloudFront** - CDN
+- **mise** - Tool version management
+
+## 📁 Project Structure
+
+This monorepo is organized with clear separation between frontend and backend:
+
+```
+homepage/
+├── frontend/              # React application
+│   ├── src/
+│   │   ├── apps/         # Feature applications
+│   │   │   ├── PersonalApplications.tsx
+│   │   │   ├── options-calculator/     # Stock options tool
+│   │   │   └── personality-test/       # MBTI personality test
+│   │   ├── types/        # TypeScript definitions
+│   │   └── utils/        # Shared utilities
+│   ├── public/           # Static assets
+│   ├── package.json      # Frontend dependencies & scripts
+│   ├── rsbuild.config.ts # Build configuration
+│   └── tsconfig.json     # TypeScript config
+│
+├── backend/               # Serverless API
+│   ├── src/
+│   │   ├── handlers/     # Lambda function handlers
+│   │   ├── services/     # Business logic
+│   │   ├── types/        # TypeScript definitions
+│   │   └── utils/        # Backend utilities
+│   ├── infrastructure/   # AWS CDK infrastructure
+│   │   ├── bin/app.ts    # CDK app entry point
+│   │   ├── stacks/       # CDK stack definitions
+│   │   └── tsconfig.json # Infrastructure TypeScript config
+│   ├── package.json      # Backend dependencies & scripts
+│   └── cdk.json          # CDK configuration
+│
+├── .github/workflows/     # CI/CD pipelines
+├── build/                # Frontend build output
+├── dev.ts                # Full-stack development script
+├── package.json          # Workspace manager & shared scripts
+├── .mise.toml            # Tool version management
+└── bunfig.toml           # Bun configuration
+```
+
+## 🔧 Available Scripts
+
+All scripts can be run from the root directory using Bun's workspace management:
+
+### Development
+```bash
+bun run dev           # Start frontend development server
+bun run dev:backend   # Start backend development server  
+bun run dev:full      # Start both frontend and backend
+```
+
+### Building
+```bash
+bun run build         # Build frontend for production
+bun run build:backend # Build backend for deployment
+```
+
+### Testing & Quality
+```bash
+bun run test           # Run all tests
+bun run test:frontend  # Run frontend tests only
+bun run test:backend   # Run backend tests only
+bun run type-check     # TypeScript checking across monorepo
+bun run mbti-quality   # Run MBTI test quality analysis
+```
+
+### Deployment
+```bash
+bun run deploy:backend # Deploy backend to AWS
+```
+
+## 🌐 Featured Applications
+
+### Personal Portfolio
+- Professional showcase with resume and contact information
+- Links to GitHub, LinkedIn, and YouTube
+- Responsive design with modern UI
+
+### MBTI Personality Test
+- Interactive 16-personality type assessment
+- Dynamic question system with cognitive function analysis
+- Real-time type calculation and detailed results
+- Quality assurance tools for question consistency
+
+### Options Calculator
+- Stock options analysis and valuation
+- Support for both manual input and live market data
+- Integration with Alpha Vantage API
+- Interactive charts and calculations
+
+## 🚀 Deployment
+
+The project uses **GitHub Actions** for automated deployment with approval gates for production safety.
+
+### Required GitHub Secrets
+
+Configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+
+#### Required Secrets
+```bash
+AWS_ACCESS_KEY_ID          # AWS IAM access key
+AWS_SECRET_ACCESS_KEY      # AWS IAM secret key  
+S3_BUCKET_NAME            # S3 bucket for frontend hosting
+```
+
+#### Optional Secrets (for enhanced features)
+```bash
+ALPHA_VANTAGE_API_KEY     # For live stock data in options calculator
+CLOUDFRONT_DISTRIBUTION_ID # For CDN cache invalidation
+```
+
+#### Environment Variables (if different from defaults)
+```bash
+AWS_REGION=us-east-1      # Default region (optional)
+CORS_ORIGIN              # Frontend domain for CORS (optional)
+```
+
+### Deployment Workflow
+
+#### Production Deployment (Single Source of Truth)
+**File:** `.github/workflows/deploy-production.yml`
+
+**Sequential approval-based workflow:**
+1. 🔐 **AWS Credentials Verification** (requires approval)
+   - Verifies AWS identity and IAM permissions
+   - Tests S3, CloudFormation, Lambda, API Gateway access
+   - Checks CDK bootstrap status
+2. 🏗️ **Build & Test** (automatic after verification)
+   - Frontend: TypeScript check + build verification
+   - Backend: TypeScript check + CDK synthesis test
+3. 🎨 **Frontend Deploy** (requires approval)
+   - Deploys to S3 + CloudFront cache invalidation
+4. 📡 **Backend Deploy** (requires approval) 
+   - CDK deployment of Lambda functions + API Gateway
+   - Health check verification
+5. 📋 **Deployment Summary**
+   - Complete deployment status and URLs
+
+**To trigger:**
+- Push to `main` branch
+- Manual dispatch from GitHub Actions tab
+
+### GitHub Environment Setup
+
+For production deployments with approvals, set up these GitHub environments:
+
+1. **Repository Settings** → **Environments** → **New environment**
+2. Create these environments:
+   - `aws-verification` - Requires approval before AWS access
+   - `frontend-deploy` - Requires approval before frontend deployment
+   - `backend-deploy` - Requires approval before backend deployment
+
+3. **For each environment:**
+   - Enable "Required reviewers" 
+   - Add yourself/team members as reviewers
+   - Optionally restrict to `main` branch only
+
+### AWS Setup
+
+#### 1. Create IAM User with Required Permissions
+```bash
+# Minimum required policies:
+- AmazonS3FullAccess (for frontend deployment)
+- CloudFormationFullAccess (for CDK)
+- IAMFullAccess (for CDK to create roles)
+- AWSLambda_FullAccess (for backend functions)
+- AmazonAPIGatewayAdministrator (for API deployment)
+```
+
+#### 2. Create S3 Bucket
+```bash
+# Replace 'your-unique-bucket-name' with your actual bucket name
+aws s3 mb s3://your-unique-bucket-name --region us-east-1
+aws s3 website s3://your-unique-bucket-name --index-document index.html
+```
+
+#### 3. Bootstrap CDK (One-time setup)
+```bash
+cd backend
+bun install
+bun run bootstrap
+```
+
+### Manual Deployment
+
+#### Frontend
+```bash
+cd frontend
+bun run build
+aws s3 sync ../build s3://your-bucket-name --delete
+```
+
+#### Backend
+```bash
+cd backend  
+bun run deploy
+```
+
+### Monitoring Deployments
+
+- **GitHub Actions**: Monitor workflow runs in the Actions tab
+- **AWS CloudFormation**: View stack deployments in AWS Console
+- **Frontend URL**: `https://your-bucket-name.s3-website-us-east-1.amazonaws.com`
+- **Backend URL**: Check CDK output or API Gateway console for endpoint
+
+## 🧪 Testing
+
+```bash
+# Run all tests across monorepo
+bun run test
+
+# Run tests for specific workspace
+bun run test:frontend
+bun run test:backend
+
+# Run specific test file
+cd frontend && bun test src/components/MyComponent.test.tsx
+
+# Type checking across entire project
+bun run type-check
+
+# MBTI test quality analysis
+bun run mbti-quality
+```
+
+## 🛠 Development Tips
+
+### Monorepo Workflow
+- All dependencies are managed through the root `package.json` workspace
+- Use `bun install` from root to install all workspace dependencies
+- Scripts can be run from root (e.g., `bun run dev:full`) or from individual workspaces
+
+### Hot Reloading
+- Frontend has hot module replacement enabled
+- Backend restarts automatically on file changes
+- Full-stack mode (`dev:full`) runs both with live reloading
+
+### Environment Variables
+```bash
+# Frontend (.env in frontend/)
+REACT_APP_API_URL=http://localhost:8080
+
+# Backend (.env in backend/)
+## These are for the options calculator. If you don't want it, you don't need it. 
+ALPHA_VANTAGE_API_KEY=your_api_key
+CORS_ORIGIN=http://localhost:3000
+```
+
+## 📚 Additional Documentation
+
+- **[Migration Guide](./MIGRATION.md)** - RSBuild + Bun migration from CRA
+- **[Testing Summary](./TESTING_SUMMARY.md)** - Test coverage and strategies
+- **[Quality Assurance](./QUALITY_ASSURANCE.md)** - QA processes and standards
+- **[Deployment Guide](./DEPLOYMENT.md)** - Detailed deployment instructions
+- **[Backend API](./backend/README.md)** - API documentation and endpoints
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Make your changes**
+4. **Run tests and type checking**
+   ```bash
+   bun run test
+   bun run type-check
+   ```
+5. **Commit with descriptive message**
+   ```bash
+   git commit -m "feat: add amazing feature"
+   ```
+6. **Push and create pull request**
+
+### Code Style
+- TypeScript is enforced across the monorepo
+- ESLint configuration via `@rsbuild/eslint-config/react`
+- Prettier for code formatting
+- Husky for git hooks (if configured)
+
+## 🔄 Migration History
+
+This project has been migrated through several iterations:
+- **CRA → RSBuild**: Improved build performance and modern tooling
+- **npm → Bun**: Faster package management and runtime
+- **AWS SAM → CDK**: More flexible infrastructure as code
+- **Monolith → Monorepo**: Clear separation of concerns
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📧 Contact
+
+**Trevor Tiernan**
+- GitHub: [@trevortiernan](https://github.com/trevortiernan)
+- LinkedIn: [Trevor Tiernan](https://linkedin.com/in/trevortiernan)
+- Website: [Live Demo](https://trevordrivendevelopment.com)
+
+---
+
+**Built with ❤️ using React, TypeScript, Bun, and AWS**

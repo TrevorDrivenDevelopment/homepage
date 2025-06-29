@@ -1,0 +1,17 @@
+# mise configuration for automatic tool version management
+# This ensures all contributors use the same Bun version
+[tools]
+bun = "1.2.17"
+
+# Optional: Add Node.js if needed for certain build tools
+# node = "22.16.0"
+
+# Automatically install tools when entering the directory
+[settings]
+experimental = true
+always_keep_download = true
+verbose = false
+
+# Optional: Environment variables
+[env]
+# Add any project-specific environment variables here

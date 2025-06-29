@@ -1,0 +1,24 @@
+[install]
+cache = true
+# auto option removed - not needed for Bun
+
+[run]
+# Configure bun run behavior for backend
+shell = "system"
+
+[test]
+root = "./src"
+timeout = 30000
+
+[build]
+# Configure bun build for backend development
+target = "node"
+outdir = "dist"
+minify = false
+sourcemap = true
+splitting = false
+
+[dev]
+# Configure development server
+port = 8080
+hot = true
