@@ -133,7 +133,7 @@ In the `prod` environment, go to **Variables** section and add:
 - `CLOUDFRONT_DISTRIBUTION_ID`: Your CloudFront distribution ID (enables cache invalidation)
 - `CLOUDFRONT_DOMAIN`: Your CloudFront domain (for deployment summary)
 - `CORS_ORIGIN`: Frontend domain for backend CORS configuration
-- `AWS_REGION`: AWS region (defaults to us-east-1)
+- `AWS_REGION`: AWS region (defaults to us-east-2)
 
 ### 3. S3 Bucket Configuration
 

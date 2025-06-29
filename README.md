@@ -203,7 +203,7 @@ CLOUDFRONT_DISTRIBUTION_ID # For CDN cache invalidation
 
 #### Environment Variables (if different from defaults)
 ```bash
-AWS_REGION=us-east-1      # Default region (optional)
+AWS_REGION=us-east-2      # Default region (optional)
 CORS_ORIGIN              # Frontend domain for CORS (optional)
 ```
 
@@ -262,7 +262,7 @@ For production deployments with approvals, configure your `prod` environment:
 #### 2. Create S3 Bucket
 ```bash
 # Replace 'your-unique-bucket-name' with your actual bucket name
-aws s3 mb s3://your-unique-bucket-name --region us-east-1
+aws s3 mb s3://your-unique-bucket-name --region us-east-2
 aws s3 website s3://your-unique-bucket-name --index-document index.html
 ```
 
@@ -292,7 +292,7 @@ bun run deploy
 
 - **GitHub Actions**: Monitor workflow runs in the Actions tab
 - **AWS CloudFormation**: View stack deployments in AWS Console
-- **Frontend URL**: `https://your-bucket-name.s3-website-us-east-1.amazonaws.com`
+- **Frontend URL**: `https://your-bucket-name.s3-website-us-east-2.amazonaws.com`
 - **Backend URL**: Check CDK output or API Gateway console for endpoint
 
 ## 🧪 Testing

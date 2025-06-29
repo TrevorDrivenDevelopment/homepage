@@ -7,7 +7,7 @@ on:
 
 env:
   BUN_VERSION: '1.2.17'
-  AWS_REGION: 'us-east-1'
+  AWS_REGION: 'us-east-2'
 
 jobs:
   # Step 1: AWS Credential Verification with IAM Permission Checks
