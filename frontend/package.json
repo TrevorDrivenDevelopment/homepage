@@ -11,6 +11,7 @@
         "@rsbuild/core": "^1.1.8",
         "@rsbuild/plugin-react": "^1.0.12",
         "@rsbuild/plugin-type-check": "^1.0.5",
+        "@types/jest": "^30.0.0",
         "react": "19.1.0",
         "react-dom": "19.1.0",
         "react-router-dom": "7.6.2",
