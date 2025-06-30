@@ -258,6 +258,7 @@ For production deployments with approvals, configure your `prod` environment:
 - AWSLambda_FullAccess (for backend functions)
 - AmazonAPIGatewayAdministrator (for API deployment)
 - AmazonSSMFullAccess (for CDK bootstrap and API key storage)
+- AmazonEC2ContainerRegistryFullAccess (for CDK, --no-docker doesn't seem to fix needing this)
 ```
 
 #### 2. Create S3 Bucket
