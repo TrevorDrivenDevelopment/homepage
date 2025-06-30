@@ -257,6 +257,7 @@ For production deployments with approvals, configure your `prod` environment:
 - IAMFullAccess (for CDK to create roles)
 - AWSLambda_FullAccess (for backend functions)
 - AmazonAPIGatewayAdministrator (for API deployment)
+- AmazonSSMFullAccess (for CDK bootstrap and API key storage)
 ```
 
 #### 2. Create S3 Bucket
