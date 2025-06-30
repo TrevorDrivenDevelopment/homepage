@@ -294,12 +294,41 @@ jobs:
         # Extract API URL from CDK outputs
         if [ -f "cdk-outputs.json" ]; then
           API_URL=$(cat cdk-outputs.json | jq -r '.HomepageStack.ApiGatewayUrl // empty')
+          API_KEY_ID=$(cat cdk-outputs.json | jq -r '.HomepageStack.ApiKeyId // empty')
+          
           if [ -n "$API_URL" ]; then
             echo "api-url=$API_URL" >> $GITHUB_OUTPUT
             echo "✅ Backend deployed to: $API_URL"
           else
             echo "❌ Could not extract API URL from CDK outputs"
             exit 1
+          fi
+          
+          if [ -n "$API_KEY_ID" ]; then
+            # Get the actual API key value
+            API_KEY_VALUE=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --query 'value' --output text --region ${{ env.AWS_REGION }})
+            
+            # Store API key in SSM Parameter Store for easy retrieval
+            aws ssm put-parameter \
+              --name "/homepage/prod/client-api-key" \
+              --value "$API_KEY_VALUE" \
+              --type "SecureString" \
+              --description "Homepage API key for client applications" \
+              --overwrite \
+              --region ${{ env.AWS_REGION }}
+            
+            echo "✅ API Key stored in SSM: /homepage/prod/client-api-key"
+            echo "🔑 API Key ID: $API_KEY_ID"
+            echo "🔑 API Key Value: $API_KEY_VALUE"
+            
+            # Also save to GitHub step summary for easy access
+            echo "## 🔑 API Key Information" >> $GITHUB_STEP_SUMMARY
+            echo "- **API Key ID:** \`$API_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **API Key Value:** \`$API_KEY_VALUE\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **SSM Parameter:** \`/homepage/prod/client-api-key\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Could not extract API Key ID from CDK outputs"
           fi
         else
           echo "❌ CDK outputs file not found"
