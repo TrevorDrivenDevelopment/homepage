@@ -276,8 +276,8 @@ jobs:
         
         echo "🔄 Bootstrapping CDK (if needed)..."
         if ! aws cloudformation describe-stacks --stack-name CDKToolkit --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
-          echo "📦 Bootstrapping CDK..."
-          bun run cdk bootstrap
+          echo "📦 Bootstrapping CDK without Docker support..."
+          bun run cdk bootstrap --no-docker
         else
           echo "✅ CDK already bootstrapped"
         fi
