@@ -4,7 +4,6 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 
 export interface HomepageStackProps extends cdk.StackProps {
@@ -27,7 +26,7 @@ export class HomepageStack extends cdk.Stack {
     const marketDataApiKey = props?.marketDataApiKey || this.node.tryGetContext('marketDataApiKey') || '';
 
     // Backend source path (relative to backend directory)
-    const backendPath = path.join(__dirname, '../src');
+    const backendPath = path.join(__dirname, '../../src');
 
     // Common Lambda function props
     const commonLambdaProps = {
@@ -37,14 +36,6 @@ export class HomepageStack extends cdk.Stack {
       environment: {
         CORS_ORIGIN: corsOrigin,
         NODE_ENV: environment,
-      },
-      bundling: {
-        minify: true,
-        sourceMap: true,
-        target: 'es2022',
-        format: lambda.OutputFormat.ESM,
-        mainFields: ['module', 'main'],
-        banner: 'import { createRequire } from "module"; const require = createRequire(import.meta.url);',
       },
     };
 
@@ -90,19 +81,19 @@ export class HomepageStack extends cdk.Stack {
     }
 
     // Health Check Lambda
-    const healthFunction = new NodejsFunction(this, 'HealthFunction', {
+    const healthFunction = new lambda.Function(this, 'HealthFunction', {
       ...commonLambdaProps,
       functionName: `homepage-health-${environment}`,
-      entry: path.join(backendPath, 'handlers/health.ts'),
-      handler: 'handler',
+      code: lambda.Code.fromAsset(path.join(backendPath, '../dist')),
+      handler: 'handlers/health.handler',
     });
 
     // Options Data Lambda
-    const optionsFunction = new NodejsFunction(this, 'OptionsFunction', {
+    const optionsFunction = new lambda.Function(this, 'OptionsFunction', {
       ...commonLambdaProps,
       functionName: `homepage-options-${environment}`,
-      entry: path.join(backendPath, 'handlers/options.ts'),
-      handler: 'handler',
+      code: lambda.Code.fromAsset(path.join(backendPath, '../dist')),
+      handler: 'handlers/options.handler',
       environment: {
         ...commonLambdaProps.environment,
         ALPHA_VANTAGE_API_KEY: alphaVantageApiKey,
@@ -110,11 +101,11 @@ export class HomepageStack extends cdk.Stack {
     });
 
     // Calculator Lambda (create file if it doesn't exist)
-    const calculatorFunction = new NodejsFunction(this, 'CalculatorFunction', {
+    const calculatorFunction = new lambda.Function(this, 'CalculatorFunction', {
       ...commonLambdaProps,
       functionName: `homepage-calculator-${environment}`,
-      entry: path.join(backendPath, 'handlers/calculator.ts'),
-      handler: 'handler',
+      code: lambda.Code.fromAsset(path.join(backendPath, '../dist')),
+      handler: 'handlers/calculator.handler',
     });
 
     // Grant SSM parameter access to functions that need it
@@ -162,13 +153,13 @@ export class HomepageStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ApiGatewayUrl', {
       value: api.url,
       description: 'API Gateway endpoint URL',
-      exportName: `${this.stackName}-ApiUrl`,
+      exportName: `${id}-ApiUrl`,
     });
 
     new cdk.CfnOutput(this, 'ApiGatewayId', {
       value: api.restApiId,
       description: 'API Gateway API ID',
-      exportName: `${this.stackName}-ApiId`,
+      exportName: `${id}-ApiId`,
     });
 
     new cdk.CfnOutput(this, 'Environment', {

@@ -2,5 +2,7 @@ node_modules
 .yarn
 .vscode
 build
+backend/dist
+backend/cdk.out
 # public directory is needed for React build process
 # static assets are in public/static/
