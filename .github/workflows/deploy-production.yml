@@ -309,14 +309,17 @@ jobs:
     - name: Test API health endpoint
       run: |
         API_URL="${{ steps.backend-deploy.outputs.api-url }}"
-        echo "🔍 Testing API health endpoint: $API_URL/api/health"
+        # Remove trailing slash from API_URL if present, then add the endpoint path
+        API_URL=$(echo "$API_URL" | sed 's/\/$//')
+        HEALTH_ENDPOINT="$API_URL/api/health"
+        echo "🔍 Testing API health endpoint: $HEALTH_ENDPOINT"
         
         # Wait for API to be available
         sleep 15
         
         # Retry health check up to 3 times
         for i in {1..3}; do
-          response=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/api/health")
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_ENDPOINT")
           if [ "$response" = "200" ]; then
             echo "✅ API health check passed (attempt $i)"
             break
@@ -324,6 +327,8 @@ jobs:
             echo "⚠️ API health check failed with status: $response (attempt $i/3)"
             if [ $i -eq 3 ]; then
               echo "❌ API health check failed after 3 attempts"
+              echo "Debug: Full response:"
+              curl -s -v "$HEALTH_ENDPOINT" || true
               exit 1
             fi
             sleep 10

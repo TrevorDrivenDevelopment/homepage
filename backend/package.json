@@ -3,11 +3,11 @@
     "version": "1.0.0",
     "description": "Backend API services for homepage applications",
     "main": "index.js",
-    "type": "module",
     "packageManager": "bun@1.2.17",
     "scripts": {
-        "build": "bun run build:tsc",
+        "build": "bun run build:bundle",
         "build:tsc": "tsc",
+        "build:bundle": "node scripts/bundle.mjs",
         "build:bun": "bun build src/index.ts --outdir dist --target node",
         "deploy": "bun run cdk deploy",
         "deploy:cdk": "bun run cdk deploy",
@@ -29,6 +29,7 @@
         "aws-cdk-lib": "^2.156.0",
         "axios": "^1.6.2",
         "constructs": "^10.3.0",
+        "esbuild": "^0.25.5",
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
