@@ -66,7 +66,6 @@ export class HomepageStack extends cdk.Stack {
         parameterName: `/homepage/${environment}/alpha-vantage-api-key`,
         stringValue: alphaVantageApiKey,
         description: 'Alpha Vantage API key for stock data',
-        type: ssm.ParameterType.SECURE_STRING,
       });
     }
 
@@ -76,7 +75,6 @@ export class HomepageStack extends cdk.Stack {
         parameterName: `/homepage/${environment}/market-data-api-key`,
         stringValue: marketDataApiKey,
         description: 'Market Data API key',
-        type: ssm.ParameterType.SECURE_STRING,
       });
     }
 
