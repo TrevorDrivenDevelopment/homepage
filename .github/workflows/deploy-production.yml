@@ -165,7 +165,7 @@ jobs:
         echo "📡 Testing backend build process..."
         bun run lint || echo "⚠️ Linting issues found"
         bun run type-check
-        bun run build:tsc
+        bun run build
         
         # Verify build artifacts
         if [ -d "dist" ] && [ -f "dist/handlers/health.js" ]; then
@@ -272,7 +272,7 @@ jobs:
       run: |
         echo "🏗️ Building backend..."
         bun install
-        bun run build:tsc
+        bun run build
         
         echo "🔄 Bootstrapping CDK (if needed)..."
         if ! aws cloudformation describe-stacks --stack-name CDKToolkit --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
