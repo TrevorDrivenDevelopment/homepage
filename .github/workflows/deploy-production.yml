@@ -305,27 +305,33 @@ jobs:
           fi
           
           if [ -n "$API_KEY_ID" ]; then
-            # Get the actual API key value
-            API_KEY_VALUE=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --query 'value' --output text --region ${{ env.AWS_REGION }})
+            # Get the actual API key value (without logging it)
+            API_KEY_VALUE=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --query 'value' --output text --region ${{ env.AWS_REGION }} 2>/dev/null)
             
-            # Store API key in SSM Parameter Store for easy retrieval
-            aws ssm put-parameter \
-              --name "/homepage/prod/client-api-key" \
-              --value "$API_KEY_VALUE" \
-              --type "SecureString" \
-              --description "Homepage API key for client applications" \
-              --overwrite \
-              --region ${{ env.AWS_REGION }}
-            
-            echo "✅ API Key stored in SSM: /homepage/prod/client-api-key"
-            echo "🔑 API Key ID: $API_KEY_ID"
-            
-            # Also save to GitHub step summary for easy access (without exposing the value)
-            echo "## 🔑 API Key Information" >> $GITHUB_STEP_SUMMARY
-            echo "- **API Key ID:** \`$API_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
-            echo "- **SSM Parameter:** \`/homepage/prod/client-api-key\`" >> $GITHUB_STEP_SUMMARY
-            echo "- **Retrieval:** Use \`scripts/get-api-key.sh\` to get the key value securely" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$API_KEY_VALUE" ]; then
+              # Store API key in SSM Parameter Store for secure retrieval
+              aws ssm put-parameter \
+                --name "/homepage/prod/client-api-key" \
+                --value "$API_KEY_VALUE" \
+                --type "SecureString" \
+                --description "Homepage API key for client applications" \
+                --overwrite \
+                --region ${{ env.AWS_REGION }} >/dev/null 2>&1
+              
+              echo "✅ API Key securely stored in SSM Parameter Store"
+              echo "🔑 API Key ID: $API_KEY_ID"
+              echo "📋 SSM Parameter: /homepage/prod/client-api-key"
+              
+              # Add to GitHub step summary (without exposing the key value)
+              echo "## 🔑 API Key Information" >> $GITHUB_STEP_SUMMARY
+              echo "- **API Key ID:** \`$API_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
+              echo "- **SSM Parameter:** \`/homepage/prod/client-api-key\`" >> $GITHUB_STEP_SUMMARY
+              echo "- **Security:** Key value stored securely, not logged" >> $GITHUB_STEP_SUMMARY
+              echo "- **Retrieval:** Use \`backend/scripts/get-api-key.sh\` to get the key value" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Could not retrieve API key value"
+            fi
           else
             echo "❌ Could not extract API Key ID from CDK outputs"
           fi
