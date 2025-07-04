@@ -71,10 +71,18 @@ async function handleOptionsChain(symbol: string): Promise<APIGatewayProxyResult
       return createErrorResponse(503, 'Alpha Vantage API service not configured');
     }
 
-    const [stockQuote, optionsChain] = await Promise.all([
-      alphaVantageService.getStockQuote(symbol),
-      alphaVantageService.getOptionsChain(symbol),
-    ]);
+    // First get the stock quote
+    const stockQuote = await alphaVantageService.getStockQuote(symbol);
+    
+    // Try to get options chain, but handle the case where it's not available
+    let optionsChain: any[] = [];
+    try {
+      optionsChain = await alphaVantageService.getOptionsChain(symbol);
+    } catch (optionsError) {
+      console.log('⚠️ Options data not available:', optionsError instanceof Error ? optionsError.message : 'Unknown error');
+      console.log('📋 Returning empty options chain with stock data only');
+      // Continue with empty options chain - this is expected for Alpha Vantage
+    }
 
     const calls = optionsChain.filter(option => option.type === 'call');
     const puts = optionsChain.filter(option => option.type === 'put');
@@ -88,7 +96,8 @@ async function handleOptionsChain(symbol: string): Promise<APIGatewayProxyResult
       expirationDates,
     };
 
-    console.log('✅ Successfully fetched options chain for', symbol);
+    console.log('✅ Successfully fetched options response for', symbol);
+    console.log(`📊 Calls: ${calls.length}, Puts: ${puts.length}, Stock Price: $${stockQuote.price}`);
     return createSuccessResponse(response);
   } catch (error) {
     console.error('❌ Options chain error:', error);
