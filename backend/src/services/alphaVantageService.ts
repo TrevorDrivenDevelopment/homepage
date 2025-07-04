@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { StockQuote, OptionQuote } from '../types/api';
+import { API_CONFIG, ENV_VARS, TIMEOUT_CONFIG } from '../config/apiConfig';
 
 export class AlphaVantageService {
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://www.alphavantage.co/query';
+  private readonly baseUrl = API_CONFIG.ALPHA_VANTAGE.BASE_URL;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -15,21 +16,47 @@ export class AlphaVantageService {
     }
 
     try {
-      const response = await axios.get(this.baseUrl, {
-        params: {
-          function: 'GLOBAL_QUOTE',
-          symbol: symbol.toUpperCase(),
-          apikey: this.apiKey,
-        },
-        timeout: 10000,
+      const url = this.baseUrl;
+      const params = {
+        function: API_CONFIG.ALPHA_VANTAGE.FUNCTIONS.GLOBAL_QUOTE,
+        symbol: symbol.toUpperCase(),
+        apikey: this.apiKey,
+      };
+      
+      console.log(`🔍 Alpha Vantage API Call:`);
+      console.log(`URL: ${url}`);
+      console.log(`Params:`, { ...params, apikey: '***' + this.apiKey.slice(-4) });
+      
+      const response = await axios.get(url, {
+        params,
+        timeout: TIMEOUT_CONFIG.STOCK_QUOTE,
       });
+
+      console.log('✅ Alpha Vantage response status:', response.status);
+      console.log('📋 Response data keys:', Object.keys(response.data));
+      console.log('📄 Full response data:', JSON.stringify(response.data, null, 2));
 
       const quote = response.data['Global Quote'];
       
       if (!quote || Object.keys(quote).length === 0) {
+        console.log('❌ No Global Quote data found in response');
+        
+        // Check for common Alpha Vantage error responses
+        if (response.data['Error Message']) {
+          throw new Error(`Alpha Vantage Error: ${response.data['Error Message']}`);
+        }
+        if (response.data['Note']) {
+          throw new Error(`Alpha Vantage Rate Limit: ${response.data['Note']}`);
+        }
+        if (response.data['Information']) {
+          throw new Error(`Alpha Vantage Info: ${response.data['Information']}`);
+        }
+        
         throw new Error(`No data found for symbol: ${symbol}`);
       }
 
+      console.log('✅ Successfully parsed quote data for', symbol);
+      
       return {
         symbol: quote['01. symbol'],
         price: parseFloat(quote['05. price']),
@@ -39,7 +66,10 @@ export class AlphaVantageService {
         currency: 'USD',
       };
     } catch (error) {
+      console.error('❌ Alpha Vantage API error:', error);
       if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
         throw new Error(`Failed to fetch stock quote: ${error.message}`);
       }
       throw error;
