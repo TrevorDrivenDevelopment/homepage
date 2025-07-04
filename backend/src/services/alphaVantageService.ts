@@ -76,7 +76,7 @@ export class AlphaVantageService {
     }
   }
 
-  async getOptionsChain(symbol: string, maxAgeHours: number = 24): Promise<OptionQuote[]> {
+  async getOptionsChain(symbol: string): Promise<OptionQuote[]> {
     if (!this.apiKey) {
       throw new Error('Alpha Vantage API key not configured');
     }
@@ -89,7 +89,7 @@ export class AlphaVantageService {
         apikey: this.apiKey,
       };
       
-      console.log(`🔍 Alpha Vantage Options API Call (max age: ${maxAgeHours}h):`);
+      console.log(`🔍 Alpha Vantage Options API Call:`);
       console.log(`URL: ${url}`);
       console.log(`Params:`, { ...params, apikey: '***' + this.apiKey.slice(-4) });
       
@@ -135,11 +135,12 @@ export class AlphaVantageService {
         lastUpdated: option.date, // Include the data timestamp from Alpha Vantage
       }));
 
-      // Filter out options with invalid data (but let the frontend handle most filtering)
+      // Filter out options with invalid data
       const validOptions = options.filter(option => 
         option.strike > 0 && 
         option.expiration && 
-        (option.type === 'call' || option.type === 'put')
+        (option.type === 'call' || option.type === 'put') &&
+        option.lastUpdated // Must have a timestamp
       );
 
       // Sort by lastUpdated date to get the most recent data first
@@ -171,42 +172,21 @@ export class AlphaVantageService {
 
       const mostRecentOptions = Array.from(contractMap.values());
       
-      // Filter by data age if specified
-      const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
-      const cutoffTime = Date.now() - maxAgeMs;
-      
-      const recentOptions = mostRecentOptions.filter(option => {
-        if (!option.lastUpdated) {
-          // If no timestamp, assume it's too old
-          return false;
-        }
-        
-        const optionTime = new Date(option.lastUpdated).getTime();
-        return optionTime >= cutoffTime;
-      });
-      
-      // Log the data freshness
+      // Log the data freshness info (but don't filter by age)
       if (mostRecentOptions.length > 0) {
         const dates = mostRecentOptions.map(opt => opt.lastUpdated).filter(Boolean);
         if (dates.length > 0) {
           const mostRecentDate = new Date(Math.max(...dates.map(d => new Date(d!).getTime())));
           const oldestDate = new Date(Math.min(...dates.map(d => new Date(d!).getTime())));
-          console.log(`📅 Options data freshness: Most recent: ${mostRecentDate.toISOString()}, Oldest: ${oldestDate.toISOString()}`);
+          console.log(`📅 Options data timestamps: Most recent: ${mostRecentDate.toISOString()}, Oldest: ${oldestDate.toISOString()}`);
           
-          // Warn if data is older than 1 day
-          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-          if (mostRecentDate < oneDayAgo) {
-            console.warn(`⚠️ Warning: Most recent options data is ${Math.floor((Date.now() - mostRecentDate.getTime()) / (1000 * 60 * 60))} hours old`);
-          }
-        }
-        
-        if (recentOptions.length < mostRecentOptions.length) {
-          console.log(`📊 Filtered to ${recentOptions.length} options within ${maxAgeHours} hours (from ${mostRecentOptions.length} total)`);
+          const hoursOld = Math.floor((Date.now() - mostRecentDate.getTime()) / (1000 * 60 * 60));
+          console.log(`📊 Most recent data is ${hoursOld} hours old`);
         }
       }
 
-      console.log(`✅ Returning ${recentOptions.length} recent options contracts for ${symbol}`);
-      return recentOptions;
+      console.log(`✅ Returning ${mostRecentOptions.length} most recent options contracts for ${symbol} (with timestamps)`);
+      return mostRecentOptions;
 
     } catch (error) {
       console.error('❌ Alpha Vantage Options API error:', error);
