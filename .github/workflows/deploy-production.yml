@@ -320,16 +320,28 @@ jobs:
           # If CDK key doesn't work, find the most recent active API key
           if [ "$API_KEY_FOUND" = "false" ]; then
             echo "🔍 CDK API key not found, searching for active API keys..."
-            ACTIVE_KEY=$(aws apigateway get-api-keys --region ${{ env.AWS_REGION }} --query 'items[?enabled==`true` && contains(name, `homepage-api-key`)][0]' --output json 2>/dev/null)
-            if [ "$ACTIVE_KEY" != "null" ] && [ -n "$ACTIVE_KEY" ]; then
-              ACTUAL_API_KEY_ID=$(echo "$ACTIVE_KEY" | jq -r '.id')
-              if [ -n "$ACTUAL_API_KEY_ID" ] && [ "$ACTUAL_API_KEY_ID" != "null" ]; then
-                # Verify the key exists and get its value (without logging)
+            
+            # Get all API keys and filter for homepage keys
+            ALL_KEYS=$(aws apigateway get-api-keys --region ${{ env.AWS_REGION }} --output json 2>/dev/null)
+            
+            if [ -n "$ALL_KEYS" ] && [ "$ALL_KEYS" != "null" ]; then
+              # Find the most recent homepage API key
+              HOMEPAGE_KEY=$(echo "$ALL_KEYS" | jq -r '.items[] | select(.enabled == true and (.name | contains("homepage-api-key"))) | .id' | head -1)
+              
+              if [ -n "$HOMEPAGE_KEY" ] && [ "$HOMEPAGE_KEY" != "null" ]; then
+                ACTUAL_API_KEY_ID="$HOMEPAGE_KEY"
+                # Verify the key exists and is accessible (without logging)
                 if aws apigateway get-api-key --api-key "$ACTUAL_API_KEY_ID" --include-value --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
                   API_KEY_FOUND="true"
                   echo "✅ Found active API key: $ACTUAL_API_KEY_ID"
+                else
+                  echo "⚠️ Found API key but cannot access: $ACTUAL_API_KEY_ID"
                 fi
+              else
+                echo "⚠️ No homepage API keys found"
               fi
+            else
+              echo "⚠️ Could not retrieve API keys list"
             fi
           fi
           
