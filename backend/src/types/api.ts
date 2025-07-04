@@ -17,6 +17,7 @@ export interface OptionQuote {
   openInterest: number;
   impliedVolatility?: number;
   type: 'call' | 'put';
+  lastUpdated?: string;
 }
 
 export interface ApiResponse<T> {

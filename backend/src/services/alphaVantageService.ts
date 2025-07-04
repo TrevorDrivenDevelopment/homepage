@@ -76,74 +76,149 @@ export class AlphaVantageService {
     }
   }
 
-  async getOptionsChain(symbol: string): Promise<OptionQuote[]> {
-    // Note: Alpha Vantage doesn't provide options data in their free tier
-    // This is a placeholder that generates mock data similar to your current implementation
-    // You would need a different service (like Polygon.io, IEX Cloud, etc.) for real options data
-    const stockQuote = await this.getStockQuote(symbol);
-    return this.generateMockOptionsData(symbol, stockQuote.price);
-  }
-
-  private generateMockOptionsData(symbol: string, currentPrice: number): OptionQuote[] {
-    const options: OptionQuote[] = [];
-    const expirationDate = this.getNextFridayExpiration();
-    
-    // Generate strike prices around current price
-    const strikes = [];
-    const baseStrike = Math.round(currentPrice / 5) * 5; // Round to nearest $5
-    for (let i = -10; i <= 10; i++) {
-      strikes.push(baseStrike + (i * 5));
+  async getOptionsChain(symbol: string, maxAgeHours: number = 24): Promise<OptionQuote[]> {
+    if (!this.apiKey) {
+      throw new Error('Alpha Vantage API key not configured');
     }
 
-    strikes.forEach(strike => {
-      // Call option
-      const callMoneyness = currentPrice / strike;
-      const callIV = 0.2 + Math.random() * 0.3; // 20-50% IV
-      const callBid = Math.max(0.01, (currentPrice - strike) + (callIV * Math.sqrt(30/365) * currentPrice * 0.5));
-      const callAsk = callBid * 1.1;
-
-      options.push({
-        symbol: `${symbol}${expirationDate.replace(/-/g, '')}C${strike.toFixed(2).replace('.', '')}`,
-        strike,
-        expiration: expirationDate,
-        bid: Math.max(0.01, callBid),
-        ask: callAsk,
-        volume: Math.floor(Math.random() * 1000),
-        openInterest: Math.floor(Math.random() * 5000),
-        impliedVolatility: callIV,
-        type: 'call',
+    try {
+      const url = this.baseUrl;
+      const params = {
+        function: API_CONFIG.ALPHA_VANTAGE.FUNCTIONS.HISTORICAL_OPTIONS,
+        symbol: symbol.toUpperCase(),
+        apikey: this.apiKey,
+      };
+      
+      console.log(`🔍 Alpha Vantage Options API Call (max age: ${maxAgeHours}h):`);
+      console.log(`URL: ${url}`);
+      console.log(`Params:`, { ...params, apikey: '***' + this.apiKey.slice(-4) });
+      
+      const response = await axios.get(url, {
+        params,
+        timeout: TIMEOUT_CONFIG.OPTIONS_CHAIN,
       });
 
-      // Put option
-      const putMoneyness = strike / currentPrice;
-      const putIV = 0.2 + Math.random() * 0.3;
-      const putBid = Math.max(0.01, (strike - currentPrice) + (putIV * Math.sqrt(30/365) * currentPrice * 0.5));
-      const putAsk = putBid * 1.1;
+      console.log('✅ Alpha Vantage options response status:', response.status);
+      console.log('📋 Response data keys:', Object.keys(response.data));
+      
+      // Check for common Alpha Vantage error responses
+      if (response.data['Error Message']) {
+        throw new Error(`Alpha Vantage Error: ${response.data['Error Message']}`);
+      }
+      if (response.data['Note']) {
+        throw new Error(`Alpha Vantage Rate Limit: ${response.data['Note']}`);
+      }
+      if (response.data['Information']) {
+        throw new Error(`Alpha Vantage Info: ${response.data['Information']}`);
+      }
 
-      options.push({
-        symbol: `${symbol}${expirationDate.replace(/-/g, '')}P${strike.toFixed(2).replace('.', '')}`,
-        strike,
-        expiration: expirationDate,
-        bid: Math.max(0.01, putBid),
-        ask: putAsk,
-        volume: Math.floor(Math.random() * 1000),
-        openInterest: Math.floor(Math.random() * 5000),
-        impliedVolatility: putIV,
-        type: 'put',
+      const optionsData = response.data.data;
+      
+      if (!optionsData || !Array.isArray(optionsData)) {
+        console.log('❌ No options data found in response');
+        throw new Error(`No options data found for symbol: ${symbol}`);
+      }
+
+      console.log(`✅ Found ${optionsData.length} historical options records for ${symbol}`);
+      
+      // Transform Alpha Vantage historical options data to our OptionQuote format
+      const options: OptionQuote[] = optionsData.map((option: any) => ({
+        symbol: option.contractID || `${symbol}${option.strike}${option.type?.toUpperCase()}${option.expiration}`,
+        strike: parseFloat(option.strike),
+        expiration: option.expiration,
+        bid: parseFloat(option.bid) || 0,
+        ask: parseFloat(option.ask) || 0,
+        volume: parseInt(option.volume) || 0,
+        openInterest: parseInt(option.open_interest) || 0,
+        impliedVolatility: option.implied_volatility ? parseFloat(option.implied_volatility) : undefined,
+        type: option.type?.toLowerCase() as 'call' | 'put',
+        lastUpdated: option.date, // Include the data timestamp from Alpha Vantage
+      }));
+
+      // Filter out options with invalid data (but let the frontend handle most filtering)
+      const validOptions = options.filter(option => 
+        option.strike > 0 && 
+        option.expiration && 
+        (option.type === 'call' || option.type === 'put')
+      );
+
+      // Sort by lastUpdated date to get the most recent data first
+      validOptions.sort((a, b) => {
+        const dateA = new Date(a.lastUpdated || 0).getTime();
+        const dateB = new Date(b.lastUpdated || 0).getTime();
+        return dateB - dateA; // Most recent first
       });
-    });
 
-    return options;
+      // Group by contract (same strike, expiration, type) and keep only the most recent data for each
+      const contractMap = new Map<string, OptionQuote>();
+      
+      validOptions.forEach(option => {
+        const contractKey = `${option.strike}_${option.expiration}_${option.type}`;
+        const existing = contractMap.get(contractKey);
+        
+        if (!existing) {
+          contractMap.set(contractKey, option);
+        } else {
+          // Keep the one with more recent data
+          const existingDate = new Date(existing.lastUpdated || 0).getTime();
+          const optionDate = new Date(option.lastUpdated || 0).getTime();
+          
+          if (optionDate > existingDate) {
+            contractMap.set(contractKey, option);
+          }
+        }
+      });
+
+      const mostRecentOptions = Array.from(contractMap.values());
+      
+      // Filter by data age if specified
+      const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
+      const cutoffTime = Date.now() - maxAgeMs;
+      
+      const recentOptions = mostRecentOptions.filter(option => {
+        if (!option.lastUpdated) {
+          // If no timestamp, assume it's too old
+          return false;
+        }
+        
+        const optionTime = new Date(option.lastUpdated).getTime();
+        return optionTime >= cutoffTime;
+      });
+      
+      // Log the data freshness
+      if (mostRecentOptions.length > 0) {
+        const dates = mostRecentOptions.map(opt => opt.lastUpdated).filter(Boolean);
+        if (dates.length > 0) {
+          const mostRecentDate = new Date(Math.max(...dates.map(d => new Date(d!).getTime())));
+          const oldestDate = new Date(Math.min(...dates.map(d => new Date(d!).getTime())));
+          console.log(`📅 Options data freshness: Most recent: ${mostRecentDate.toISOString()}, Oldest: ${oldestDate.toISOString()}`);
+          
+          // Warn if data is older than 1 day
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          if (mostRecentDate < oneDayAgo) {
+            console.warn(`⚠️ Warning: Most recent options data is ${Math.floor((Date.now() - mostRecentDate.getTime()) / (1000 * 60 * 60))} hours old`);
+          }
+        }
+        
+        if (recentOptions.length < mostRecentOptions.length) {
+          console.log(`📊 Filtered to ${recentOptions.length} options within ${maxAgeHours} hours (from ${mostRecentOptions.length} total)`);
+        }
+      }
+
+      console.log(`✅ Returning ${recentOptions.length} recent options contracts for ${symbol}`);
+      return recentOptions;
+
+    } catch (error) {
+      console.error('❌ Alpha Vantage Options API error:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
+        throw new Error(`Failed to fetch options chain: ${error.message}`);
+      }
+      throw error;
+    }
   }
 
-  private getNextFridayExpiration(): string {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
-    const nextFriday = new Date(now);
-    nextFriday.setDate(now.getDate() + daysUntilFriday + 7); // Next Friday, not this Friday
-    return nextFriday.toISOString().split('T')[0];
-  }
 
   isConfigured(): boolean {
     return !!this.apiKey && this.apiKey.length > 0;

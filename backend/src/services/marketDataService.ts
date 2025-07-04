@@ -21,10 +21,15 @@ export interface MarketIndex {
 
 export class MarketDataService {
   private apiKey: string;
-  private baseUrl: string = 'https://api.example.com/v1'; // Replace with actual API
+  private baseUrl: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, baseUrl?: string) {
     this.apiKey = apiKey;
+    this.baseUrl = baseUrl || '';
+    
+    if (!this.baseUrl) {
+      throw new Error('Market Data API base URL must be provided. No default or mock endpoints available.');
+    }
   }
 
   async getMarketData(symbol: string): Promise<MarketData> {
