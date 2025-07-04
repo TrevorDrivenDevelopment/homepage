@@ -319,13 +319,12 @@ jobs:
             
             echo "✅ API Key stored in SSM: /homepage/prod/client-api-key"
             echo "🔑 API Key ID: $API_KEY_ID"
-            echo "🔑 API Key Value: $API_KEY_VALUE"
             
-            # Also save to GitHub step summary for easy access
+            # Also save to GitHub step summary for easy access (without exposing the value)
             echo "## 🔑 API Key Information" >> $GITHUB_STEP_SUMMARY
             echo "- **API Key ID:** \`$API_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
-            echo "- **API Key Value:** \`$API_KEY_VALUE\`" >> $GITHUB_STEP_SUMMARY
             echo "- **SSM Parameter:** \`/homepage/prod/client-api-key\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Retrieval:** Use \`scripts/get-api-key.sh\` to get the key value securely" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Could not extract API Key ID from CDK outputs"
