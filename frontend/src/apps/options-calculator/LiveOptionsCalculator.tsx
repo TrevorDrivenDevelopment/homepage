@@ -20,10 +20,15 @@ import {
   FormControlLabel,
   Divider,
   IconButton,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { TrendingUp, TrendingDown, Refresh, Edit, CloudDownload, ArrowBack, CloudUpload, Download } from '@mui/icons-material';
-import { fetchStockQuote, fetchOptionsChain, StockQuote, OptionQuote, optionsService } from './enhancedOptionsService';
-import { useBackendApi } from '../../services/backendApiService';
+import { fetchStockQuote, fetchOptionsChain, StockQuote, OptionQuote } from './enhancedOptionsService';
+import { OptionsTable } from './components/OptionsTable';
+import { BestOptionsSummary } from './components/BestOptionsSummary';
+import { OptionDetailsView } from './components/OptionDetailsView';
+import { LiveDataControls } from './components/LiveDataControls';
 
 interface ManualOptionProfile {
   strike: number;
@@ -52,8 +57,10 @@ const LiveOptionsCalculator: React.FC = () => {
   // Live data state
   const [symbol, setSymbol] = useState<string>('AAPL');
   const [stockQuote, setStockQuote] = useState<StockQuote | null>(null);
-  const [optionsChain, setOptionsChain] = useState<OptionQuote[]>([]);
+  const [callsChain, setCallsChain] = useState<OptionQuote[]>([]);
+  const [putsChain, setPutsChain] = useState<OptionQuote[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [selectedTab, setSelectedTab] = useState<number>(0); // 0 for calls, 1 for puts
   
   // API Configuration state
   const [apiEndpoints, setApiEndpoints] = useState({
@@ -82,11 +89,6 @@ const LiveOptionsCalculator: React.FC = () => {
   const [percentageIncrements, setPercentageIncrements] = useState<string>('5,10,15,20,25');
   const [selectedOptionForDetails, setSelectedOptionForDetails] = useState<OptionQuote | null>(null);
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
-  
-  // Check if backend API is available
-  const isBackendAvailable = optionsService.isUsingBackend();
-
-  const { api, isConfigured } = useBackendApi();
 
   const roundToCents = (input: number): number => Math.round((input * 100)) / 100;
   
@@ -105,15 +107,60 @@ const LiveOptionsCalculator: React.FC = () => {
     setError('');
 
     try {
-      // The enhanced service will use the backend API if configured, 
-      // or fall back to custom URLs if backend is not available
-      const [quote, options] = await Promise.all([
+      const [quote, rawOptions] = await Promise.all([
         fetchStockQuote(symbol.trim().toUpperCase(), apiEndpoints.stockQuoteUrl, apiEndpoints.apiKey),
         fetchOptionsChain(symbol.trim().toUpperCase(), apiEndpoints.optionsChainUrl, apiEndpoints.apiKey),
       ]);
 
+      // Separate calls and puts, and validate data
+      const validCalls = rawOptions.filter(option => {
+        // Only include call options (default to call if type not specified)
+        if (option.type && option.type !== 'call') return false;
+        
+        // Filter out obviously invalid bid/ask spreads
+        if (option.bid <= 0 || option.ask <= 0) return false;
+        if (option.bid >= option.ask) return false;
+        
+        // Filter out suspiciously low prices that suggest mock data
+        if (option.bid < 0.05 && option.ask < 0.05) return false;
+        
+        // Filter out suspiciously wide spreads (over 50% spread)
+        const spread = (option.ask - option.bid) / option.bid;
+        if (spread > 0.5) return false;
+        
+        return true;
+      });
+
+      const validPuts = rawOptions.filter(option => {
+        // Only include put options
+        if (!option.type || option.type !== 'put') return false;
+        
+        // Filter out obviously invalid bid/ask spreads
+        if (option.bid <= 0 || option.ask <= 0) return false;
+        if (option.bid >= option.ask) return false;
+        
+        // Filter out suspiciously low prices that suggest mock data
+        if (option.bid < 0.05 && option.ask < 0.05) return false;
+        
+        // Filter out suspiciously wide spreads (over 50% spread)
+        const spread = (option.ask - option.bid) / option.bid;
+        if (spread > 0.5) return false;
+        
+        return true;
+      });
+
+      // Sort by strike price
+      validCalls.sort((a, b) => a.strike - b.strike);
+      validPuts.sort((a, b) => a.strike - b.strike);
+
       setStockQuote(quote);
-      setOptionsChain(options);
+      setCallsChain(validCalls);
+      setPutsChain(validPuts);
+      
+      // Add warning if we filtered out options
+      if (validCalls.length + validPuts.length < rawOptions.length) {
+        console.warn(`Filtered out ${rawOptions.length - validCalls.length - validPuts.length} invalid options`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
@@ -481,9 +528,9 @@ const LiveOptionsCalculator: React.FC = () => {
 
   const sellPrices = getTargetPrices;
 
-  // Calculate best options for each percentage increase
-  const getBestOptionsAtEachPercentage = useMemo(() => {
-    if (useManualData || !stockQuote || optionsChain.length === 0) return new Map();
+  // Calculate best call options for each percentage increase
+  const getBestCallsAtEachPercentage = useMemo(() => {
+    if (useManualData || !stockQuote || callsChain.length === 0) return new Map();
     
     const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));
     const investment = parseFloat(investmentAmount) || 10000;
@@ -494,16 +541,17 @@ const LiveOptionsCalculator: React.FC = () => {
       let bestOption: OptionQuote | null = null;
       let bestProfit = -Infinity;
       
-      optionsChain.forEach(option => {
+      callsChain.forEach((option: OptionQuote) => {
         const premiumPaid = roundMidpointUp(option.bid, option.ask);
         const contractsAffordable = Math.floor(investment / (premiumPaid * 100));
         
-        if (contractsAffordable > 0) {
+        if (contractsAffordable > 0 && contractsAffordable <= 10000) { // Reasonable contract limit
           const optionValue = Math.max(0, targetPrice - option.strike);
           const profitPerShare = optionValue - premiumPaid;
           const totalProfit = profitPerShare * 100 * contractsAffordable;
           
-          if (totalProfit > bestProfit) {
+          // Sanity check for unrealistic profits (over $1M suggests data issue)
+          if (Math.abs(totalProfit) < 1000000 && totalProfit > bestProfit) {
             bestProfit = totalProfit;
             bestOption = option;
           }
@@ -516,7 +564,45 @@ const LiveOptionsCalculator: React.FC = () => {
     });
     
     return bestAtPercentage;
-  }, [useManualData, stockQuote, optionsChain, percentageIncrements, investmentAmount]);
+  }, [useManualData, stockQuote, callsChain, percentageIncrements, investmentAmount]);
+
+  // Calculate best put options for each percentage decrease
+  const getBestPutsAtEachPercentage = useMemo(() => {
+    if (useManualData || !stockQuote || putsChain.length === 0) return new Map();
+    
+    const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));
+    const investment = parseFloat(investmentAmount) || 10000;
+    const bestAtPercentage = new Map<number, { option: OptionQuote; profit: number }>();
+    
+    percentages.forEach(percentage => {
+      const targetPrice = stockQuote.price * (1 - percentage / 100); // Decrease for puts
+      let bestOption: OptionQuote | null = null;
+      let bestProfit = -Infinity;
+      
+      putsChain.forEach((option: OptionQuote) => {
+        const premiumPaid = roundMidpointUp(option.bid, option.ask);
+        const contractsAffordable = Math.floor(investment / (premiumPaid * 100));
+        
+        if (contractsAffordable > 0 && contractsAffordable <= 10000) { // Reasonable contract limit
+          const optionValue = Math.max(0, option.strike - targetPrice);
+          const profitPerShare = optionValue - premiumPaid;
+          const totalProfit = profitPerShare * 100 * contractsAffordable;
+          
+          // Sanity check for unrealistic profits (over $1M suggests data issue)
+          if (Math.abs(totalProfit) < 1000000 && totalProfit > bestProfit) {
+            bestProfit = totalProfit;
+            bestOption = option;
+          }
+        }
+      });
+      
+      if (bestOption) {
+        bestAtPercentage.set(percentage, { option: bestOption, profit: bestProfit });
+      }
+    });
+    
+    return bestAtPercentage;
+  }, [useManualData, stockQuote, putsChain, percentageIncrements, investmentAmount]);
 
   // Calculate best manual options for each percentage increase
   const getBestManualOptionsAtEachPercentage = useMemo(() => {
@@ -566,51 +652,35 @@ const LiveOptionsCalculator: React.FC = () => {
     });
   };
 
-  // Enhanced calculation function
-  const calculateOptionsWithBackend = async () => {
-    if (!isConfigured) {
-      // Fall back to client-side calculation
-      return calculateManualOptions();
-    }
-
-    try {
-      setError('');
-      
-      const price = parseFloat(manualSecurityPrice);
-      const money = parseFloat(investmentAmount);
-      const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));
-      const options = parseManualOptionsData();    const result = await api.calculateOptions({
-      securityPrice: price,
-      investmentAmount: money,
-      options: options,
-      percentageIncrements: percentages
-    }) as any; // Type assertion for now
-
-    // Process backend results
-    const resultsMap = new Map<number, OptionResult[]>();
-    Object.entries(result.resultsByPrice).forEach(([key, value]) => {
-      resultsMap.set(parseFloat(key), value as OptionResult[]);
-    });
-    
-    setManualResults(resultsMap);
-    setBestManualOptions(result.bestOptions);
-      
-    } catch (err) {
-      console.error('Backend calculation failed, falling back to client-side:', err);
-      // Fall back to client-side calculation
-      calculateManualOptions();
-    }
-  };
-
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom align="center">
         Options Calculator
       </Typography>
-      
+
+      <Alert severity="warning" sx={{ mb: 3 }}>
+        <Typography variant="body2">
+          <strong>⚠️ REAL MONEY WARNING:</strong> This calculator uses only real market data from your configured API endpoints. 
+          No mock or demo data is ever displayed. Ensure your API endpoints provide accurate, real-time financial data 
+          before making any trading decisions.
+        </Typography>
+      </Alert>
+
+      {/* Data Quality Warning */}
+      {!useManualData && (callsChain.length > 0 || putsChain.length > 0) && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            <strong>📊 Data Quality Check:</strong> Showing {callsChain.length} valid call options and {putsChain.length} valid put options. 
+            Options with suspicious pricing (e.g., $0.01 bid/ask, invalid spreads) have been filtered out. 
+            If you see unrealistic prices or profits, please verify your API endpoint is returning real market data.
+          </Typography>
+        </Alert>
+      )}
+
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2">
-          <strong>Data Source:</strong> Toggle between live market data (simulated for demo) and manual entry mode below.
+          <strong>Data Source:</strong> Toggle between live market data and manual entry mode below. 
+          For live data, configure your own API endpoints that provide real market data.
         </Typography>
       </Alert>
 
@@ -629,7 +699,7 @@ const LiveOptionsCalculator: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {useManualData ? <Edit /> : <CloudDownload />}
                 <Typography>
-                  {useManualData ? 'Manual Data Entry Mode' : 'Live Data Mode (Demo)'}
+                  {useManualData ? 'Manual Data Entry Mode' : 'Live Data Mode'}
                 </Typography>
               </Box>
             }
@@ -637,26 +707,20 @@ const LiveOptionsCalculator: React.FC = () => {
           
           {!useManualData && (
             <Box sx={{ mt: 2 }}>
-              <Alert severity={isBackendAvailable ? "info" : "warning"} sx={{ mb: 2 }}>
+              <Alert severity="info" sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  {isBackendAvailable ? (
-                    <>
-                      <strong>Backend API Connected:</strong> Using integrated backend API at {optionsService.getApiUrl()}. 
-                      Note: Live data requires API keys to be configured on the backend.
-                    </>
-                  ) : (
-                    <>
-                      <strong>Custom API Configuration:</strong> Backend API not available. Configure custom API endpoints below.
-                      {' '}
-                      <Button 
-                        size="small" 
-                        onClick={() => setShowApiConfig(!showApiConfig)}
-                        sx={{ ml: 1 }}
-                      >
-                        {showApiConfig ? 'Hide Config' : 'Configure APIs'}
-                      </Button>
-                    </>
-                  )}
+                  <strong>API Configuration:</strong> {apiEndpoints.stockQuoteUrl && apiEndpoints.optionsChainUrl && apiEndpoints.apiKey 
+                    ? 'Custom API endpoints configured and ready to use.' 
+                    : 'Configure your own API endpoints that provide live market data.'
+                  }
+                  {' '}
+                  <Button 
+                    size="small" 
+                    onClick={() => setShowApiConfig(!showApiConfig)}
+                    sx={{ ml: 1 }}
+                  >
+                    {showApiConfig ? 'Hide Config' : 'Configure APIs'}
+                  </Button>
                   {' '}
                   <Button 
                     size="small" 
@@ -669,13 +733,13 @@ const LiveOptionsCalculator: React.FC = () => {
                 </Typography>
               </Alert>
               
-              {showApiConfig && !isBackendAvailable && (
+              {showApiConfig && (
                 <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
                     API Endpoint Configuration
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Enter your custom API endpoints that follow the required contract (see API Help below).
+                    Enter your API endpoints that follow the required contract (see API Help below).
                   </Typography>
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
@@ -705,7 +769,7 @@ const LiveOptionsCalculator: React.FC = () => {
                       size="small"
                       fullWidth
                       type="password"
-                      helperText="Your API key will be sent as X-API-Key header to the entered service endpoint for your use. We do not otherwise send or store it."
+                      helperText="Your API key will be sent as X-API-Key header to your custom endpoints."
                     />
                   </Box>
                 </Card>
@@ -722,18 +786,21 @@ const LiveOptionsCalculator: React.FC = () => {
             {useManualData ? 'Manual Input Parameters' : 'Live Data Parameters'}
           </Typography>
           
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'end', flexWrap: 'wrap', mb: 2 }}>
-            {!useManualData ? (
-              <TextField
-                label="Stock Symbol"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                placeholder="AAPL"
-                size="small"
-                sx={{ minWidth: 120 }}
-                helperText="Enter ticker symbol"
-              />
-            ) : (
+          
+          {!useManualData ? (
+            <LiveDataControls
+              symbol={symbol}
+              setSymbol={setSymbol}
+              investmentAmount={investmentAmount}
+              setInvestmentAmount={setInvestmentAmount}
+              percentageIncrements={percentageIncrements}
+              setPercentageIncrements={setPercentageIncrements}
+              loading={loading}
+              onFetchData={fetchData}
+              isApiConfigured={!!(apiEndpoints.stockQuoteUrl && apiEndpoints.optionsChainUrl && apiEndpoints.apiKey)}
+            />
+          ) : (
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'end', flexWrap: 'wrap', mb: 2 }}>
               <TextField
                 label="Current Security Price ($)"
                 value={manualSecurityPrice}
@@ -744,39 +811,26 @@ const LiveOptionsCalculator: React.FC = () => {
                 sx={{ minWidth: 150 }}
                 helperText="Current stock price"
               />
-            )}
-            
-            <TextField
-              label="Investment Amount ($)"
-              value={investmentAmount}
-              onChange={(e) => setInvestmentAmount(e.target.value)}
-              type="number"
-              size="small"
-              sx={{ minWidth: 150 }}
-              helperText="Total investment budget"
-            />
-            
-            <TextField
-              label="Price Increase % (comma-separated)"
-              value={percentageIncrements}
-              onChange={(e) => setPercentageIncrements(e.target.value)}
-              placeholder="5,10,15,20,25"
-              size="small"
-              sx={{ minWidth: 200 }}
-              helperText="Expected stock price increases"
-            />
-            
-            {!useManualData && (
-              <Button
-                variant="contained"
-                onClick={fetchData}
-                disabled={loading || (!isBackendAvailable && (!apiEndpoints.stockQuoteUrl || !apiEndpoints.optionsChainUrl || !apiEndpoints.apiKey))}
-                startIcon={loading ? <CircularProgress size={16} /> : <Refresh />}
-              >
-                {loading ? 'Loading...' : 'Fetch Data'}
-              </Button>
-            )}
-          </Box>
+              <TextField
+                label="Investment Amount ($)"
+                value={investmentAmount}
+                onChange={(e) => setInvestmentAmount(e.target.value)}
+                type="number"
+                size="small"
+                sx={{ minWidth: 150 }}
+                helperText="Total investment budget"
+              />
+              <TextField
+                label="Price Change % (comma-separated)"
+                value={percentageIncrements}
+                onChange={(e) => setPercentageIncrements(e.target.value)}
+                placeholder="5,10,15,20,25"
+                size="small"
+                sx={{ minWidth: 200 }}
+                helperText="Expected stock price changes"
+              />
+            </Box>
+          )}
           
           {useManualData && (
             <Box sx={{ mt: 2 }}>
@@ -903,7 +957,7 @@ const LiveOptionsCalculator: React.FC = () => {
               
               <Button
                 variant="contained"
-                onClick={calculateOptionsWithBackend}
+                onClick={calculateManualOptions}
                 size="large"
                 fullWidth
               >
@@ -1201,213 +1255,82 @@ const LiveOptionsCalculator: React.FC = () => {
       )}
 
       {/* Live Options Chain */}
-      {!useManualData && optionsChain.length > 0 && (
+      {!useManualData && (callsChain.length > 0 || putsChain.length > 0) && (
         <Card>
           <CardContent>
             {!showDetailsView ? (
               <>
                 <Typography variant="h6" gutterBottom>
-                  Options Chain - Call Options
+                  Options Chain
                 </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Click on any option to see potential returns at different price levels. Expiration: {optionsChain[0]?.expiration}
-                  <br />
-                  <strong>Pricing Note:</strong> Contract calculations use the mid-point price (average of bid and ask).
-                </Typography>
-
-                {/* Best Options Summary */}
-                {getBestOptionsAtEachPercentage.size > 0 && (
-                  <Alert severity="success" sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Best Options by Price Increase:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {Array.from(getBestOptionsAtEachPercentage.entries())
-                        .sort(([a], [b]) => a - b)
-                        .map(([percentage, { option, profit }]) => (
-                          <Chip
-                            key={percentage}
-                            label={`+${percentage}%: $${option.strike} Strike (${profit >= 0 ? '+' : ''}$${profit.toFixed(0)} profit)`}
-                            color="primary"
-                            variant="outlined"
-                            size="small"
-                          />
-                        ))}
-                    </Box>
-                  </Alert>
-                )}
                 
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Strike</TableCell>
-                        <TableCell>Bid</TableCell>
-                        <TableCell>Ask</TableCell>
-                        <TableCell>Mid Price</TableCell>
-                        <TableCell>Volume</TableCell>
-                        <TableCell>Open Interest</TableCell>
-                        <TableCell>IV</TableCell>
-                        <TableCell>Moneyness</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {optionsChain.map((option) => {
-                        const midPrice = roundMidpointUp(option.bid, option.ask);
-                        const moneyness = stockQuote ? option.strike / stockQuote.price : 1;
-                        const isITM = stockQuote ? stockQuote.price > option.strike : false;
-                        const isATM = stockQuote ? Math.abs(stockQuote.price - option.strike) <= (stockQuote.price * 0.02) : false; // Within 2% is ATM
-                        const isOTM = stockQuote ? stockQuote.price < option.strike : false;
-                        
-                        // Find which percentages this option is best for
-                        const bestAtPercentages: number[] = [];
-                        getBestOptionsAtEachPercentage.forEach((value, percentage) => {
-                          if (value.option.symbol === option.symbol) {
-                            bestAtPercentages.push(percentage);
-                          }
-                        });
-                        
-                        const getMoneyIndicator = () => {
-                          if (isATM) return <Chip label="ATM" size="small" color="warning" variant="outlined" />;
-                          if (isITM) return <Chip label="ITM" size="small" color="success" variant="outlined" />;
-                          if (isOTM) return <Chip label="OTM" size="small" color="default" variant="outlined" />;
-                          return null;
-                        };
-                        
-                        const getBestAtIndicators = () => {
-                          if (bestAtPercentages.length === 0) return null;
-                          
-                          return (
-                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                              {bestAtPercentages.map(percentage => (
-                                <Chip
-                                  key={percentage}
-                                  label={`Best at +${percentage}%`}
-                                  size="small"
-                                  color="primary"
-                                  variant="filled"
-                                  sx={{ fontSize: '0.65rem', height: '18px' }}
-                                />
-                              ))}
-                            </Box>
-                          );
-                        };
-                        
-                        return (
-                          <TableRow
-                            key={option.symbol}
-                            onClick={() => {
-                              setSelectedOptionForDetails(option);
-                              setShowDetailsView(true);
-                            }}
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': { bgcolor: 'action.hover' },
-                              bgcolor: bestAtPercentages.length > 0 ? 'primary.50' : 'inherit',
-                            }}
-                          >
-                            <TableCell>
-                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  ${option.strike}
-                                  {getMoneyIndicator()}
-                                </Box>
-                                {getBestAtIndicators()}
-                              </Box>
-                            </TableCell>
-                            <TableCell>${option.bid.toFixed(2)}</TableCell>
-                            <TableCell>${option.ask.toFixed(2)}</TableCell>
-                            <TableCell>
-                              <strong>${midPrice.toFixed(2)}</strong>
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                (Used for calculations)
-                              </Typography>
-                            </TableCell>
-                            <TableCell>{option.volume.toLocaleString()}</TableCell>
-                            <TableCell>{option.openInterest.toLocaleString()}</TableCell>
-                            <TableCell>{((option.impliedVolatility || 0) * 100).toFixed(1)}%</TableCell>
-                            <TableCell>{moneyness.toFixed(3)}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <Tabs value={selectedTab} onChange={(e, newValue) => setSelectedTab(newValue)} sx={{ mb: 2 }}>
+                  <Tab label={`Calls (${callsChain.length})`} />
+                  <Tab label={`Puts (${putsChain.length})`} />
+                </Tabs>
+
+                {selectedTab === 0 && callsChain.length > 0 && (
+                  <>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      Click on any call option to see potential returns at different price levels. Expiration: {callsChain[0]?.expiration}
+                      <br />
+                      <strong>Pricing Note:</strong> Contract calculations use the mid-point price (average of bid and ask).
+                    </Typography>
+
+                    <BestOptionsSummary 
+                      bestAtPercentages={getBestCallsAtEachPercentage}
+                      optionType="call"
+                    />
+                    
+                    <OptionsTable
+                      options={callsChain}
+                      stockQuote={stockQuote}
+                      onOptionClick={(option) => {
+                        setSelectedOptionForDetails(option);
+                        setShowDetailsView(true);
+                      }}
+                      bestAtPercentages={getBestCallsAtEachPercentage}
+                      optionType="call"
+                    />
+                  </>
+                )}
+
+                {selectedTab === 1 && putsChain.length > 0 && (
+                  <>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      Click on any put option to see potential returns at different price levels. Expiration: {putsChain[0]?.expiration}
+                      <br />
+                      <strong>Pricing Note:</strong> Contract calculations use the mid-point price (average of bid and ask).
+                    </Typography>
+
+                    <BestOptionsSummary 
+                      bestAtPercentages={getBestPutsAtEachPercentage}
+                      optionType="put"
+                    />
+                    
+                    <OptionsTable
+                      options={putsChain}
+                      stockQuote={stockQuote}
+                      onOptionClick={(option) => {
+                        setSelectedOptionForDetails(option);
+                        setShowDetailsView(true);
+                      }}
+                      bestAtPercentages={getBestPutsAtEachPercentage}
+                      optionType="put"
+                    />
+                  </>
+                )}
               </>
             ) : (
               selectedOptionForDetails && stockQuote && (
-                <>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <IconButton 
-                      onClick={() => setShowDetailsView(false)}
-                      sx={{ p: 1 }}
-                    >
-                      <ArrowBack />
-                    </IconButton>
-                    <Typography variant="h6">
-                      Potential Returns for ${selectedOptionForDetails.strike} Strike
-                    </Typography>
-                  </Box>
-                  
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    <Typography variant="body2">
-                      <strong>Calculation Details:</strong><br />
-                      • Cost per contract: ${roundMidpointUp(selectedOptionForDetails.bid, selectedOptionForDetails.ask).toFixed(2)} × 100 = ${(roundMidpointUp(selectedOptionForDetails.bid, selectedOptionForDetails.ask) * 100).toFixed(2)}<br />
-                      • Number of contracts with ${investmentAmount}: {Math.floor(parseFloat(investmentAmount) / (roundMidpointUp(selectedOptionForDetails.bid, selectedOptionForDetails.ask) * 100))}<br />
-                      • At expiration, profit = (max(Stock Price - Strike, 0) - Premium Paid) × 100 × Contracts
-                    </Typography>
-                  </Alert>
-
-                  <TableContainer component={Paper} sx={{ mt: 2, mb: 2 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Price Increase</TableCell>
-                          <TableCell>Stock Price</TableCell>
-                          <TableCell>Option Value</TableCell>
-                          <TableCell>Gain/Loss</TableCell>
-                          <TableCell>% Return</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {percentageIncrements.split(',').map((increment) => {
-                          const percentIncrease = parseFloat(increment.trim());
-                          const newStockPrice = stockQuote.price * (1 + percentIncrease / 100);
-                          const optionValue = Math.max(0, newStockPrice - selectedOptionForDetails.strike);
-                          const premiumPaid = roundMidpointUp(selectedOptionForDetails.bid, selectedOptionForDetails.ask);
-                          const profitPerShare = optionValue - premiumPaid;
-                          const contractsAffordable = Math.floor(parseFloat(investmentAmount) / (premiumPaid * 100));
-                          const totalProfit = profitPerShare * 100 * contractsAffordable;
-                          const percentReturn = (totalProfit / parseFloat(investmentAmount)) * 100;
-
-                          return (
-                            <TableRow key={increment}>
-                              <TableCell>+{percentIncrease}%</TableCell>
-                              <TableCell>${newStockPrice.toFixed(2)}</TableCell>
-                              <TableCell>${optionValue.toFixed(2)}</TableCell>
-                              <TableCell
-                                sx={{
-                                  color: totalProfit >= 0 ? 'success.main' : 'error.main',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(0)}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: percentReturn >= 0 ? 'success.main' : 'error.main',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                {percentReturn >= 0 ? '+' : ''}{percentReturn.toFixed(1)}%
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </>
+                <OptionDetailsView
+                  option={selectedOptionForDetails}
+                  stockQuote={stockQuote}
+                  investmentAmount={investmentAmount}
+                  percentageIncrements={percentageIncrements}
+                  optionType={selectedOptionForDetails.type === 'put' ? 'put' : 'call'}
+                  onBack={() => setShowDetailsView(false)}
+                />
               )
             )}
           </CardContent>
@@ -1650,8 +1573,9 @@ components:
           </Typography>
           <Alert severity="warning">
             <Typography variant="body2">
-              A complete AWS Lambda implementation example with Terraform deployment scripts 
-              is available at: <code>https://github.com/options-calculator/api-lambda-template</code>
+              A complete example with AWS CDK, github actions, and lambda function are available at: 
+
+              `<code>https://github.com/TrevorDrivenDevelopment/homepage/tree/main/backend</code>`
             </Typography>
           </Alert>
         </CardContent>
