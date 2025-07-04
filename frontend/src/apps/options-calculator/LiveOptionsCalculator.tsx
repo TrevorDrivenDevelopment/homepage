@@ -22,7 +22,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { TrendingUp, TrendingDown, Refresh, Edit, CloudDownload, ArrowBack, CloudUpload, Download } from '@mui/icons-material';
-import { fetchStockQuote, fetchOptionsChain, StockQuote, OptionQuote } from './optionsService';
+import { fetchStockQuote, fetchOptionsChain, StockQuote, OptionQuote, optionsService } from './enhancedOptionsService';
 import { useBackendApi } from '../../services/backendApiService';
 
 interface ManualOptionProfile {
@@ -82,6 +82,9 @@ const LiveOptionsCalculator: React.FC = () => {
   const [percentageIncrements, setPercentageIncrements] = useState<string>('5,10,15,20,25');
   const [selectedOptionForDetails, setSelectedOptionForDetails] = useState<OptionQuote | null>(null);
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
+  
+  // Check if backend API is available
+  const isBackendAvailable = optionsService.isUsingBackend();
 
   const { api, isConfigured } = useBackendApi();
 
@@ -98,22 +101,15 @@ const LiveOptionsCalculator: React.FC = () => {
       return;
     }
 
-    if (!apiEndpoints.stockQuoteUrl || !apiEndpoints.optionsChainUrl || !apiEndpoints.apiKey) {
-      setError('Please configure API endpoints and API key in the settings above');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      // Replace {symbol} placeholder in URLs
-      const stockUrl = apiEndpoints.stockQuoteUrl.replace('{symbol}', symbol.trim().toUpperCase());
-      const optionsUrl = apiEndpoints.optionsChainUrl.replace('{symbol}', symbol.trim().toUpperCase());
-
+      // The enhanced service will use the backend API if configured, 
+      // or fall back to custom URLs if backend is not available
       const [quote, options] = await Promise.all([
-        fetchStockQuote(symbol.trim().toUpperCase(), stockUrl, apiEndpoints.apiKey),
-        fetchOptionsChain(symbol.trim().toUpperCase(), optionsUrl, apiEndpoints.apiKey),
+        fetchStockQuote(symbol.trim().toUpperCase(), apiEndpoints.stockQuoteUrl, apiEndpoints.apiKey),
+        fetchOptionsChain(symbol.trim().toUpperCase(), apiEndpoints.optionsChainUrl, apiEndpoints.apiKey),
       ]);
 
       setStockQuote(quote);
@@ -641,17 +637,26 @@ const LiveOptionsCalculator: React.FC = () => {
           
           {!useManualData && (
             <Box sx={{ mt: 2 }}>
-              <Alert severity="warning" sx={{ mb: 2 }}>
+              <Alert severity={isBackendAvailable ? "info" : "warning"} sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  <strong>API Configuration Required:</strong> Live mode requires API endpoints for stock quotes and options data.
-                  {' '}
-                  <Button 
-                    size="small" 
-                    onClick={() => setShowApiConfig(!showApiConfig)}
-                    sx={{ ml: 1 }}
-                  >
-                    {showApiConfig ? 'Hide Config' : 'Configure APIs'}
-                  </Button>
+                  {isBackendAvailable ? (
+                    <>
+                      <strong>Backend API Connected:</strong> Using integrated backend API at {optionsService.getApiUrl()}. 
+                      Note: Live data requires API keys to be configured on the backend.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Custom API Configuration:</strong> Backend API not available. Configure custom API endpoints below.
+                      {' '}
+                      <Button 
+                        size="small" 
+                        onClick={() => setShowApiConfig(!showApiConfig)}
+                        sx={{ ml: 1 }}
+                      >
+                        {showApiConfig ? 'Hide Config' : 'Configure APIs'}
+                      </Button>
+                    </>
+                  )}
                   {' '}
                   <Button 
                     size="small" 
@@ -664,7 +669,7 @@ const LiveOptionsCalculator: React.FC = () => {
                 </Typography>
               </Alert>
               
-              {showApiConfig && (
+              {showApiConfig && !isBackendAvailable && (
                 <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
                     API Endpoint Configuration
@@ -765,7 +770,7 @@ const LiveOptionsCalculator: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={fetchData}
-                disabled={loading || !apiEndpoints.stockQuoteUrl || !apiEndpoints.optionsChainUrl || !apiEndpoints.apiKey}
+                disabled={loading || (!isBackendAvailable && (!apiEndpoints.stockQuoteUrl || !apiEndpoints.optionsChainUrl || !apiEndpoints.apiKey))}
                 startIcon={loading ? <CircularProgress size={16} /> : <Refresh />}
               >
                 {loading ? 'Loading...' : 'Fetch Data'}
@@ -963,13 +968,13 @@ const LiveOptionsCalculator: React.FC = () => {
                 ${stockQuote.price.toFixed(2)}
               </Typography>
               <Chip
-                icon={stockQuote.change >= 0 ? <TrendingUp /> : <TrendingDown />}
-                label={`${stockQuote.change >= 0 ? '+' : ''}${stockQuote.change.toFixed(2)} (${stockQuote.changePercent.toFixed(2)}%)`}
-                color={stockQuote.change >= 0 ? 'success' : 'error'}
+                icon={(stockQuote.change ?? 0) >= 0 ? <TrendingUp /> : <TrendingDown />}
+                label={`${(stockQuote.change ?? 0) >= 0 ? '+' : ''}${(stockQuote.change ?? 0).toFixed(2)} (${stockQuote.changePercent || '0.00%'})`}
+                color={(stockQuote.change ?? 0) >= 0 ? 'success' : 'error'}
                 variant="outlined"
               />
               <Typography variant="body2" color="text.secondary">
-                Last updated: {new Date(stockQuote.lastUpdated).toLocaleString()}
+                Last updated: {new Date(stockQuote.lastUpdated || new Date().toISOString()).toLocaleString()}
               </Typography>
             </Box>
           </CardContent>
@@ -1428,11 +1433,11 @@ info:
   version: 1.0.0
   description: API endpoints required for live options data
 servers:
-  - url: https://your-api.com/v1
+  - url: https://your-api.com/api
 security:
   - ApiKeyAuth: []
 paths:
-  /quote/{symbol}:
+  /options/stock/{symbol}:
     get:
       summary: Get stock quote
       security:
@@ -1446,12 +1451,12 @@ paths:
             example: AAPL
       responses:
         '200':
-          description: Current stock quote
+          description: Current stock quote wrapped in API response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StockQuote'
-  /options/{symbol}:
+                $ref: '#/components/schemas/StockQuoteResponse'
+  /options/chain/{symbol}:
     get:
       summary: Get options chain
       security:
@@ -1465,13 +1470,11 @@ paths:
             example: AAPL
       responses:
         '200':
-          description: Options chain data
+          description: Options chain data wrapped in API response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OptionQuote'
+                $ref: '#/components/schemas/OptionsChainResponse'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -1479,14 +1482,47 @@ components:
       in: header
       name: X-API-Key
   schemas:
+    StockQuoteResponse:
+      type: object
+      required:
+        - success
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/StockQuote'
+        error:
+          type: string
+          description: Error message if success is false
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-07-04T17:14:44.620Z"
+    OptionsChainResponse:
+      type: object
+      required:
+        - success
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/OptionsChainData'
+        error:
+          type: string
+          description: Error message if success is false
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-07-04T17:14:44.620Z"
     StockQuote:
       type: object
       required:
         - symbol
         - price
-        - change
-        - changePercent
-        - lastUpdated
       properties:
         symbol:
           type: string
@@ -1494,19 +1530,55 @@ components:
         price:
           type: number
           format: float
-          example: 175.50
+          example: 213.55
         change:
           type: number
           format: float
           example: 2.30
+          description: Optional - price change from previous close
         changePercent:
-          type: number
-          format: float
-          example: 1.33
+          type: string
+          example: "1.33%"
+          description: Optional - percentage change as formatted string
         lastUpdated:
           type: string
           format: date-time
-          example: "2024-01-15T21:00:00.000Z"
+          example: "2025-07-04T17:14:44.620Z"
+          description: Optional - when the quote was last updated
+        currency:
+          type: string
+          example: "USD"
+          description: Optional - currency code
+    OptionsChainData:
+      type: object
+      required:
+        - symbol
+        - stockPrice
+        - calls
+        - puts
+        - expirationDates
+      properties:
+        symbol:
+          type: string
+          example: AAPL
+        stockPrice:
+          type: number
+          format: float
+          example: 213.55
+        calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionQuote'
+        puts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionQuote'
+        expirationDates:
+          type: array
+          items:
+            type: string
+            format: date
+            example: "2025-07-11"
     OptionQuote:
       type: object
       required:
@@ -1517,37 +1589,42 @@ components:
         - ask
         - volume
         - openInterest
+        - type
       properties:
         symbol:
           type: string
-          example: AAPL_170
+          example: AAPL20250711C21500
         strike:
           type: number
           format: float
-          example: 170.00
+          example: 215.00
         expiration:
           type: string
           format: date
-          example: "2024-01-19"
+          example: "2025-07-11"
         bid:
           type: number
           format: float
-          example: 5.50
+          example: 7.08
         ask:
           type: number
           format: float
-          example: 5.70
+          example: 7.79
         volume:
           type: integer
-          example: 1250
+          example: 573
         openInterest:
           type: integer
-          example: 5430
+          example: 3884
+        type:
+          type: string
+          enum: [call, put]
+          example: call
         impliedVolatility:
           type: number
           format: float
-          example: 0.28
-          description: Optional - decimal form (0.28 = 28%)`}
+          example: 0.278
+          description: Optional - decimal form (0.278 = 27.8%)`}
             </Typography>
           </Alert>
 
@@ -1557,9 +1634,13 @@ components:
           <Alert severity="success" sx={{ mb: 2 }}>
             <Typography variant="body2">
               • Replace <code>{'{symbol}'}</code> in your endpoint URLs with the actual stock symbol<br/>
+              • All responses are wrapped in an ApiResponse object with success, data, error, and timestamp fields<br/>
+              • Stock quotes return the data directly in the data field<br/>
+              • Options chains return an object with calls, puts, and other metadata (not a flat array)<br/>
               • Ensure proper CORS headers are included<br/>
               • Use HTTPS for production deployments<br/>
-              • Consider rate limiting and authentication as needed<br/>
+              • API key authentication is required via X-API-Key header<br/>
+              • The type field is required for options (call or put)<br/>
               • The impliedVolatility field is optional but recommended
             </Typography>
           </Alert>
