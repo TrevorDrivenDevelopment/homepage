@@ -304,11 +304,40 @@ jobs:
             exit 1
           fi
           
+          # Handle API key - try CDK output first, then find active key
+          ACTUAL_API_KEY_ID=""
+          API_KEY_FOUND="false"
+          
           if [ -n "$API_KEY_ID" ]; then
-            # Get the actual API key value (without logging it)
-            API_KEY_VALUE=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --query 'value' --output text --region ${{ env.AWS_REGION }} 2>/dev/null)
+            # Try to get API key value from CDK output (without logging the value)
+            if aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+              ACTUAL_API_KEY_ID="$API_KEY_ID"
+              API_KEY_FOUND="true"
+              echo "✅ Using API key from CDK output: $ACTUAL_API_KEY_ID"
+            fi
+          fi
+          
+          # If CDK key doesn't work, find the most recent active API key
+          if [ "$API_KEY_FOUND" = "false" ]; then
+            echo "🔍 CDK API key not found, searching for active API keys..."
+            ACTIVE_KEY=$(aws apigateway get-api-keys --region ${{ env.AWS_REGION }} --query 'items[?enabled==`true` && contains(name, `homepage-api-key`)][0]' --output json 2>/dev/null)
+            if [ "$ACTIVE_KEY" != "null" ] && [ -n "$ACTIVE_KEY" ]; then
+              ACTUAL_API_KEY_ID=$(echo "$ACTIVE_KEY" | jq -r '.id')
+              if [ -n "$ACTUAL_API_KEY_ID" ] && [ "$ACTUAL_API_KEY_ID" != "null" ]; then
+                # Verify the key exists and get its value (without logging)
+                if aws apigateway get-api-key --api-key "$ACTUAL_API_KEY_ID" --include-value --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+                  API_KEY_FOUND="true"
+                  echo "✅ Found active API key: $ACTUAL_API_KEY_ID"
+                fi
+              fi
+            fi
+          fi
+          
+          if [ "$API_KEY_FOUND" = "true" ] && [ -n "$ACTUAL_API_KEY_ID" ]; then
+            # Get the API key value securely (without logging it)
+            API_KEY_VALUE=$(aws apigateway get-api-key --api-key "$ACTUAL_API_KEY_ID" --include-value --query 'value' --output text --region ${{ env.AWS_REGION }} 2>/dev/null)
             
-            if [ -n "$API_KEY_VALUE" ]; then
+            if [ -n "$API_KEY_VALUE" ] && [ "$API_KEY_VALUE" != "None" ]; then
               # Store API key in SSM Parameter Store for secure retrieval
               aws ssm put-parameter \
                 --name "/homepage/prod/client-api-key" \
@@ -319,21 +348,28 @@ jobs:
                 --region ${{ env.AWS_REGION }} >/dev/null 2>&1
               
               echo "✅ API Key securely stored in SSM Parameter Store"
-              echo "🔑 API Key ID: $API_KEY_ID"
+              echo "🔑 Active API Key ID: $ACTUAL_API_KEY_ID"
               echo "📋 SSM Parameter: /homepage/prod/client-api-key"
+              
+              # Clear the variable to prevent accidental exposure
+              unset API_KEY_VALUE
               
               # Add to GitHub step summary (without exposing the key value)
               echo "## 🔑 API Key Information" >> $GITHUB_STEP_SUMMARY
-              echo "- **API Key ID:** \`$API_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
+              echo "- **Active API Key ID:** \`$ACTUAL_API_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
               echo "- **SSM Parameter:** \`/homepage/prod/client-api-key\`" >> $GITHUB_STEP_SUMMARY
-              echo "- **Security:** Key value stored securely, not logged" >> $GITHUB_STEP_SUMMARY
+              echo "- **Security:** Key value stored securely, never logged" >> $GITHUB_STEP_SUMMARY
               echo "- **Retrieval:** Use \`backend/scripts/get-api-key.sh\` to get the key value" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
             else
-              echo "❌ Could not retrieve API key value"
+              echo "⚠️ API key value could not be retrieved"
             fi
           else
-            echo "❌ Could not extract API Key ID from CDK outputs"
+            echo "⚠️ No valid API key found - API endpoints will require manual key setup"
+            echo "## ⚠️ API Key Warning" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status:** No valid API key found during deployment" >> $GITHUB_STEP_SUMMARY
+            echo "- **Action Required:** Run \`backend/scripts/regenerate-api-key.sh\` to create a new key" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
           fi
         else
           echo "❌ CDK outputs file not found"
