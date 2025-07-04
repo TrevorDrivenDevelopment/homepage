@@ -29,8 +29,7 @@ export class MarketDataService {
 
   async getMarketData(symbol: string): Promise<MarketData> {
     if (!this.apiKey) {
-      // Return mock data if no API key
-      return this.getMockMarketData(symbol);
+      throw new Error('Market Data API key not configured');
     }
 
     try {
@@ -52,13 +51,13 @@ export class MarketDataService {
       };
     } catch (error) {
       console.error('Error fetching market data:', error);
-      return this.getMockMarketData(symbol);
+      throw new Error(`Failed to fetch market data for ${symbol}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   async getMarketIndices(): Promise<MarketIndex[]> {
     if (!this.apiKey) {
-      return this.getMockMarketIndices();
+      throw new Error('Market Data API key not configured');
     }
 
     try {
@@ -71,50 +70,8 @@ export class MarketDataService {
       return response.data.indices;
     } catch (error) {
       console.error('Error fetching market indices:', error);
-      return this.getMockMarketIndices();
+      throw new Error(`Failed to fetch market indices: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }
-
-  private getMockMarketData(symbol: string): MarketData {
-    const basePrice = 100 + Math.random() * 200;
-    const change = (Math.random() - 0.5) * 10;
-    
-    return {
-      symbol,
-      price: parseFloat(basePrice.toFixed(2)),
-      change: parseFloat(change.toFixed(2)),
-      changePercent: parseFloat((change / basePrice * 100).toFixed(2)),
-      volume: Math.floor(Math.random() * 10000000),
-      marketCap: Math.floor(Math.random() * 100000000000),
-      pe: parseFloat((15 + Math.random() * 20).toFixed(2)),
-      eps: parseFloat((5 + Math.random() * 10).toFixed(2))
-    };
-  }
-
-  private getMockMarketIndices(): MarketIndex[] {
-    return [
-      {
-        name: 'S&P 500',
-        symbol: 'SPX',
-        value: 4200 + Math.random() * 400,
-        change: (Math.random() - 0.5) * 50,
-        changePercent: (Math.random() - 0.5) * 2
-      },
-      {
-        name: 'NASDAQ',
-        symbol: 'IXIC',
-        value: 13000 + Math.random() * 2000,
-        change: (Math.random() - 0.5) * 100,
-        changePercent: (Math.random() - 0.5) * 2
-      },
-      {
-        name: 'Dow Jones',
-        symbol: 'DJI',
-        value: 33000 + Math.random() * 3000,
-        change: (Math.random() - 0.5) * 200,
-        changePercent: (Math.random() - 0.5) * 1.5
-      }
-    ];
   }
 
   isConfigured(): boolean {
