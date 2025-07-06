@@ -135,58 +135,30 @@ export class AlphaVantageService {
         lastUpdated: option.date, // Include the data timestamp from Alpha Vantage
       }));
 
-      // Filter out options with invalid data
-      const validOptions = options.filter(option => 
-        option.strike > 0 && 
-        option.expiration && 
-        (option.type === 'call' || option.type === 'put') &&
-        option.lastUpdated // Must have a timestamp
-      );
-
-      // Sort by lastUpdated date to get the most recent data first
-      validOptions.sort((a, b) => {
-        const dateA = new Date(a.lastUpdated || 0).getTime();
-        const dateB = new Date(b.lastUpdated || 0).getTime();
-        return dateB - dateA; // Most recent first
-      });
-
-      // Group by contract (same strike, expiration, type) and keep only the most recent data for each
-      const contractMap = new Map<string, OptionQuote>();
-      
-      validOptions.forEach(option => {
-        const contractKey = `${option.strike}_${option.expiration}_${option.type}`;
-        const existing = contractMap.get(contractKey);
-        
-        if (!existing) {
-          contractMap.set(contractKey, option);
-        } else {
-          // Keep the one with more recent data
-          const existingDate = new Date(existing.lastUpdated || 0).getTime();
-          const optionDate = new Date(option.lastUpdated || 0).getTime();
-          
-          if (optionDate > existingDate) {
-            contractMap.set(contractKey, option);
-          }
-        }
-      });
-
-      const mostRecentOptions = Array.from(contractMap.values());
-      
-      // Log the data freshness info (but don't filter by age)
-      if (mostRecentOptions.length > 0) {
-        const dates = mostRecentOptions.map(opt => opt.lastUpdated).filter(Boolean);
-        if (dates.length > 0) {
-          const mostRecentDate = new Date(Math.max(...dates.map(d => new Date(d!).getTime())));
-          const oldestDate = new Date(Math.min(...dates.map(d => new Date(d!).getTime())));
-          console.log(`📅 Options data timestamps: Most recent: ${mostRecentDate.toISOString()}, Oldest: ${oldestDate.toISOString()}`);
-          
-          const hoursOld = Math.floor((Date.now() - mostRecentDate.getTime()) / (1000 * 60 * 60));
-          console.log(`📊 Most recent data is ${hoursOld} hours old`);
-        }
+      // Step 1: Filter out invalid options data
+      const validOptions = this.filterValidOptions(options);
+      if (validOptions.length === 0) {
+        console.log('❌ No valid options found after filtering');
+        return [];
       }
 
-      console.log(`✅ Returning ${mostRecentOptions.length} most recent options contracts for ${symbol} (with timestamps)`);
-      return mostRecentOptions;
+      // Step 2: For each unique contract, keep only the one with the most recent timestamp
+      const latestContracts = this.getLatestContractData(validOptions);
+      
+      console.log(`📊 Original options: ${validOptions.length}`);
+      console.log(`📊 Unique contracts with latest data: ${latestContracts.length}`);
+      
+      if (latestContracts.length > 0) {
+        const timestamps = latestContracts.map((opt: OptionQuote) => new Date(opt.lastUpdated || 0).getTime());
+        const oldestTimestamp = Math.min(...timestamps);
+        const newestTimestamp = Math.max(...timestamps);
+        
+        const hoursOld = Math.floor((Date.now() - newestTimestamp) / (1000 * 60 * 60));
+        console.log(`📅 Data age range: ${hoursOld} hours (newest) to ${Math.floor((Date.now() - oldestTimestamp) / (1000 * 60 * 60))} hours (oldest)`);
+      }
+
+      console.log(`✅ Returning ${latestContracts.length} latest option contracts for ${symbol}`);
+      return latestContracts;
 
     } catch (error) {
       console.error('❌ Alpha Vantage Options API error:', error);
@@ -199,8 +171,49 @@ export class AlphaVantageService {
     }
   }
 
-
   isConfigured(): boolean {
     return !!this.apiKey && this.apiKey.length > 0;
+  }
+
+  /**
+   * Step 1: Filter out options that have invalid data
+   * Removes options with no strike price, expiration, type, or timestamp
+   */
+  private filterValidOptions(options: OptionQuote[]): OptionQuote[] {
+    return options.filter(option => 
+      option.strike > 0 && 
+      option.expiration && 
+      (option.type === 'call' || option.type === 'put') &&
+      option.lastUpdated // Must have a timestamp
+    );
+  }
+
+  /**
+   * Step 2: For each unique contract, keep only the one with the most recent timestamp
+   * A unique contract = same strike price + expiration date + option type (call/put)
+   */
+  private getLatestContractData(validOptions: OptionQuote[]): OptionQuote[] {
+    const contractMap = new Map<string, OptionQuote>();
+    
+    validOptions.forEach(option => {
+      // Create unique key for this contract
+      const contractKey = `${option.strike}_${option.expiration}_${option.type}`;
+      const existing = contractMap.get(contractKey);
+      
+      if (!existing) {
+        // First time seeing this contract
+        contractMap.set(contractKey, option);
+      } else {
+        // We've seen this contract before - keep the one with newer timestamp
+        const existingTime = new Date(existing.lastUpdated || 0).getTime();
+        const optionTime = new Date(option.lastUpdated || 0).getTime();
+        
+        if (optionTime > existingTime) {
+          contractMap.set(contractKey, option);
+        }
+      }
+    });
+
+    return Array.from(contractMap.values());
   }
 }

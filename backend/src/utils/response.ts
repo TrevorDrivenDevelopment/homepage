@@ -54,10 +54,3 @@ export function getPathParameter(
 ): string | null {
   return event.pathParameters?.[paramName] || null;
 }
-
-export function getQueryParameter(
-  event: APIGatewayProxyEvent,
-  paramName: string
-): string | null {
-  return event.queryStringParameters?.[paramName] || null;
-}
