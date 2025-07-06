@@ -9,7 +9,7 @@ export const corsHeaders = {
 
 export function createResponse(
   statusCode: number,
-  body: any,
+  body: unknown,
   additionalHeaders?: Record<string, string>
 ): APIGatewayProxyResult {
   return {
@@ -25,16 +25,28 @@ export function createResponse(
 export function createErrorResponse(
   statusCode: number,
   message: string,
-  error?: any
+  error?: unknown
 ): APIGatewayProxyResult {
   console.error('API Error:', { statusCode, message, error });
   
-  return createResponse(statusCode, {
+  interface ErrorResponseBody {
+    success: false;
+    error: string;
+    timestamp: string;
+    details?: string;
+  }
+
+  const responseBody: ErrorResponseBody = {
     success: false,
     error: message,
     timestamp: new Date().toISOString(),
-    ...(process.env.NODE_ENV === 'dev' && error && { details: error }),
-  });
+  };
+
+  if (process.env.NODE_ENV === 'dev' && error) {
+    responseBody.details = error instanceof Error ? error.message : String(error);
+  }
+
+  return createResponse(statusCode, responseBody);
 }
 
 export function createSuccessResponse<T>(

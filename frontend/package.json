@@ -21,16 +21,11 @@
         "dev": "rsbuild dev",
         "build": "rsbuild build",
         "preview": "rsbuild preview",
-        "lint": "eslint src/**/*.{ts,tsx}",
+        "lint": "eslint src/**/*.{ts,tsx} --no-warn-ignored",
         "test": "bun test",
         "type-check": "tsc --noEmit",
         "mbti-quality": "bun run src/apps/personality-test/testing/main.ts",
         "dev:full": "bun run dev.ts"
-    },
-    "eslintConfig": {
-        "extends": [
-            "@rsbuild/eslint-config/react"
-        ]
     },
     "browserslist": {
         "production": [

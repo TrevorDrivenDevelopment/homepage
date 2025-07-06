@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { createSuccessResponse, createErrorResponse } from '../utils/response';
-import { CalculationRequest, CalculationResult } from '../types/api';
+import { CalculationRequest, CalculationResult, ManualOptionProfile, OptionResult } from '../types/api';
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -110,11 +110,11 @@ function calculateSellPrices(securityPrice: number, percentageIncrements: number
  * Calculate results for each option at each sell price
  */
 function calculateResultsByPrice(
-  options: any[], 
+  options: ManualOptionProfile[], 
   investmentAmount: number, 
   sellPrices: number[]
-): Map<number, any[]> {
-  const resultsByPrice = new Map<number, any[]>();
+): Map<number, OptionResult[]> {
+  const resultsByPrice = new Map<number, OptionResult[]>();
   
   for (const option of options) {
     const optionAnalysis = analyzeOption(option, investmentAmount, sellPrices);
@@ -129,7 +129,7 @@ function calculateResultsByPrice(
 /**
  * Analyze a single option and calculate its performance at all sell prices
  */
-function analyzeOption(option: any, investmentAmount: number, sellPrices: number[]) {
+function analyzeOption(option: ManualOptionProfile, investmentAmount: number, sellPrices: number[]): OptionResult[] | null {
   const optionPrice = option.price ?? roundMidpointUp(option.bid, option.ask);
   const totalCostPerContract = optionPrice * 100;
   
@@ -181,8 +181,8 @@ function calculateGainLoss(
  * Add option results to the results map, keeping only top 5 per price
  */
 function addOptionResultsToMap(
-  optionResults: any[], 
-  resultsByPrice: Map<number, any[]>
+  optionResults: OptionResult[], 
+  resultsByPrice: Map<number, OptionResult[]>
 ): void {
   for (const result of optionResults) {
     const currentResults = resultsByPrice.get(result.sellPrice) ?? [];
@@ -197,7 +197,7 @@ function addOptionResultsToMap(
 /**
  * Find the best performing options at the highest sell price
  */
-function findBestOptions(resultsByPrice: Map<number, any[]>, sellPrices: number[]) {
+function findBestOptions(resultsByPrice: Map<number, OptionResult[]>, sellPrices: number[]): { best: OptionResult | null; secondBest: OptionResult | null } {
   const highestSellPrice = sellPrices[sellPrices.length - 1];
   const resultsAtHighestPercentage = resultsByPrice.get(highestSellPrice) || [];
   

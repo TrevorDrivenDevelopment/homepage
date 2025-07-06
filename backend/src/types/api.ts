@@ -67,6 +67,7 @@ export interface OptionResult {
   bid: number;
   ask: number;
   price?: number;
+  sellPrice: number;
   gainLoss: number;
   actualInvestment: number;
   shares: number;

@@ -18,13 +18,13 @@ interface LiveOptionsChainProps {
   putsChain: OptionQuote[];
   stockQuote: StockQuote;
   selectedTab: number;
-  setSelectedTab: (value: number) => void;
+  setSelectedTab: (arg: number) => void;
   getBestCallsAtEachPercentage: Map<number, { option: OptionQuote; profit: number }>;
   getBestPutsAtEachPercentage: Map<number, { option: OptionQuote; profit: number }>;
   selectedOptionForDetails: OptionQuote | null;
-  setSelectedOptionForDetails: (option: OptionQuote | null) => void;
+  setSelectedOptionForDetails: (arg: OptionQuote | null) => void;
   showDetailsView: boolean;
-  setShowDetailsView: (show: boolean) => void;
+  setShowDetailsView: (arg: boolean) => void;
   investmentAmount: string;
   percentageIncrements: string;
 }
@@ -62,7 +62,6 @@ export const LiveOptionsChain: React.FC<LiveOptionsChainProps> = ({
 
   const callsFreshness = getDataFreshness(callsChain);
   const putsFreshness = getDataFreshness(putsChain);
-  const currentOptions = selectedTab === 0 ? callsChain : putsChain;
   const currentFreshness = selectedTab === 0 ? callsFreshness : putsFreshness;
 
   return (

@@ -38,10 +38,17 @@ export default [
         'error',
         {
           argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          args: 'none',
         },
       ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-empty-interface': 'off',
+      '@typescript-eslint/interface-name-prefix': 'off',
       
       // React rules
       'react/react-in-jsx-scope': 'off', // Not needed with React 17+

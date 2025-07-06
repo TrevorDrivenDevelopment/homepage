@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Box,
   Card,
-  CardContent,
   Typography,
   TextField,
   Button,
@@ -130,7 +129,7 @@ export const ManualDataInput: React.FC<ManualDataInputProps> = ({
         </Card>
         
         {/* Manual Option Entries */}
-        {manualOptionEntries.map((entry, index) => (
+        {manualOptionEntries.map((entry) => (
           <Card key={entry.id} variant="outlined" sx={{ mb: 2, p: 2 }}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <TextField
