@@ -14,7 +14,7 @@ import { Edit, CloudDownload } from '@mui/icons-material';
 
 interface DataSourceToggleProps {
   useManualData: boolean;
-  setUseManualData: (value: boolean) => void;
+  setUseManualData: React.Dispatch<React.SetStateAction<boolean>>;
   apiEndpoints: {
     stockQuoteUrl: string;
     optionsChainUrl: string;
@@ -26,7 +26,7 @@ interface DataSourceToggleProps {
     apiKey: string;
   }>>;
   showApiConfig: boolean;
-  setShowApiConfig: (value: boolean) => void;
+  setShowApiConfig: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
@@ -60,31 +60,54 @@ export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
         
         {!useManualData && (
           <Box sx={{ mt: 2 }}>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                <strong>API Configuration:</strong> {apiEndpoints.stockQuoteUrl && apiEndpoints.optionsChainUrl && apiEndpoints.apiKey 
-                  ? 'Custom API endpoints configured and ready to use.' 
-                  : 'Configure your own API endpoints that provide live market data.'
-                }
-                {' '}
-                <Button 
-                  size="small" 
-                  onClick={() => setShowApiConfig(!showApiConfig)}
-                  sx={{ ml: 1 }}
-                >
-                  {showApiConfig ? 'Hide Config' : 'Configure APIs'}
-                </Button>
-                {' '}
-                <Button 
-                  size="small" 
-                  variant="outlined"
-                  href="#api-help"
-                  sx={{ ml: 1 }}
-                >
-                  API Help
-                </Button>
-              </Typography>
-            </Alert>
+            {!apiEndpoints.stockQuoteUrl || !apiEndpoints.optionsChainUrl || !apiEndpoints.apiKey ? (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>API Configuration Required:</strong> To use live data mode, you must configure your own API endpoints that provide real market data.
+                  {' '}
+                  <Button 
+                    size="small" 
+                    variant="contained"
+                    onClick={() => setShowApiConfig(true)}
+                    sx={{ ml: 1 }}
+                  >
+                    Configure APIs Now
+                  </Button>
+                  {' '}
+                  <Button 
+                    size="small" 
+                    variant="outlined"
+                    href="#api-help"
+                    sx={{ ml: 1 }}
+                  >
+                    API Help
+                  </Button>
+                </Typography>
+              </Alert>
+            ) : (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>APIs Configured:</strong> Custom API endpoints are configured and ready to use.
+                  {' '}
+                  <Button 
+                    size="small" 
+                    onClick={() => setShowApiConfig(!showApiConfig)}
+                    sx={{ ml: 1 }}
+                  >
+                    {showApiConfig ? 'Hide Config' : 'Edit Config'}
+                  </Button>
+                  {' '}
+                  <Button 
+                    size="small" 
+                    variant="outlined"
+                    href="#api-help"
+                    sx={{ ml: 1 }}
+                  >
+                    API Help
+                  </Button>
+                </Typography>
+              </Alert>
+            )}
             
             {showApiConfig && (
               <Card variant="outlined" sx={{ p: 2, mb: 2 }}>

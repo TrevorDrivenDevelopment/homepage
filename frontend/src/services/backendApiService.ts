@@ -1,37 +1,9 @@
-// API Configuration and Service for Frontend
-const API_BASE_URL = (() => {
-  // In browser environments, check for Rsbuild environment variables
-  if (typeof window !== 'undefined') {
-    // Use import.meta.env for Rsbuild (Vite-like environment variables)
-    return (import.meta.env?.RSBUILD_API_URL as string) || 
-           (import.meta.env?.REACT_APP_API_URL as string) || 
-           'http://localhost:8080';
-  }
-  // Fallback for server-side rendering or other environments
-  return 'http://localhost:8080';
-})();
-
-export interface ApiClient {
-  baseURL: string;
-  isConfigured: boolean;
-}
-
 class BackendApiService {
-  private baseURL: string;
-  public isConfigured: boolean;
-
-  constructor() {
-    this.baseURL = API_BASE_URL;
-    this.isConfigured = !!API_BASE_URL;
-  }
 
   private async request<T>(
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<T> {
-    if (!this.isConfigured) {
-      throw new Error('Backend API not configured');
-    }
 
     const url = `${this.baseURL}${endpoint}`;
     const response = await fetch(url, {
@@ -105,11 +77,3 @@ class BackendApiService {
 }
 
 export const backendApi = new BackendApiService();
-
-// Hook for React components
-export function useBackendApi() {
-  return {
-    api: backendApi,
-    isConfigured: backendApi.isConfigured,
-  };
-}

@@ -21,6 +21,8 @@ export interface StockQuote {
   changePercent?: string;
   lastUpdated?: string;
   currency?: string;
+  week52High?: number;
+  week52Low?: number;
 }
 
 export interface OptionsChainResponse {
@@ -71,6 +73,8 @@ export const fetchStockQuote = async (symbol: string, customUrl?: string, apiKey
         changePercent: responseData.data.changePercent,
         lastUpdated: responseData.data.lastUpdated || new Date().toISOString(),
         currency: responseData.data.currency || 'USD',
+        week52High: responseData.data.week52High,
+        week52Low: responseData.data.week52Low,
       };
     } else {
       // Direct response format
@@ -81,6 +85,8 @@ export const fetchStockQuote = async (symbol: string, customUrl?: string, apiKey
         changePercent: responseData.changePercent,
         lastUpdated: responseData.lastUpdated || new Date().toISOString(),
         currency: responseData.currency || 'USD',
+        week52High: responseData.week52High,
+        week52Low: responseData.week52Low,
       };
     }
   } catch (error) {
@@ -135,10 +141,10 @@ export const fetchOptionsChain = async (symbol: string, customUrl?: string, apiK
 
 // Legacy compatibility export - placeholder that requires real API configuration
 export const optionsService = {
-  fetchStockQuote: (symbol: string) => {
+  fetchStockQuote: () => {
     throw new Error('Direct service calls are not supported. Use custom API endpoints with fetchStockQuote(symbol, customUrl, apiKey).');
   },
-  fetchOptionsChain: (symbol: string) => {
+  fetchOptionsChain: () => {
     throw new Error('Direct service calls are not supported. Use custom API endpoints with fetchOptionsChain(symbol, customUrl, apiKey).');
   },
   isUsingBackend: () => false,

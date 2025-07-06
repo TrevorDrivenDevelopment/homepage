@@ -14,6 +14,7 @@ import { StockQuoteCard } from './components/StockQuoteCard';
 import { ManualResultsDisplay } from './components/ManualResultsDisplay';
 import { ApiDocumentation } from './components/ApiDocumentation';
 import { LiveOptionsChain } from './components/LiveOptionsChain';
+import { ErrorModal } from './components/ErrorModal';
 import { useLiveData } from './hooks/useLiveData';
 import { useManualOptions } from './hooks/useManualOptions';
 import { useOptionsCalculation } from './hooks/useOptionsCalculation';
@@ -24,6 +25,7 @@ import {
   calculateManualOptionsResults,
   parseManualOptionsFromEntries 
 } from './utils/manualOptionsUtils';
+import { ManualOptionEntry } from './hooks/useManualOptions';
 
 const LiveOptionsCalculator: React.FC = () => {
   // Use custom hooks for state management
@@ -32,6 +34,8 @@ const LiveOptionsCalculator: React.FC = () => {
     setUseManualData,
     error,
     setError,
+    errorModalOpen,
+    setErrorModalOpen,
     investmentAmount,
     setInvestmentAmount,
     percentageIncrements,
@@ -105,7 +109,9 @@ const LiveOptionsCalculator: React.FC = () => {
       setError('');
       await fetchLiveData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
+      setError(errorMessage);
+      setErrorModalOpen(true);
     }
   };
 
@@ -138,7 +144,7 @@ const LiveOptionsCalculator: React.FC = () => {
     }
   };
 
-  const calculateManualOptionsWithEntries = (entries: any[]) => {
+  const calculateManualOptionsWithEntries = (entries: ManualOptionEntry[]) => {
     try {
       setError('');
       
@@ -188,8 +194,8 @@ const LiveOptionsCalculator: React.FC = () => {
 
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2">
-          <strong>Data Source:</strong> Toggle between live market data and manual entry mode below. 
-          For live data, configure your own API endpoints that provide real market data.
+          <strong>Data Source:</strong> Toggle between live market data (requires your own API configuration) and manual entry mode below. 
+          For live data, you must provide your own API endpoints that return real market data - no default APIs are included for security and reliability.
         </Typography>
       </Alert>
 
@@ -291,6 +297,31 @@ const LiveOptionsCalculator: React.FC = () => {
           percentageIncrements={percentageIncrements}
         />
       )}
+
+      {/* Show placeholder when no options data but live mode is enabled */}
+      {!useManualData && !stockQuote && !loading && isApiConfigured && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Options Chain
+            </Typography>
+            <Alert severity="info">
+              <Typography variant="body2">
+                Enter a stock symbol and click "Get Data" to view options chain information.
+              </Typography>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error Modal */}
+      <ErrorModal
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        onRetry={fetchData}
+        error={error}
+        title="Failed to Load Options Data"
+      />
 
       {/* API Documentation */}
       <ApiDocumentation

@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "description": "Backend API services for homepage applications",
     "main": "index.js",
-    "packageManager": "bun@1.2.17",
+    "type": "module",
+    "packageManager": "bun@1.2.18",
     "scripts": {
         "build": "bun run build:bundle",
         "build:tsc": "tsc",
@@ -13,7 +14,8 @@
         "deploy:cdk": "bun run cdk deploy",
         "destroy": "bun run cdk destroy",
         "local": "sam local start-api",
-        "dev": "bun --watch src/index.ts",
+        "dev": "NODE_ENV=development bun --watch src/index.ts",
+        "dev:local": "NODE_ENV=development bun --watch src/index.ts",
         "test": "bun test",
         "lint": "eslint src/**/*.ts",
         "type-check": "tsc --noEmit",
@@ -25,22 +27,26 @@
         "cdk:bootstrap": "cdk bootstrap"
     },
     "dependencies": {
-        "@aws-sdk/client-ssm": "^3.470.0",
-        "aws-cdk-lib": "^2.156.0",
-        "axios": "^1.6.2",
-        "constructs": "^10.3.0",
-        "esbuild": "^0.25.5",
-        "source-map-support": "^0.5.21"
+        "@aws-sdk/client-ssm": "3.840.0",
+        "aws-cdk-lib": "2.204.0",
+        "axios": "1.10.0",
+        "constructs": "10.4.2",
+        "dotenv": "^17.0.1",
+        "esbuild": "0.25.5",
+        "source-map-support": "0.5.21"
     },
     "devDependencies": {
-        "@aws-sdk/types": "^3.470.0",
-        "@types/aws-lambda": "^8.10.131",
-        "@types/bun": "^1.1.18",
-        "@types/node": "^20.9.0",
-        "@typescript-eslint/eslint-plugin": "^6.12.0",
-        "@typescript-eslint/parser": "^6.12.0",
-        "aws-cdk": "^2.156.0",
-        "eslint": "^8.54.0",
-        "typescript": "^5.2.2"
+        "@aws-sdk/types": "3.840.0",
+        "@eslint/js": "9.30.1",
+        "@types/aws-lambda": "8.10.150",
+        "@types/bun": "1.2.18",
+        "@types/dotenv": "8.2.3",
+        "@types/node": "24.0.10",
+        "@typescript-eslint/eslint-plugin": "8.35.1",
+        "@typescript-eslint/parser": "8.35.1",
+        "aws-cdk": "2.1020.2",
+        "eslint": "9.30.1",
+        "globals": "16.3.0",
+        "typescript": "5.8.3"
     }
 }

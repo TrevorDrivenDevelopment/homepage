@@ -5,11 +5,13 @@
  * This allows local development with Bun while maintaining AWS Lambda compatibility
  */
 
+// Load environment variables first (only in local development)
+import './config/env';
+
 import { createServer } from 'http';
 import { handler as healthHandler } from './handlers/health';
 import { handler as optionsHandler } from './handlers/options';
 import { handler as calculatorHandler } from './handlers/calculator';
-import { handler as portfolioHandler } from './handlers/portfolio';
 
 const PORT = process.env.PORT || 8080;
 
@@ -18,9 +20,7 @@ const routes = {
   '/api/health': healthHandler,
   '/api/options/stock': optionsHandler,
   '/api/options/chain': optionsHandler,
-  '/api/calculator/options': calculatorHandler,
-  '/api/portfolio/analyze': portfolioHandler,
-  '/api/portfolio/risk-metrics': portfolioHandler,
+  '/api/calculator/options': calculatorHandler
 };
 
 // Mock API Gateway event for local development

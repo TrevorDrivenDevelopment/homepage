@@ -9,7 +9,7 @@ import {
   Chip,
 } from '@mui/material';
 import { StockQuote, OptionQuote } from '../enhancedOptionsService';
-import { OptionsTable } from './OptionsTable';
+import { OptionsGroupedByExpiration } from './OptionsGroupedByExpiration';
 import { BestOptionsSummary } from './BestOptionsSummary';
 import { OptionDetailsView } from './OptionDetailsView';
 
@@ -124,7 +124,9 @@ export const LiveOptionsChain: React.FC<LiveOptionsChainProps> = ({
             {selectedTab === 0 && callsChain.length > 0 && (
               <>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  Click on any call option to see potential returns at different price levels. Expiration: {callsChain[0]?.expiration}
+                  Click on any call option to see potential returns at different price levels.
+                  <br />
+                  <strong>Expiration Dates:</strong> Options are grouped by expiration date - check the Expiration column to compare similar-term contracts.
                   <br />
                   <strong>Pricing Note:</strong> Contract calculations use the mid-point price (average of bid and ask).
                   <br />
@@ -136,15 +138,17 @@ export const LiveOptionsChain: React.FC<LiveOptionsChainProps> = ({
                   optionType="call"
                 />
                 
-                <OptionsTable
+                <OptionsGroupedByExpiration
                   options={callsChain}
                   stockQuote={stockQuote}
-                  onOptionClick={(option) => {
+                  onOptionClick={(option: OptionQuote) => {
                     setSelectedOptionForDetails(option);
                     setShowDetailsView(true);
                   }}
                   bestAtPercentages={getBestCallsAtEachPercentage}
                   optionType="call"
+                  investmentAmount={investmentAmount}
+                  percentageIncrements={percentageIncrements}
                 />
               </>
             )}
@@ -152,7 +156,9 @@ export const LiveOptionsChain: React.FC<LiveOptionsChainProps> = ({
             {selectedTab === 1 && putsChain.length > 0 && (
               <>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  Click on any put option to see potential returns at different price levels. Expiration: {putsChain[0]?.expiration}
+                  Click on any put option to see potential returns at different price levels.
+                  <br />
+                  <strong>Expiration Dates:</strong> Options are grouped by expiration date - check the Expiration column to compare similar-term contracts.
                   <br />
                   <strong>Pricing Note:</strong> Contract calculations use the mid-point price (average of bid and ask).
                   <br />
@@ -164,15 +170,17 @@ export const LiveOptionsChain: React.FC<LiveOptionsChainProps> = ({
                   optionType="put"
                 />
                 
-                <OptionsTable
+                <OptionsGroupedByExpiration
                   options={putsChain}
                   stockQuote={stockQuote}
-                  onOptionClick={(option) => {
+                  onOptionClick={(option: OptionQuote) => {
                     setSelectedOptionForDetails(option);
                     setShowDetailsView(true);
                   }}
                   bestAtPercentages={getBestPutsAtEachPercentage}
                   optionType="put"
+                  investmentAmount={investmentAmount}
+                  percentageIncrements={percentageIncrements}
                 />
               </>
             )}

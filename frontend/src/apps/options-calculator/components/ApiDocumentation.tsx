@@ -1,20 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
   Typography,
   Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Button,
+  Box,
 } from '@mui/material';
+import { ExpandMore, Code } from '@mui/icons-material';
 
 interface ApiDocumentationProps {
   showApiConfig: boolean;
   useManualData: boolean;
+  onToggle?: () => void;
 }
 
 export const ApiDocumentation: React.FC<ApiDocumentationProps> = ({
   showApiConfig,
   useManualData,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const shouldShow = !useManualData && showApiConfig;
   
   if (!shouldShow) return null;
@@ -22,16 +30,36 @@ export const ApiDocumentation: React.FC<ApiDocumentationProps> = ({
   return (
     <Card id="api-help" sx={{ mb: 3 }}>
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          OpenAPI 3.0 Specification
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6">
+            API Documentation
+          </Typography>
+          <Button
+            startIcon={<Code />}
+            onClick={() => setIsExpanded(!isExpanded)}
+            variant="outlined"
+            size="small"
+          >
+            {isExpanded ? 'Hide' : 'Show'} OpenAPI Spec
+          </Button>
+        </Box>
         
-        <Typography variant="body1" gutterBottom>
-          Your API endpoints must comply with the following OpenAPI 3.0 specification:
-        </Typography>
-
         <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2" component="pre" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+          <Typography variant="body2">
+            Your API endpoints must comply with the OpenAPI 3.0 specification below. 
+            The backend will call these endpoints to fetch real market data.
+          </Typography>
+        </Alert>
+
+        <Accordion expanded={isExpanded} onChange={() => setIsExpanded(!isExpanded)}>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="subtitle1">
+              OpenAPI 3.0 Specification
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2" component="pre" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
 {`openapi: 3.0.3
 info:
   title: Options Calculator API
@@ -44,7 +72,7 @@ security:
 paths:
   /options/stock/{symbol}:
     get:
-      summary: Get stock quote
+      summary: Get stock quote with 52-week range
       security:
         - ApiKeyAuth: []
       parameters:
@@ -63,7 +91,7 @@ paths:
                 $ref: '#/components/schemas/StockQuoteResponse'
   /options/chain/{symbol}:
     get:
-      summary: Get options chain
+      summary: Get options chain (filtered to exclude expired options)
       security:
         - ApiKeyAuth: []
       parameters:
@@ -75,7 +103,7 @@ paths:
             example: AAPL
       responses:
         '200':
-          description: Options chain data wrapped in API response
+          description: Options chain data wrapped in API response (expired options filtered out)
           content:
             application/json:
               schema:
@@ -104,7 +132,7 @@ components:
         timestamp:
           type: string
           format: date-time
-          example: "2025-07-04T17:14:44.620Z"
+          example: "2026-01-07T17:14:44.620Z"
     OptionsChainResponse:
       type: object
       required:
@@ -122,7 +150,7 @@ components:
         timestamp:
           type: string
           format: date-time
-          example: "2025-07-04T17:14:44.620Z"
+          example: "2026-01-07T17:14:44.620Z"
     StockQuote:
       type: object
       required:
@@ -148,12 +176,22 @@ components:
         lastUpdated:
           type: string
           format: date-time
-          example: "2025-07-04T17:14:44.620Z"
+          example: "2026-01-07T17:14:44.620Z"
           description: Optional - when the quote was last updated
         currency:
           type: string
           example: "USD"
           description: Optional - currency code
+        week52High:
+          type: number
+          format: float
+          example: 237.49
+          description: Optional - 52-week high price
+        week52Low:
+          type: number
+          format: float
+          example: 164.08
+          description: Optional - 52-week low price
     OptionsChainData:
       type: object
       required:
@@ -183,7 +221,8 @@ components:
           items:
             type: string
             format: date
-            example: "2025-07-11"
+            example: "2026-01-17"
+          description: Array of available expiration dates (expired dates filtered out)
     OptionQuote:
       type: object
       required:
@@ -198,7 +237,7 @@ components:
       properties:
         symbol:
           type: string
-          example: AAPL20250711C21500
+          example: AAPL20260117C21500
         strike:
           type: number
           format: float
@@ -206,7 +245,8 @@ components:
         expiration:
           type: string
           format: date
-          example: "2025-07-11"
+          example: "2026-01-17"
+          description: Must be a future date (expired options filtered out)
         bid:
           type: number
           format: float
@@ -230,35 +270,38 @@ components:
           format: float
           example: 0.278
           description: Optional - decimal form (0.278 = 27.8%)`}
-          </Typography>
-        </Alert>
+              </Typography>
+            </Alert>
 
-        <Typography variant="subtitle2" gutterBottom>
-          Implementation Notes:
-        </Typography>
-        <Alert severity="success" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            • Replace <code>{'{symbol}'}</code> in your endpoint URLs with the actual stock symbol<br/>
-            • All responses are wrapped in an ApiResponse object with success, data, error, and timestamp fields<br/>
-            • Stock quotes return the data directly in the data field<br/>
-            • Options chains return an object with calls, puts, and other metadata (not a flat array)<br/>
-            • Ensure proper CORS headers are included<br/>
-            • Use HTTPS for production deployments<br/>
-            • API key authentication is required via X-API-Key header<br/>
-            • The type field is required for options (call or put)<br/>
-            • The impliedVolatility field is optional but recommended
-          </Typography>
-        </Alert>
+            <Typography variant="subtitle2" gutterBottom>
+              Implementation Notes:
+            </Typography>
+            <Alert severity="success" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                • Replace <code>{'{symbol}'}</code> in your endpoint URLs with the actual stock symbol<br/>
+                • All responses are wrapped in an ApiResponse object with success, data, error, and timestamp fields<br/>
+                • Stock quotes now include week52High and week52Low fields for 52-week range display<br/>
+                • Options chains return an object with calls, puts, and other metadata (not a flat array)<br/>
+                • Options are automatically filtered to exclude expired contracts<br/>
+                • Ensure proper CORS headers are included<br/>
+                • Use HTTPS for production deployments<br/>
+                • API key authentication is required via X-API-Key header<br/>
+                • The type field is required for options (call or put)<br/>
+                • The impliedVolatility field is optional but recommended
+              </Typography>
+            </Alert>
 
-        <Typography variant="subtitle2" gutterBottom>
-          Sample Implementation (AWS Lambda + API Gateway):
-        </Typography>
-        <Alert severity="warning">
-          <Typography variant="body2">
-            A complete example with AWS CDK, github actions, and lambda function are available at: 
-            <code>https://github.com/TrevorDrivenDevelopment/homepage/tree/main/backend</code>
-          </Typography>
-        </Alert>
+            <Typography variant="subtitle2" gutterBottom>
+              Sample Implementation (AWS Lambda + API Gateway):
+            </Typography>
+            <Alert severity="warning">
+              <Typography variant="body2">
+                A complete example with AWS CDK, github actions, and lambda function are available at: 
+                <code>https://github.com/TrevorDrivenDevelopment/homepage/tree/main/backend</code>
+              </Typography>
+            </Alert>
+          </AccordionDetails>
+        </Accordion>
       </CardContent>
     </Card>
   );

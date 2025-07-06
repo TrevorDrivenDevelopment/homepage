@@ -4,16 +4,17 @@ import {
   Button,
   TextField,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
-import { Refresh } from '@mui/icons-material';
+import { Refresh, Warning } from '@mui/icons-material';
 
 interface LiveDataControlsProps {
   symbol: string;
-  setSymbol: (symbol: string) => void;
+  setSymbol: React.Dispatch<React.SetStateAction<string>>;
   investmentAmount: string;
-  setInvestmentAmount: (amount: string) => void;
+  setInvestmentAmount: React.Dispatch<React.SetStateAction<string>>;
   percentageIncrements: string;
-  setPercentageIncrements: (increments: string) => void;
+  setPercentageIncrements: React.Dispatch<React.SetStateAction<string>>;
   loading: boolean;
   onFetchData: () => void;
   isApiConfigured: boolean;
@@ -62,14 +63,19 @@ export const LiveDataControls: React.FC<LiveDataControlsProps> = ({
         helperText="Expected stock price changes"
       />
       
-      <Button
-        variant="contained"
-        onClick={onFetchData}
-        disabled={loading || !isApiConfigured}
-        startIcon={loading ? <CircularProgress size={16} /> : <Refresh />}
-      >
-        {loading ? 'Loading...' : 'Fetch Data'}
-      </Button>
+      <Tooltip title={!isApiConfigured ? "Please configure your API endpoints first" : ""}>
+        <span>
+          <Button
+            variant="contained"
+            onClick={onFetchData}
+            disabled={loading || !isApiConfigured}
+            startIcon={loading ? <CircularProgress size={16} /> : !isApiConfigured ? <Warning /> : <Refresh />}
+            color={!isApiConfigured ? "warning" : "primary"}
+          >
+            {loading ? 'Loading...' : !isApiConfigured ? 'Configure APIs First' : 'Fetch Data'}
+          </Button>
+        </span>
+      </Tooltip>
     </Box>
   );
 };

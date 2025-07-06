@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { createSuccessResponse, createErrorResponse, getPathParameter } from '../utils/response';
 import { AlphaVantageService } from '../services/alphaVantageService';
-import { OptionsChainResponse } from '../types/api';
+import { OptionQuote, OptionsChainResponse } from '../types/api';
 
 const alphaVantageService = new AlphaVantageService(
   process.env.ALPHA_VANTAGE_API_KEY || ''
@@ -75,7 +75,7 @@ async function handleOptionsChain(symbol: string): Promise<APIGatewayProxyResult
     const stockQuote = await alphaVantageService.getStockQuote(symbol);
     
     // Try to get options chain, but handle the case where it's not available
-    let optionsChain: any[] = [];
+    let optionsChain: OptionQuote[] = [];
     try {
       optionsChain = await alphaVantageService.getOptionsChain(symbol);
     } catch (optionsError) {

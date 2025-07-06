@@ -5,6 +5,8 @@ export interface StockQuote {
   changePercent?: string;
   lastUpdated?: string;
   currency?: string;
+  week52High?: number;
+  week52Low?: number;
 }
 
 export interface OptionQuote {

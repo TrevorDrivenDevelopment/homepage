@@ -21,7 +21,7 @@ export const useLiveData = () => {
     optionsChainUrl: '',
     apiKey: ''
   });
-  const [showApiConfig, setShowApiConfig] = useState<boolean>(false);
+  const [showApiConfig, setShowApiConfig] = useState<boolean>(true); // Show API config by default until configured
 
   const fetchData = async () => {
     if (!symbol.trim()) {
@@ -38,15 +38,21 @@ export const useLiveData = () => {
 
       const { calls, puts } = separateCallsAndPuts(rawOptions);
 
-      // Sort by strike price
-      calls.sort((a: OptionQuote, b: OptionQuote) => a.strike - b.strike);
-      puts.sort((a: OptionQuote, b: OptionQuote) => a.strike - b.strike);
+      // Sort by expiration date first, then by strike price within each expiration
+      calls.sort((a: OptionQuote, b: OptionQuote) => {
+        const dateComparison = a.expiration.localeCompare(b.expiration);
+        if (dateComparison !== 0) return dateComparison;
+        return a.strike - b.strike;
+      });
+      puts.sort((a: OptionQuote, b: OptionQuote) => {
+        const dateComparison = a.expiration.localeCompare(b.expiration);
+        if (dateComparison !== 0) return dateComparison;
+        return a.strike - b.strike;
+      });
 
       setStockQuote(quote);
       setCallsChain(calls);
       setPutsChain(puts);
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }

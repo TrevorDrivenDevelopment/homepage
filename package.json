@@ -16,6 +16,9 @@
     "build": "bun run build:frontend",
     "build:frontend": "cd frontend && bun run build",
     "build:backend": "cd backend && bun run build",
+    "lint": "bun run lint:frontend && bun run lint:backend",
+    "lint:frontend": "cd frontend && bun run lint",
+    "lint:backend": "cd backend && bun run lint",
     "test": "bun run test:frontend && bun run test:backend",
     "test:frontend": "cd frontend && bun run test",
     "test:backend": "cd backend && bun run test",
@@ -43,8 +46,8 @@
     ]
   },
   "devDependencies": {
-    "@types/bun": "^1.1.18",
-    "@types/node": "24.0.3",
+    "@types/bun": "1.2.18",
+    "@types/node": "24.0.10",
     "typescript": "5.8.3"
   }
 }
