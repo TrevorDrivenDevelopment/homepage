@@ -1,54 +1,152 @@
-import { Box, Typography } from '@mui/material';
-import React from 'react';
-import { mbtiTypes } from '../calculation/mbtiData';
-import { TypeResult } from '../types';
-import { GridColors, MBTI_STYLES, getMatchBorderStyles } from '../theme/mbtiTheme';
+import { Component, For } from 'solid-js';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Chip, 
+  Box, 
+  Stack, 
+  LinearProgress 
+} from '@suid/material';
+import { TypeResult } from '../types/mbti';
+import { mbtiTypes } from '../data/mbtiData';
 
 interface TopTypesDisplayProps {
   topTypes: TypeResult[];
   currentType: string;
-  gridColors: GridColors;
+  isComplete: boolean;
 }
 
-const TopTypesDisplay: React.FC<TopTypesDisplayProps> = ({ topTypes, currentType, gridColors }) => {
+const getMatchColor = (match: string) => {
+  switch (match.toLowerCase()) {
+    case 'excellent match': return 'success';
+    case 'very good match': return 'info';
+    case 'good match': return 'primary';
+    case 'partial match': return 'warning';
+    default: return 'default';
+  }
+};
+
+const TopTypesDisplay: Component<TopTypesDisplayProps> = (props) => {
   return (
-    <Box sx={{ mb: 3, ...MBTI_STYLES.panel }}>
-      <Typography variant="h6" gutterBottom>
-        Your Top 3 Closest Types
-      </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {topTypes.map((typeResult, index) => {
-          const typeInfo = mbtiTypes[typeResult.type];
-          // The answer type is always the first one (index 0)
-          const isMainType = index === 0;
-          return (
-            <Box
-              key={typeResult.type}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                ...getMatchBorderStyles(isMainType),
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="h6" sx={{ color: isMainType ? gridColors.linkColor : 'inherit' }}>
-                  #{index + 1}: {typeResult.type} {isMainType && '⭐'}
-                </Typography>
-                <Typography variant="body2" sx={MBTI_STYLES.secondaryText}>
-                  {typeResult.match} (Score: {typeResult.score})
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Functions:</strong> {typeInfo.functions.join(' → ')}
-              </Typography>
-              <Typography variant="body2" sx={MBTI_STYLES.secondaryText}>
-                {typeInfo.description}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-    </Box>
+    <Card sx={{
+      backgroundColor: '#4A6E8D',
+      border: '1px solid #4A6E8D'
+    }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom sx={{ color: '#ffffff' }}>
+          {props.isComplete ? 'Final Results' : 'Current Best Matches'}
+        </Typography>
+        
+        <Stack spacing={2}>
+          <For each={props.topTypes}>
+            {(typeResult, index) => {
+              const typeInfo = mbtiTypes[typeResult.type];
+              const isCurrentType = typeResult.type === props.currentType;
+              
+              return (
+                <Box 
+                  sx={{ 
+                    p: 2, 
+                    border: 1, 
+                    borderColor: isCurrentType ? '#7CE2FF' : '#4A6E8D',
+                    borderRadius: 1,
+                    backgroundColor: isCurrentType ? '#1B3A57' : '#1B3A57'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ffffff' }}>
+                        #{index() + 1}
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#ffffff' }}>
+                        {typeResult.type}
+                      </Typography>
+                      {isCurrentType && (
+                        <Chip 
+                          label="Current Type" 
+                          size="small" 
+                          variant="filled"
+                          sx={{
+                            backgroundColor: '#7CE2FF',
+                            color: '#1B3A57'
+                          }}
+                        />
+                      )}
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#ffffff' }}>
+                        Score: {typeResult.score}
+                      </Typography>
+                      <Chip 
+                        label={typeResult.match}
+                        size="small"
+                        color={getMatchColor(typeResult.match)}
+                        variant="outlined"
+                        sx={{
+                          borderColor: '#7CE2FF',
+                          color: '#7CE2FF'
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                  
+                  {typeInfo && (
+                    <>
+                      <Typography variant="body2" sx={{ mb: 1, color: '#7CE2FF' }}>
+                        {typeInfo.description}
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        <Typography variant="caption" sx={{ mr: 1, color: '#ffffff' }}>
+                          Function Stack:
+                        </Typography>
+                        <For each={typeInfo.functions}>
+                          {(func, funcIndex) => (
+                            <Chip 
+                              label={func}
+                              size="small"
+                              variant={funcIndex() === 0 ? 'filled' : 'outlined'}
+                              sx={{ 
+                                fontSize: '0.7rem',
+                                backgroundColor: funcIndex() === 0 ? '#7CE2FF' : 'transparent',
+                                color: funcIndex() === 0 ? '#1B3A57' : '#7CE2FF',
+                                borderColor: '#7CE2FF'
+                              }}
+                            />
+                          )}
+                        </For>
+                      </Box>
+                    </>
+                  )}
+                  
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(typeResult.score, 100)}
+                    sx={{
+                      mt: 1,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: '#4A6E8D',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: '#7CE2FF'
+                      }
+                    }}
+                  />
+                </Box>
+              );
+            }}
+          </For>
+        </Stack>
+        
+        {!props.isComplete && (
+          <Typography variant="caption" sx={{ mt: 2, display: 'block', color: '#7CE2FF' }}>
+            Complete all questions for final results and more accurate type matching.
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

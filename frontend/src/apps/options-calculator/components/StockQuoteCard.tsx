@@ -1,53 +1,52 @@
-import React from 'react';
+import { Show, createMemo } from 'solid-js';
 import {
   Box,
   Card,
   CardContent,
   Typography,
   Chip,
-} from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
+} from '@suid/material';
+import { TrendingUp, TrendingDown } from '@suid/icons-material';
 import { StockQuote } from '../enhancedOptionsService';
 
 interface StockQuoteCardProps {
   stockQuote: StockQuote;
 }
 
-export const StockQuoteCard: React.FC<StockQuoteCardProps> = ({ stockQuote }) => {
-  const currentPrice = stockQuote.price;
-  const week52High = stockQuote.week52High;
-  const week52Low = stockQuote.week52Low;
+export const StockQuoteCard = (props: StockQuoteCardProps) => {
+  const currentPrice = () => props.stockQuote.price;
+  const week52High = () => props.stockQuote.week52High;
+  const week52Low = () => props.stockQuote.week52Low;
   
   // Calculate position within 52-week range
-  const get52WeekPosition = () => {
-    if (!week52High || !week52Low) return null;
-    const range = week52High - week52Low;
-    const position = ((currentPrice - week52Low) / range) * 100;
+  const get52WeekPosition = createMemo(() => {
+    const high = week52High();
+    const low = week52Low();
+    if (!high || !low) return null;
+    const range = high - low;
+    const position = ((currentPrice() - low) / range) * 100;
     return Math.round(position);
-  };
-
-  const position52Week = get52WeekPosition();
+  });
 
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 2 }}>
           <Typography variant="h5">
-            {stockQuote.symbol}
+            {props.stockQuote.symbol}
           </Typography>
           <Typography variant="h4" color="primary">
-            ${stockQuote.price.toFixed(2)}
+            ${props.stockQuote.price.toFixed(2)}
           </Typography>
           <Chip
-            icon={(stockQuote.change ?? 0) >= 0 ? <TrendingUp /> : <TrendingDown />}
-            label={`${(stockQuote.change ?? 0) >= 0 ? '+' : ''}${(stockQuote.change ?? 0).toFixed(2)} (${stockQuote.changePercent || '0.00%'})`}
-            color={(stockQuote.change ?? 0) >= 0 ? 'success' : 'error'}
+            icon={(props.stockQuote.change ?? 0) >= 0 ? <TrendingUp /> : <TrendingDown />}
+            label={`${(props.stockQuote.change ?? 0) >= 0 ? '+' : ''}${(props.stockQuote.change ?? 0).toFixed(2)} (${props.stockQuote.changePercent || '0.00%'})`}
+            color={(props.stockQuote.change ?? 0) >= 0 ? 'success' : 'error'}
             variant="outlined"
           />
         </Box>
 
-        {/* 52-Week Range Information */}
-        {week52High && week52Low && (
+        <Show when={week52High() && week52Low()}>
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               52-Week Range
@@ -58,7 +57,7 @@ export const StockQuoteCard: React.FC<StockQuoteCardProps> = ({ stockQuote }) =>
                   Low:
                 </Typography>
                 <Typography variant="body2" fontWeight="medium">
-                  ${week52Low.toFixed(2)}
+                  ${week52Low()?.toFixed(2)}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -66,23 +65,23 @@ export const StockQuoteCard: React.FC<StockQuoteCardProps> = ({ stockQuote }) =>
                   High:
                 </Typography>
                 <Typography variant="body2" fontWeight="medium">
-                  ${week52High.toFixed(2)}
+                  ${week52High()?.toFixed(2)}
                 </Typography>
               </Box>
-              {position52Week !== null && (
+              <Show when={get52WeekPosition() !== null}>
                 <Chip
-                  label={`${position52Week}% of range`}
+                  label={`${get52WeekPosition()}% of range`}
                   size="small"
-                  color={position52Week > 75 ? 'warning' : position52Week < 25 ? 'info' : 'default'}
+                  color={get52WeekPosition()! > 75 ? 'warning' : get52WeekPosition()! < 25 ? 'info' : 'default'}
                   variant="outlined"
                 />
-              )}
+              </Show>
             </Box>
           </Box>
-        )}
+        </Show>
 
         <Typography variant="body2" color="text.secondary">
-          Last updated: {new Date(stockQuote.lastUpdated || new Date().toISOString()).toLocaleString()}
+          Last updated: {new Date(props.stockQuote.lastUpdated || new Date().toISOString()).toLocaleString()}
         </Typography>
       </CardContent>
     </Card>

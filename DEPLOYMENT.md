@@ -4,7 +4,7 @@ This repository uses a modern monorepo structure with a single, comprehensive Gi
 
 ## Architecture Overview
 
-- **Frontend**: React app (built with Rsbuild) deployed to AWS S3 + CloudFront
+- **Frontend**: SolidJS app (built with RSBuild) deployed to AWS S3 + CloudFront
 - **Backend**: TypeScript Lambda functions with API Gateway
 - **Infrastructure**: AWS CDK for infrastructure as code
 - **CI/CD**: Single GitHub Actions workflow with approval gates
@@ -143,7 +143,7 @@ Ensure your S3 bucket is configured for static website hosting:
    - Go to S3 bucket → **Properties** → **Static website hosting**
    - Enable static website hosting
    - Index document: `index.html`
-   - Error document: `index.html` (for React Router support)
+   - Error document: `index.html` (for SolidJS Router support)
 
 2. **Bucket Policy** (for public access):
 ```json
@@ -188,11 +188,11 @@ bun run cdk bootstrap
    - Checks CDK bootstrap status
 
 2. **🏗️ Build & Test** (automatic)
-   - Frontend: TypeScript check + build verification
+   - Frontend: TypeScript check + RSBuild build verification
    - Backend: TypeScript check + CDK synthesis test
 
 3. **🎨 Frontend Deploy** (requires approval)
-   - Builds React app with Rsbuild
+   - Builds SolidJS app with RSBuild
    - Deploys to S3 with `--delete` flag
    - Invalidates CloudFront cache (if configured)
 

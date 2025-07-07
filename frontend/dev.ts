@@ -17,7 +17,7 @@ const frontend = spawn('bun', ['run', 'dev'], {
   shell: true,
   env: {
     ...process.env,
-    REACT_APP_API_URL: `http://localhost:${BACKEND_PORT}`,
+    APP_API_URL: `http://localhost:${BACKEND_PORT}`,
     RSBUILD_API_URL: `http://localhost:${BACKEND_PORT}`,
   },
 });

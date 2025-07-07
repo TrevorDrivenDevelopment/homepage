@@ -1,6 +1,23 @@
 # MBTI Quality Assurance Testing Framework
 
-This testing framework provides comprehensive quality assurance for the MBTI personality test system. It includes question quality analysis, type accuracy testing, consistency validation, and performance metrics.
+This testing framework provides comprehensive quality assurance for the MBTI personality test system.
+
+The testing framework validates the MBTICalculator that powers the QuestionSelector component (SolidJS):
+
+```typescript
+// In QuestionSelector.tsx (SolidJS)
+import { MBTICalculator } from './strategies';
+
+const calculator = new MBTICalculator();
+const result = calculator.calculate(responses);
+
+// Results include:
+// - result.type: Calculated MBTI type
+// - result.confidence: Confidence score
+// - result.scores: Function scores
+// - result.alternativeTypes: Top alternative types
+// - result.stack: Cognitive function stack
+``accuracy testing, consistency validation, and performance metrics.
 
 ## Overview
 

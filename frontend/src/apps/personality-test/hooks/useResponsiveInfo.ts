@@ -1,14 +1,17 @@
-import { useMediaQuery, useTheme } from '@mui/material';
-import { useState } from 'react';
+import { createSignal, createMemo } from 'solid-js';
 
 export const useResponsiveInfo = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState({ title: '', description: '' });
+  // Simple mobile detection based on window width
+  const isMobile = createMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768; // md breakpoint equivalent
+  });
+  
+  const [modalOpen, setModalOpen] = createSignal(false);
+  const [modalContent, setModalContent] = createSignal({ title: '', description: '' });
 
   const showInfo = (title: string, description: string) => {
-    if (isMobile) {
+    if (isMobile()) {
       setModalContent({ title, description });
       setModalOpen(true);
     }

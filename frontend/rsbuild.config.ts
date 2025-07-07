@@ -1,13 +1,6 @@
 import { defineConfig } from '@rsbuild/core';
-import { pluginReact } from '@rsbuild/plugin-react';
-import { pluginTypeCheck } from '@rsbuild/plugin-type-check';
 
 export default defineConfig({
-  plugins: [
-    pluginReact(),
-    // Temporarily disable type checking for the initial build
-    // pluginTypeCheck(),
-  ],
   html: {
     template: './public/index.html',
   },
@@ -17,7 +10,7 @@ export default defineConfig({
     },
     define: {
       // Define environment variables for the browser
-      'import.meta.env.REACT_APP_API_URL': JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:8080'),
+      'import.meta.env.APP_API_URL': JSON.stringify(process.env.APP_API_URL || 'http://localhost:8080'),
       'import.meta.env.RSBUILD_API_URL': JSON.stringify(process.env.RSBUILD_API_URL || 'http://localhost:8080'),
       'import.meta.env.PUBLIC_URL': JSON.stringify(''),
     },
@@ -43,5 +36,31 @@ export default defineConfig({
     chunkSplit: {
       strategy: 'split-by-experience',
     },
+  },
+  tools: {
+    rspack: {
+      resolve: {
+        conditionNames: ['solid', 'browser', 'import', 'module', 'default'],
+      },
+      module: {
+        rules: [
+          {
+            test: /\.(jsx|tsx)$/,
+            exclude: /node_modules\/(?!@suid)/,
+            use: [
+              {
+                loader: 'babel-loader',
+                options: {
+                  presets: [
+                    ['solid', { generate: 'dom', hydratable: false }],
+                    '@babel/preset-typescript'
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
   },
 });

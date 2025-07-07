@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show, createMemo } from 'solid-js';
 import {
   Dialog,
   DialogTitle,
@@ -8,8 +8,8 @@ import {
   Typography,
   Alert,
   Box,
-} from '@mui/material';
-import { Error as ErrorIcon, Refresh } from '@mui/icons-material';
+} from '@suid/material';
+import { Error as ErrorIcon, Refresh } from '@suid/icons-material';
 
 interface ErrorModalProps {
   open: boolean;
@@ -19,14 +19,9 @@ interface ErrorModalProps {
   title?: string;
 }
 
-export const ErrorModal: React.FC<ErrorModalProps> = ({
-  open,
-  onClose,
-  onRetry,
-  error,
-  title = 'Data Retrieval Failed',
-}) => {
-  const getErrorSuggestion = (errorMessage: string) => {
+export const ErrorModal = (props: ErrorModalProps) => {
+  const getErrorSuggestion = createMemo(() => {
+    const errorMessage = props.error;
     if (errorMessage.includes('API key')) {
       return 'Please verify your API key is correct and has the necessary permissions.';
     }
@@ -40,13 +35,13 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
       return 'Please check your internet connection and that the API server is running.';
     }
     return 'Please verify your API configuration and try again.';
-  };
+  });
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={props.open} onClose={props.onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <ErrorIcon color="error" />
-        {title}
+        {props.title || 'Data Retrieval Failed'}
       </DialogTitle>
       
       <DialogContent>
@@ -63,7 +58,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word'
             }}>
-              {error}
+              {props.error}
             </Box>
           </Typography>
         </Alert>
@@ -71,7 +66,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
         <Alert severity="info">
           <Typography variant="body2">
             <strong>Suggested Solution:</strong><br />
-            {getErrorSuggestion(error)}
+            {getErrorSuggestion()}
           </Typography>
         </Alert>
 
@@ -87,14 +82,14 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
       </DialogContent>
       
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={props.onClose} color="primary">
           Close
         </Button>
-        {onRetry && (
+        <Show when={props.onRetry}>
           <Button
             onClick={() => {
-              onClose();
-              onRetry();
+              props.onClose();
+              props.onRetry?.();
             }}
             variant="contained"
             color="primary"
@@ -102,7 +97,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           >
             Retry
           </Button>
-        )}
+        </Show>
       </DialogActions>
     </Dialog>
   );

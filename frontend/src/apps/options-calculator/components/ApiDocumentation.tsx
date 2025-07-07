@@ -1,16 +1,4 @@
-import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Button,
-  Box,
-} from '@mui/material';
-import { ExpandMore, Code } from '@mui/icons-material';
+import { createSignal, Show } from 'solid-js';
 
 interface ApiDocumentationProps {
   showApiConfig: boolean;
@@ -18,48 +6,127 @@ interface ApiDocumentationProps {
   onToggle?: () => void;
 }
 
-export const ApiDocumentation: React.FC<ApiDocumentationProps> = ({
-  showApiConfig,
-  useManualData,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const shouldShow = !useManualData && showApiConfig;
+export const ApiDocumentation = (props: ApiDocumentationProps) => {
+  const [isExpanded, setIsExpanded] = createSignal(false);
   
-  if (!shouldShow) return null;
-
   return (
-    <Card id="api-help" sx={{ mb: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6">
-            API Documentation
-          </Typography>
-          <Button
-            startIcon={<Code />}
-            onClick={() => setIsExpanded(!isExpanded)}
-            variant="outlined"
-            size="small"
-          >
-            {isExpanded ? 'Hide' : 'Show'} OpenAPI Spec
-          </Button>
-        </Box>
-        
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            Your API endpoints must comply with the OpenAPI 3.0 specification below. 
-            The backend will call these endpoints to fetch real market data.
-          </Typography>
-        </Alert>
+    <Show when={!props.useManualData && props.showApiConfig}>
+      <div id="api-help" style={{ 
+        "margin-bottom": "24px",
+        border: "1px solid #4A6E8D",
+        "border-radius": "4px",
+        "box-shadow": "0 1px 3px rgba(0,0,0,0.12)",
+        "background-color": "#4A6E8D"
+      }}>
+        <div style={{ padding: "16px" }}>
+          <div style={{ 
+            display: "flex", 
+            "align-items": "center", 
+            "justify-content": "space-between", 
+            "margin-bottom": "16px" 
+          }}>
+            <h3 style={{ 
+              margin: "0",
+              "font-size": "1.25rem",
+              "font-weight": "500",
+              color: "#ffffff"
+            }}>
+              API Documentation
+            </h3>
+            <button
+              onClick={() => setIsExpanded(!isExpanded())}
+              style={{
+                background: "none",
+                border: "1px solid #7CE2FF",
+                color: "#7CE2FF",
+                padding: "6px 16px",
+                "border-radius": "4px",
+                cursor: "pointer",
+                "font-size": "0.875rem",
+                display: "flex",
+                "align-items": "center",
+                gap: "8px"
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0L19.2 12l-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+              </svg>
+              {isExpanded() ? 'Hide' : 'Show'} OpenAPI Spec
+            </button>
+          </div>
+          
+          <div style={{ 
+            "background-color": "#e3f2fd",
+            border: "1px solid #2196f3",
+            "border-radius": "4px",
+            padding: "12px",
+            "margin-bottom": "16px"
+          }}>
+            <p style={{ 
+              margin: "0",
+              "font-size": "0.875rem",
+              color: "#1565c0"
+            }}>
+              Your API endpoints must comply with the OpenAPI 3.0 specification below. 
+              The backend will call these endpoints to fetch real market data.
+            </p>
+          </div>
 
-        <Accordion expanded={isExpanded} onChange={() => setIsExpanded(!isExpanded)}>
-          <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography variant="subtitle1">
-              OpenAPI 3.0 Specification
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2" component="pre" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+          <div style={{
+            border: "1px solid #e0e0e0",
+            "border-radius": "4px"
+          }}>
+            <button
+              onClick={() => setIsExpanded(!isExpanded())}
+              style={{
+                width: "100%",
+                background: "none",
+                border: "none",
+                padding: "16px",
+                cursor: "pointer",
+                "text-align": "left",
+                display: "flex",
+                "justify-content": "space-between",
+                "align-items": "center"
+              }}
+            >
+              <h4 style={{ 
+                margin: "0",
+                "font-size": "1rem",
+                "font-weight": "500"
+              }}>
+                OpenAPI 3.0 Specification
+              </h4>
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="currentColor"
+                style={{
+                  transform: isExpanded() ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s"
+                }}
+              >
+                <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+              </svg>
+            </button>
+            
+            <Show when={isExpanded()}>
+              <div style={{ padding: "0 16px 16px 16px" }}>
+                <div style={{ 
+                  "background-color": "#e3f2fd",
+                  border: "1px solid #2196f3",
+                  "border-radius": "4px",
+                  padding: "12px",
+                  "margin-bottom": "16px"
+                }}>
+                  <pre style={{ 
+                    margin: "0",
+                    "font-family": "monospace", 
+                    "white-space": "pre-wrap", 
+                    "font-size": "0.8rem",
+                    color: "#1565c0"
+                  }}>
 {`openapi: 3.0.3
 info:
   title: Options Calculator API
@@ -270,39 +337,71 @@ components:
           format: float
           example: 0.278
           description: Optional - decimal form (0.278 = 27.8%)`}
-              </Typography>
-            </Alert>
+                  </pre>
+                </div>
 
-            <Typography variant="subtitle2" gutterBottom>
-              Implementation Notes:
-            </Typography>
-            <Alert severity="success" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                • Replace <code>{'{symbol}'}</code> in your endpoint URLs with the actual stock symbol<br/>
-                • All responses are wrapped in an ApiResponse object with success, data, error, and timestamp fields<br/>
-                • Stock quotes now include week52High and week52Low fields for 52-week range display<br/>
-                • Options chains return an object with calls, puts, and other metadata (not a flat array)<br/>
-                • Options are automatically filtered to exclude expired contracts<br/>
-                • Ensure proper CORS headers are included<br/>
-                • Use HTTPS for production deployments<br/>
-                • API key authentication is required via X-API-Key header<br/>
-                • The type field is required for options (call or put)<br/>
-                • The impliedVolatility field is optional but recommended
-              </Typography>
-            </Alert>
+                <h5 style={{ 
+                  margin: "16px 0 8px 0",
+                  "font-size": "0.875rem",
+                  "font-weight": "500"
+                }}>
+                  Implementation Notes:
+                </h5>
+                <div style={{ 
+                  "background-color": "#e8f5e8",
+                  border: "1px solid #4caf50",
+                  "border-radius": "4px",
+                  padding: "12px",
+                  "margin-bottom": "16px"
+                }}>
+                  <p style={{ 
+                    margin: "0",
+                    "font-size": "0.875rem",
+                    color: "#2e7d32",
+                    "line-height": "1.6"
+                  }}>
+                    • Replace <code style={{ "background-color": "#f5f5f5", padding: "2px 4px", "border-radius": "2px" }}>{'{symbol}'}</code> in your endpoint URLs with the actual stock symbol<br/>
+                    • All responses are wrapped in an ApiResponse object with success, data, error, and timestamp fields<br/>
+                    • Stock quotes now include week52High and week52Low fields for 52-week range display<br/>
+                    • Options chains return an object with calls, puts, and other metadata (not a flat array)<br/>
+                    • Options are automatically filtered to exclude expired contracts<br/>
+                    • Ensure proper CORS headers are included<br/>
+                    • Use HTTPS for production deployments<br/>
+                    • API key authentication is required via X-API-Key header<br/>
+                    • The type field is required for options (call or put)<br/>
+                    • The impliedVolatility field is optional but recommended
+                  </p>
+                </div>
 
-            <Typography variant="subtitle2" gutterBottom>
-              Sample Implementation (AWS Lambda + API Gateway):
-            </Typography>
-            <Alert severity="warning">
-              <Typography variant="body2">
-                A complete example with AWS CDK, github actions, and lambda function are available at: 
-                <code>https://github.com/TrevorDrivenDevelopment/homepage/tree/main/backend</code>
-              </Typography>
-            </Alert>
-          </AccordionDetails>
-        </Accordion>
-      </CardContent>
-    </Card>
+                <h5 style={{ 
+                  margin: "16px 0 8px 0",
+                  "font-size": "0.875rem",
+                  "font-weight": "500"
+                }}>
+                  Sample Implementation (AWS Lambda + API Gateway):
+                </h5>
+                <div style={{ 
+                  "background-color": "#fff3e0",
+                  border: "1px solid #ff9800",
+                  "border-radius": "4px",
+                  padding: "12px"
+                }}>
+                  <p style={{ 
+                    margin: "0",
+                    "font-size": "0.875rem",
+                    color: "#e65100"
+                  }}>
+                    A complete example with AWS CDK, github actions, and lambda function are available at: 
+                    <code style={{ "background-color": "#f5f5f5", padding: "2px 4px", "border-radius": "2px" }}>
+                      https://github.com/TrevorDrivenDevelopment/homepage/tree/main/backend
+                    </code>
+                  </p>
+                </div>
+              </div>
+            </Show>
+          </div>
+        </div>
+      </div>
+    </Show>
   );
 };

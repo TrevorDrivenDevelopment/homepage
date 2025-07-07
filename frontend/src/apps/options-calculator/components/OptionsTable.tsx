@@ -1,4 +1,4 @@
-import React from 'react';
+import { For } from 'solid-js';
 import {
   Table,
   TableBody,
@@ -10,24 +10,19 @@ import {
   Chip,
   Box,
   Typography,
-} from '@mui/material';
+} from '@suid/material';
 import { OptionQuote, StockQuote } from '../enhancedOptionsService';
 
 interface OptionsTableProps {
   options: OptionQuote[];
   stockQuote: StockQuote | null;
+  // eslint-disable-next-line no-unused-vars
   onOptionClick: (option: OptionQuote) => void;
   bestAtPercentages: Map<number, { option: OptionQuote; profit: number }>;
   optionType: 'call' | 'put';
 }
 
-export const OptionsTable: React.FC<OptionsTableProps> = ({
-  options,
-  stockQuote,
-  onOptionClick,
-  bestAtPercentages,
-  optionType,
-}) => {
+export const OptionsTable = (props: OptionsTableProps) => {
   const roundMidpointUp = (bid: number, ask: number): number => {
     const midpoint = (bid + ask) / 2;
     return Math.ceil(midpoint * 100) / 100;
@@ -72,14 +67,14 @@ export const OptionsTable: React.FC<OptionsTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {options.map((option) => {
+          <For each={props.options}>{(option) => {
             const midPrice = roundMidpointUp(option.bid, option.ask);
-            const moneyness = stockQuote ? option.strike / stockQuote.price : 1;
-            const moneynessInfo = stockQuote ? getMoneyness(option, stockQuote.price, optionType) : null;
+            const moneyness = props.stockQuote ? option.strike / props.stockQuote.price : 1;
+            const moneynessInfo = props.stockQuote ? getMoneyness(option, props.stockQuote.price, props.optionType) : null;
             
             // Find which percentages this option is best for
             const bestAtPercentagesList: number[] = [];
-            bestAtPercentages.forEach((value, percentage) => {
+            props.bestAtPercentages.forEach((value, percentage) => {
               if (value.option.symbol === option.symbol) {
                 bestAtPercentagesList.push(percentage);
               }
@@ -87,8 +82,7 @@ export const OptionsTable: React.FC<OptionsTableProps> = ({
             
             return (
               <TableRow
-                key={option.symbol}
-                onClick={() => onOptionClick(option)}
+                onClick={() => props.onOptionClick(option)}
                 sx={{
                   cursor: 'pointer',
                   '&:hover': { bgcolor: 'action.hover' },
@@ -110,16 +104,15 @@ export const OptionsTable: React.FC<OptionsTableProps> = ({
                     </Box>
                     {bestAtPercentagesList.length > 0 && (
                       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {bestAtPercentagesList.map(percentage => (
+                        <For each={bestAtPercentagesList}>{(percentage) => (
                           <Chip
-                            key={percentage}
                             label={`Best at +${percentage}%`}
                             size="small"
                             color="primary"
                             variant="filled"
                             sx={{ fontSize: '0.65rem', height: '18px' }}
                           />
-                        ))}
+                        )}</For>
                       </Box>
                     )}
                   </Box>
@@ -128,7 +121,7 @@ export const OptionsTable: React.FC<OptionsTableProps> = ({
                 <TableCell>${option.ask.toFixed(2)}</TableCell>
                 <TableCell>
                   <strong>${midPrice.toFixed(2)}</strong>
-                  <Typography variant="caption" color="text.secondary" display="block">
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                     (Used for calculations)
                   </Typography>
                 </TableCell>
@@ -138,7 +131,7 @@ export const OptionsTable: React.FC<OptionsTableProps> = ({
                 <TableCell>{moneyness.toFixed(3)}</TableCell>
               </TableRow>
             );
-          })}
+          }}</For>
         </TableBody>
       </Table>
     </TableContainer>

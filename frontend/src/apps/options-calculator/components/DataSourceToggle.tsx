@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 import {
   Box,
   Card,
@@ -9,67 +9,89 @@ import {
   Alert,
   Button,
   TextField,
-} from '@mui/material';
-import { Edit, CloudDownload } from '@mui/icons-material';
+} from '@suid/material';
+import { Edit, CloudDownload } from '@suid/icons-material';
+import type { Setter } from 'solid-js';
 
 interface DataSourceToggleProps {
   useManualData: boolean;
-  setUseManualData: React.Dispatch<React.SetStateAction<boolean>>;
+  setUseManualData: Setter<boolean>;
   apiEndpoints: {
     stockQuoteUrl: string;
     optionsChainUrl: string;
     apiKey: string;
   };
-  setApiEndpoints: React.Dispatch<React.SetStateAction<{
+  setApiEndpoints: Setter<{
     stockQuoteUrl: string;
     optionsChainUrl: string;
     apiKey: string;
-  }>>;
+  }>;
   showApiConfig: boolean;
-  setShowApiConfig: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowApiConfig: Setter<boolean>;
 }
 
-export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
-  useManualData,
-  setUseManualData,
-  apiEndpoints,
-  setApiEndpoints,
-  showApiConfig,
-  setShowApiConfig,
-}) => {
+export const DataSourceToggle = (props: DataSourceToggleProps) => {
   return (
-    <Card sx={{ mb: 3 }}>
+    <Card sx={{ 
+      mb: 3,
+      backgroundColor: '#4A6E8D',
+      border: '1px solid #4A6E8D'
+    }}>
       <CardContent>
         <FormControlLabel
           control={
             <Switch
-              checked={useManualData}
-              onChange={(e) => setUseManualData(e.target.checked)}
+              checked={props.useManualData}
+              onChange={(e, checked) => props.setUseManualData(checked)}
               color="primary"
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#7CE2FF',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#7CE2FF',
+                },
+              }}
             />
           }
           label={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {useManualData ? <Edit /> : <CloudDownload />}
-              <Typography>
-                {useManualData ? 'Manual Data Entry Mode' : 'Live Data Mode'}
+              {props.useManualData ? <Edit sx={{ color: '#7CE2FF' }} /> : <CloudDownload sx={{ color: '#7CE2FF' }} />}
+              <Typography sx={{ color: '#ffffff' }}>
+                {props.useManualData ? 'Manual Data Entry Mode' : 'Live Data Mode'}
               </Typography>
             </Box>
           }
         />
         
-        {!useManualData && (
+        <Show when={!props.useManualData}>
           <Box sx={{ mt: 2 }}>
-            {!apiEndpoints.stockQuoteUrl || !apiEndpoints.optionsChainUrl || !apiEndpoints.apiKey ? (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                <Typography variant="body2">
+            <Show 
+              when={props.apiEndpoints.stockQuoteUrl && props.apiEndpoints.optionsChainUrl && props.apiEndpoints.apiKey}
+              fallback={              <Alert severity="warning" sx={{ 
+                mb: 2,
+                backgroundColor: '#1B3A57',
+                borderColor: '#ff6b6b',
+                color: '#ffffff',
+                '& .MuiAlert-icon': {
+                  color: '#ff6b6b'
+                }
+              }}>
+                <Typography variant="body2" sx={{ color: '#ffffff' }}>
                   <strong>API Configuration Required:</strong> To use live data mode, you must configure your own API endpoints that provide real market data.
                   {' '}
                   <Button 
                     size="small" 
                     variant="contained"
-                    onClick={() => setShowApiConfig(true)}
-                    sx={{ ml: 1 }}
+                    onClick={() => props.setShowApiConfig(true)}
+                    sx={{ 
+                      ml: 1,
+                      backgroundColor: '#7CE2FF',
+                      color: '#1B3A57',
+                      '&:hover': {
+                        backgroundColor: '#4A6E8D'
+                      }
+                    }}
                   >
                     Configure APIs Now
                   </Button>
@@ -78,51 +100,87 @@ export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
                     size="small" 
                     variant="outlined"
                     href="#api-help"
-                    sx={{ ml: 1 }}
+                    sx={{ 
+                      ml: 1,
+                      borderColor: '#7CE2FF',
+                      color: '#7CE2FF',
+                      '&:hover': {
+                        borderColor: '#ffffff',
+                        backgroundColor: '#4A6E8D'
+                      }
+                    }}
                   >
                     API Help
                   </Button>
                 </Typography>
               </Alert>
-            ) : (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                <Typography variant="body2">
+              }
+            >
+              <Alert severity="success" sx={{ 
+                mb: 2,
+                backgroundColor: '#1B3A57',
+                borderColor: '#7CE2FF',
+                color: '#ffffff',
+                '& .MuiAlert-icon': {
+                  color: '#7CE2FF'
+                }
+              }}>
+                <Typography variant="body2" sx={{ color: '#ffffff' }}>
                   <strong>APIs Configured:</strong> Custom API endpoints are configured and ready to use.
                   {' '}
                   <Button 
                     size="small" 
-                    onClick={() => setShowApiConfig(!showApiConfig)}
-                    sx={{ ml: 1 }}
+                    onClick={() => props.setShowApiConfig(!props.showApiConfig)}
+                    sx={{ 
+                      ml: 1,
+                      color: '#7CE2FF',
+                      '&:hover': {
+                        backgroundColor: '#4A6E8D'
+                      }
+                    }}
                   >
-                    {showApiConfig ? 'Hide Config' : 'Edit Config'}
+                    {props.showApiConfig ? 'Hide Config' : 'Edit Config'}
                   </Button>
                   {' '}
                   <Button 
                     size="small" 
                     variant="outlined"
                     href="#api-help"
-                    sx={{ ml: 1 }}
+                    sx={{ 
+                      ml: 1,
+                      borderColor: '#7CE2FF',
+                      color: '#7CE2FF',
+                      '&:hover': {
+                        borderColor: '#ffffff',
+                        backgroundColor: '#4A6E8D'
+                      }
+                    }}
                   >
                     API Help
                   </Button>
                 </Typography>
               </Alert>
-            )}
+            </Show>
             
-            {showApiConfig && (
-              <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+            <Show when={props.showApiConfig}>
+              <Card variant="outlined" sx={{ 
+                p: 2, 
+                mb: 2,
+                backgroundColor: '#1B3A57',
+                borderColor: '#4A6E8D'
+              }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ color: '#ffffff' }}>
                   API Endpoint Configuration
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" gutterBottom sx={{ color: '#7CE2FF' }}>
                   Enter your API endpoints that follow the required contract (see API Help below).
                 </Typography>
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                   <TextField
                     label="Stock Quote API URL"
-                    value={apiEndpoints.stockQuoteUrl}
-                    onChange={(e) => setApiEndpoints(prev => ({ ...prev, stockQuoteUrl: e.target.value }))}
+                    value={props.apiEndpoints.stockQuoteUrl}
+                    onChange={(e, value) => props.setApiEndpoints(prev => ({ ...prev, stockQuoteUrl: value }))}
                     placeholder="https://your-api.com/quote/{symbol}"
                     size="small"
                     fullWidth
@@ -130,8 +188,8 @@ export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
                   />
                   <TextField
                     label="Options Chain API URL"
-                    value={apiEndpoints.optionsChainUrl}
-                    onChange={(e) => setApiEndpoints(prev => ({ ...prev, optionsChainUrl: e.target.value }))}
+                    value={props.apiEndpoints.optionsChainUrl}
+                    onChange={(e, value) => props.setApiEndpoints(prev => ({ ...prev, optionsChainUrl: value }))}
                     placeholder="https://your-api.com/options/{symbol}"
                     size="small"
                     fullWidth
@@ -139,8 +197,8 @@ export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
                   />
                   <TextField
                     label="API Key"
-                    value={apiEndpoints.apiKey}
-                    onChange={(e) => setApiEndpoints(prev => ({ ...prev, apiKey: e.target.value }))}
+                    value={props.apiEndpoints.apiKey}
+                    onChange={(e, value) => props.setApiEndpoints(prev => ({ ...prev, apiKey: value }))}
                     placeholder="your-api-key-here"
                     size="small"
                     fullWidth
@@ -149,9 +207,9 @@ export const DataSourceToggle: React.FC<DataSourceToggleProps> = ({
                   />
                 </Box>
               </Card>
-            )}
+            </Show>
           </Box>
-        )}
+        </Show>
       </CardContent>
     </Card>
   );

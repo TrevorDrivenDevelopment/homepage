@@ -1,11 +1,11 @@
 # Trevor Driven Development Homepage
 
-A modern full-stack monorepo built with **React**, **RSBuild**, **Bun**, and **AWS CDK**. Features a personal portfolio with interactive applications including an MBTI personality test and options calculator.
+A modern full-stack monorepo built with **SolidJS**, **RSBuild**, **Bun**, and **AWS CDK**. Features a personal portfolio with interactive applications including an MBTI personality test and options calculator.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- [Bun](https://bun.sh) (v1.2.17+) - Fast JavaScript runtime and package manager
+- [Bun](https://bun.sh) (v1.2.18+) - Fast JavaScript runtime and package manager
 - [mise](https://mise.run) - Tool version management (recommended)
 - [AWS CDK CLI](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) - For backend deployment (optional)
 
@@ -55,15 +55,15 @@ bun install
 #### Full-Stack Development (Recommended)
 ```bash
 # Start both frontend and backend servers
-bun run dev:full
+bun run dev
 ```
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8080
 
 #### Individual Services
 ```bash
-# Frontend only (React app)
-bun run dev
+# Frontend only (SolidJS app)
+bun run dev:frontend
 
 # Backend only (Lambda functions locally)
 bun run dev:backend
@@ -72,10 +72,10 @@ bun run dev:backend
 ## 🛠 Technology Stack
 
 ### Frontend
-- **React 19** with TypeScript
+- **SolidJS** with TypeScript
 - **RSBuild** - Fast build tool (Webpack/Vite alternative)
-- **Material-UI** - React component library
-- **React Router** - Client-side routing
+- **SUID (SolidJS UI)** - Material Design components for SolidJS
+- **SolidJS Router** - Client-side routing
 
 ### Backend
 - **Bun** - Fast JavaScript runtime (development)
@@ -96,7 +96,7 @@ This monorepo is organized with clear separation between frontend and backend:
 
 ```
 homepage/
-├── frontend/              # React application
+├── frontend/              # SolidJS application
 │   ├── src/
 │   │   ├── apps/         # Feature applications
 │   │   │   ├── PersonalApplications.tsx
@@ -106,7 +106,7 @@ homepage/
 │   │   └── utils/        # Shared utilities
 │   ├── public/           # Static assets
 │   ├── package.json      # Frontend dependencies & scripts
-│   ├── rsbuild.config.ts # Build configuration
+│   ├── rsbuild.config.ts # RSBuild configuration
 │   └── tsconfig.json     # TypeScript config
 │
 ├── backend/               # Serverless API
@@ -138,7 +138,7 @@ All scripts can be run from the root directory using Bun's workspace management:
 ```bash
 bun run dev           # Start frontend development server
 bun run dev:backend   # Start backend development server  
-bun run dev:full      # Start both frontend and backend
+bun run dev:full      # Start both frontend and backend (legacy alias)
 ```
 
 ### Building
@@ -332,7 +332,7 @@ bun run mbti-quality
 ### Environment Variables
 ```bash
 # Frontend (.env in frontend/)
-REACT_APP_API_URL=http://localhost:8080
+APP_API_URL=http://localhost:8080
 
 # Backend (.env in backend/)
 ## These are for the options calculator. If you don't want it, you don't need it. 
@@ -369,7 +369,7 @@ CORS_ORIGIN=http://localhost:3000
 
 ### Code Style
 - TypeScript is enforced across the monorepo
-- ESLint configuration via `@rsbuild/eslint-config/react`
+- ESLint configuration for SolidJS with TypeScript
 - Prettier for code formatting
 - Husky for git hooks (if configured)
 
@@ -388,10 +388,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📧 Contact
 
 **Trevor Tiernan**
-- GitHub: [@trevortiernan](https://github.com/trevortiernan)
+- GitHub: [@trevortiernan](https://github.com/trevordrivendevelopment)
 - LinkedIn: [Trevor Tiernan](https://linkedin.com/in/trevortiernan)
 - Website: [Live Demo](https://trevordrivendevelopment.com)
 
 ---
 
-**Built with ❤️ using React, TypeScript, Bun, and AWS**
+**Built with ❤️ using SolidJS, TypeScript, Bun, and AWS**

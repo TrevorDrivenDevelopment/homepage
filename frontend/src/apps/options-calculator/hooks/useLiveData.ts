@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createSignal, createMemo } from 'solid-js';
 import { fetchStockQuote, fetchOptionsChain, StockQuote, OptionQuote } from '../enhancedOptionsService';
 import { separateCallsAndPuts } from '../utils/optionsSeparationUtils';
 
@@ -9,22 +9,22 @@ interface ApiEndpoints {
 }
 
 export const useLiveData = () => {
-  const [symbol, setSymbol] = useState<string>('AAPL');
-  const [stockQuote, setStockQuote] = useState<StockQuote | null>(null);
-  const [callsChain, setCallsChain] = useState<OptionQuote[]>([]);
-  const [putsChain, setPutsChain] = useState<OptionQuote[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [selectedTab, setSelectedTab] = useState<number>(0); // 0 for calls, 1 for puts
-  
-  const [apiEndpoints, setApiEndpoints] = useState<ApiEndpoints>({
+  const [symbol, setSymbol] = createSignal<string>('AAPL');
+  const [stockQuote, setStockQuote] = createSignal<StockQuote | null>(null);
+  const [callsChain, setCallsChain] = createSignal<OptionQuote[]>([]);
+  const [putsChain, setPutsChain] = createSignal<OptionQuote[]>([]);
+  const [loading, setLoading] = createSignal<boolean>(false);
+  const [selectedTab, setSelectedTab] = createSignal<number>(0); // 0 for calls, 1 for puts
+
+  const [apiEndpoints, setApiEndpoints] = createSignal<ApiEndpoints>({
     stockQuoteUrl: '',
     optionsChainUrl: '',
     apiKey: ''
   });
-  const [showApiConfig, setShowApiConfig] = useState<boolean>(true); // Show API config by default until configured
+  const [showApiConfig, setShowApiConfig] = createSignal<boolean>(true); // Show API config by default until configured
 
   const fetchData = async () => {
-    if (!symbol.trim()) {
+    if (!symbol().trim()) {
       throw new Error('Please enter a stock symbol');
     }
 
@@ -32,8 +32,8 @@ export const useLiveData = () => {
 
     try {
       const [quote, rawOptions] = await Promise.all([
-        fetchStockQuote(symbol.trim().toUpperCase(), apiEndpoints.stockQuoteUrl, apiEndpoints.apiKey),
-        fetchOptionsChain(symbol.trim().toUpperCase(), apiEndpoints.optionsChainUrl, apiEndpoints.apiKey),
+        fetchStockQuote(symbol().trim().toUpperCase(), apiEndpoints().stockQuoteUrl, apiEndpoints().apiKey),
+        fetchOptionsChain(symbol().trim().toUpperCase(), apiEndpoints().optionsChainUrl, apiEndpoints().apiKey),
       ]);
 
       const { calls, puts } = separateCallsAndPuts(rawOptions);
@@ -58,7 +58,7 @@ export const useLiveData = () => {
     }
   };
 
-  const isApiConfigured = !!(apiEndpoints.stockQuoteUrl && apiEndpoints.optionsChainUrl && apiEndpoints.apiKey);
+  const isApiConfigured = createMemo(() => !!(apiEndpoints().stockQuoteUrl && apiEndpoints().optionsChainUrl && apiEndpoints().apiKey));
 
   return {
     // State

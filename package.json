@@ -28,11 +28,6 @@
     "mbti-quality": "cd frontend && bun run mbti-quality",
     "deploy:backend": "cd backend && bun run deploy"
   },
-  "eslintConfig": {
-    "extends": [
-      "@rsbuild/eslint-config/react"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -46,7 +41,6 @@
     ]
   },
   "devDependencies": {
-    "@types/bun": "1.2.18",
     "@types/node": "24.0.10",
     "typescript": "5.8.3"
   }

@@ -1,13 +1,4 @@
-import React, { useState } from 'react';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Chip,
-  Box,
-} from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
+import { createSignal, For, Show, createMemo } from 'solid-js';
 import { OptionQuote, StockQuote } from '../enhancedOptionsService';
 import { OptionsTable } from './OptionsTable';
 
@@ -21,38 +12,39 @@ interface OptionsGroupedByExpirationProps {
   percentageIncrements: string;
 }
 
-export const OptionsGroupedByExpiration: React.FC<OptionsGroupedByExpirationProps> = ({
-  options,
-  stockQuote,
-  onOptionClick,
-  bestAtPercentages,
-  optionType,
-  investmentAmount,
-  percentageIncrements,
-}) => {
+export const OptionsGroupedByExpiration = (props: OptionsGroupedByExpirationProps) => {
   // Group options by expiration date
-  const groupedOptions = options.reduce((groups, option) => {
-    const expiration = option.expiration;
-    if (!groups[expiration]) {
-      groups[expiration] = [];
-    }
-    groups[expiration].push(option);
-    return groups;
-  }, {} as Record<string, OptionQuote[]>);
+  const groupedOptions = createMemo(() => {
+    return props.options.reduce((groups, option) => {
+      const expiration = option.expiration;
+      if (!groups[expiration]) {
+        groups[expiration] = [];
+      }
+      groups[expiration].push(option);
+      return groups;
+    }, {} as Record<string, OptionQuote[]>);
+  });
 
   // Sort expiration dates chronologically
-  const sortedExpirations = Object.keys(groupedOptions).sort((a, b) => 
-    new Date(a).getTime() - new Date(b).getTime()
-  );
+  const sortedExpirations = createMemo(() => {
+    return Object.keys(groupedOptions()).sort((a, b) => 
+      new Date(a).getTime() - new Date(b).getTime()
+    );
+  });
 
   // Default to expanding the first (nearest) expiration
-  const [expandedPanel, setExpandedPanel] = useState<string>(sortedExpirations[0] || '');
+  const [expandedPanel, setExpandedPanel] = createSignal<string>('');
 
-  const handleAccordionChange = (expiration: string) => (
-    event: React.SyntheticEvent,
-    isExpanded: boolean
-  ) => {
-    setExpandedPanel(isExpanded ? expiration : '');
+  // Initialize with first expiration when data loads
+  const _initializeExpanded = createMemo(() => {
+    const expirations = sortedExpirations();
+    if (expirations.length > 0 && !expandedPanel()) {
+      setExpandedPanel(expirations[0]);
+    }
+  });
+
+  const handleAccordionChange = (expiration: string) => {
+    setExpandedPanel(expandedPanel() === expiration ? '' : expiration);
   };
 
   const getDaysToExpiry = (expiration: string) => {
@@ -77,16 +69,16 @@ export const OptionsGroupedByExpiration: React.FC<OptionsGroupedByExpirationProp
 
   // Calculate best options for a specific expiration date group using the same logic as global calculation
   const getBestOptionsForExpiration = (expirationOptions: OptionQuote[]) => {
-    if (!stockQuote) return new Map();
+    if (!props.stockQuote) return new Map();
     
-    const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));
-    const investment = parseFloat(investmentAmount) || 10000;
+    const percentages = props.percentageIncrements.split(',').map(p => parseFloat(p.trim()));
+    const investment = parseFloat(props.investmentAmount) || 10000;
     const bestForExpiration = new Map<number, { option: OptionQuote; profit: number }>();
     
     percentages.forEach(percentage => {
-      const targetPrice = optionType === 'call' 
-        ? stockQuote.price * (1 + percentage / 100)
-        : stockQuote.price * (1 - percentage / 100);
+      const targetPrice = props.optionType === 'call' 
+        ? props.stockQuote!.price * (1 + percentage / 100)
+        : props.stockQuote!.price * (1 - percentage / 100);
       let bestOption: OptionQuote | null = null;
       let bestProfit = -Infinity;
       
@@ -96,7 +88,7 @@ export const OptionsGroupedByExpiration: React.FC<OptionsGroupedByExpirationProp
         
         if (contractsAffordable > 0 && contractsAffordable <= 10000) { // Reasonable contract limit
           let optionValue = 0;
-          if (optionType === 'call') {
+          if (props.optionType === 'call') {
             optionValue = Math.max(0, targetPrice - option.strike);
           } else {
             optionValue = Math.max(0, option.strike - targetPrice);
@@ -121,85 +113,149 @@ export const OptionsGroupedByExpiration: React.FC<OptionsGroupedByExpirationProp
     return bestForExpiration;
   };
 
-  if (sortedExpirations.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-        No {optionType} options available
-      </Typography>
-    );
-  }
+  const getChipColor = (daysToExpiry: number) => {
+    if (daysToExpiry <= 7) return { "background-color": '#d32f2f', color: 'white' };
+    if (daysToExpiry <= 30) return { "background-color": '#ed6c02', color: 'white' };
+    return { "background-color": '#f5f5f5', color: '#666' };
+  };
 
   return (
-    <Box>
-      {sortedExpirations.map((expiration) => {
-        const expirationOptions = groupedOptions[expiration];
-        const daysToExpiry = getDaysToExpiry(expiration);
-        const isExpanded = expandedPanel === expiration;
-        
-        // Calculate best options for this specific expiration date
-        const bestForThisExpiration = getBestOptionsForExpiration(expirationOptions);
-        const bestOptionsInGroup = bestForThisExpiration.size;
+    <Show 
+      when={sortedExpirations().length > 0}
+      fallback={
+        <div style={{ 
+          "text-align": "center", 
+          padding: "32px 0",
+          color: "#666",
+          "font-size": "0.875rem"
+        }}>
+          No {props.optionType} options available
+        </div>
+      }
+    >
+      <div>
+        <For each={sortedExpirations()}>
+          {(expiration) => {
+            const expirationOptions = groupedOptions()[expiration];
+            const daysToExpiry = getDaysToExpiry(expiration);
+            const isExpanded = () => expandedPanel() === expiration;
+            
+            // Calculate best options for this specific expiration date
+            const bestForThisExpiration = getBestOptionsForExpiration(expirationOptions);
+            const bestOptionsInGroup = bestForThisExpiration.size;
 
-        return (
-          <Accordion
-            key={expiration}
-            expanded={isExpanded}
-            onChange={handleAccordionChange(expiration)}
-            sx={{ 
-              mb: 1,
-              '&:before': { display: 'none' }, // Remove default divider
-              boxShadow: 1,
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMore />}
-              sx={{
-                backgroundColor: isExpanded ? 'action.selected' : 'background.paper',
-                '&:hover': { backgroundColor: 'action.hover' },
-                minHeight: 64,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mr: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="h6" component="div">
-                    {formatExpirationDate(expiration)}
-                  </Typography>
-                  <Chip 
-                    label={`${daysToExpiry} days`}
-                    size="small"
-                    color={daysToExpiry <= 7 ? 'error' : daysToExpiry <= 30 ? 'warning' : 'default'}
-                    variant="outlined"
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Chip 
-                    label={`${expirationOptions.length} contracts`}
-                    size="small"
-                    variant="outlined"
-                  />
-                  {bestOptionsInGroup > 0 && (
-                    <Chip 
-                      label={`${bestOptionsInGroup} best`}
-                      size="small"
-                      color="primary"
-                      variant="filled"
+            return (
+              <div style={{
+                "margin-bottom": "8px",
+                border: "1px solid #e0e0e0",
+                "border-radius": "4px",
+                "box-shadow": "0 1px 3px rgba(0,0,0,0.12)"
+              }}>
+                <button
+                  onClick={() => handleAccordionChange(expiration)}
+                  style={{
+                    width: "100%",
+                    background: isExpanded() ? "#f5f5f5" : "white",
+                    border: "none",
+                    padding: "16px",
+                    cursor: "pointer",
+                    "text-align": "left",
+                    display: "flex",
+                    "justify-content": "space-between",
+                    "align-items": "center",
+                    "min-height": "64px",
+                    "border-radius": "4px"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isExpanded()) {
+                      e.currentTarget.style.backgroundColor = "#f0f0f0";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isExpanded()) {
+                      e.currentTarget.style.backgroundColor = "white";
+                    }
+                  }}
+                >
+                  <div style={{ 
+                    display: "flex", 
+                    "align-items": "center", 
+                    gap: "16px" 
+                  }}>
+                    <h4 style={{ 
+                      margin: "0",
+                      "font-size": "1.25rem",
+                      "font-weight": "500"
+                    }}>
+                      {formatExpirationDate(expiration)}
+                    </h4>
+                    <span style={{
+                      ...getChipColor(daysToExpiry),
+                      padding: "4px 8px",
+                      "border-radius": "16px",
+                      "font-size": "0.75rem",
+                      border: daysToExpiry > 30 ? "1px solid #ccc" : "none"
+                    }}>
+                      {daysToExpiry} days
+                    </span>
+                  </div>
+                  <div style={{ 
+                    display: "flex", 
+                    "align-items": "center", 
+                    gap: "8px" 
+                  }}>
+                    <span style={{
+                      "background-color": "#f5f5f5",
+                      color: "#666",
+                      padding: "4px 8px",
+                      "border-radius": "16px",
+                      "font-size": "0.75rem",
+                      border: "1px solid #ccc"
+                    }}>
+                      {expirationOptions.length} contracts
+                    </span>
+                    <Show when={bestOptionsInGroup > 0}>
+                      <span style={{
+                        "background-color": "#1976d2",
+                        color: "white",
+                        padding: "4px 8px",
+                        "border-radius": "16px",
+                        "font-size": "0.75rem"
+                      }}>
+                        {bestOptionsInGroup} best
+                      </span>
+                    </Show>
+                    <svg 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="currentColor"
+                      style={{
+                        transform: isExpanded() ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.2s"
+                      }}
+                    >
+                      <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+                    </svg>
+                  </div>
+                </button>
+                
+                <Show when={isExpanded()}>
+                  <div style={{ padding: "0" }}>
+                    <OptionsTable
+                      options={expirationOptions}
+                      stockQuote={props.stockQuote}
+                      onOptionClick={props.onOptionClick}
+                      bestAtPercentages={bestForThisExpiration}
+                      optionType={props.optionType}
                     />
-                  )}
-                </Box>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 0 }}>
-              <OptionsTable
-                options={expirationOptions}
-                stockQuote={stockQuote}
-                onOptionClick={onOptionClick}
-                bestAtPercentages={bestForThisExpiration}
-                optionType={optionType}
-              />
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
-    </Box>
+                  </div>
+                </Show>
+              </div>
+            );
+          }}
+        </For>
+      </div>
+    </Show>
   );
 };

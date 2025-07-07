@@ -1,121 +1,100 @@
-import React from 'react';
-import {
-  Alert,
-  Box,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
-} from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
-import { OptionQuote, StockQuote } from '../enhancedOptionsService';
+import { Show } from 'solid-js';
+
+interface OptionData {
+  symbol: string;
+  strike: number;
+  expiration: string;
+  type: 'call' | 'put';
+  bid: number;
+  ask: number;
+  volume: number;
+  openInterest: number;
+  impliedVolatility?: number;
+}
 
 interface OptionDetailsViewProps {
-  option: OptionQuote;
-  stockQuote: StockQuote;
-  investmentAmount: string;
-  percentageIncrements: string;
-  optionType: 'call' | 'put';
+  option: OptionData | null;
   onBack: () => void;
 }
 
-export const OptionDetailsView: React.FC<OptionDetailsViewProps> = ({
-  option,
-  stockQuote,
-  investmentAmount,
-  percentageIncrements,
-  optionType,
-  onBack,
-}) => {
-  const roundMidpointUp = (bid: number, ask: number): number => {
-    const midpoint = (bid + ask) / 2;
-    return Math.ceil(midpoint * 100) / 100;
-  };
-
-  const calculateOptionValue = (stockPrice: number, strike: number, type: 'call' | 'put'): number => {
-    if (type === 'call') {
-      return Math.max(0, stockPrice - strike);
-    } else {
-      return Math.max(0, strike - stockPrice);
-    }
-  };
-
-  const premiumPaid = roundMidpointUp(option.bid, option.ask);
-  const contractsAffordable = Math.floor(parseFloat(investmentAmount) / (premiumPaid * 100));
-
+export const OptionDetailsView = (props: OptionDetailsViewProps) => {
   return (
-    <>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <IconButton onClick={onBack} sx={{ p: 1 }}>
-          <ArrowBack />
-        </IconButton>
-        <Typography variant="h6">
-          Potential Returns for ${option.strike} Strike {optionType.toUpperCase()}
-        </Typography>
-      </Box>
-      
-      <Alert severity="info" sx={{ mb: 2 }}>
-        <Typography variant="body2">
-          <strong>Calculation Details:</strong><br />
-          • Cost per contract: ${premiumPaid.toFixed(2)} × 100 = ${(premiumPaid * 100).toFixed(2)}<br />
-          • Number of contracts with ${investmentAmount}: {contractsAffordable}<br />
-          • At expiration, profit = (max({optionType === 'call' ? 'Stock Price - Strike' : 'Strike - Stock Price'}, 0) - Premium Paid) × 100 × Contracts
-        </Typography>
-      </Alert>
-
-      <TableContainer component={Paper} sx={{ mt: 2, mb: 2 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Price {optionType === 'call' ? 'Increase' : 'Decrease'}</TableCell>
-              <TableCell>Stock Price</TableCell>
-              <TableCell>Option Value</TableCell>
-              <TableCell>Gain/Loss</TableCell>
-              <TableCell>% Return</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {percentageIncrements.split(',').map((increment) => {
-              const percentChange = parseFloat(increment.trim());
-              const multiplier = optionType === 'call' ? (1 + percentChange / 100) : (1 - percentChange / 100);
-              const newStockPrice = stockQuote.price * multiplier;
-              const optionValue = calculateOptionValue(newStockPrice, option.strike, optionType);
-              const profitPerShare = optionValue - premiumPaid;
-              const totalProfit = profitPerShare * 100 * contractsAffordable;
-              const percentReturn = (totalProfit / parseFloat(investmentAmount)) * 100;
-
-              return (
-                <TableRow key={increment}>
-                  <TableCell>{optionType === 'call' ? '+' : '-'}{percentChange}%</TableCell>
-                  <TableCell>${newStockPrice.toFixed(2)}</TableCell>
-                  <TableCell>${optionValue.toFixed(2)}</TableCell>
-                  <TableCell
-                    sx={{
-                      color: totalProfit >= 0 ? 'success.main' : 'error.main',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(0)}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      color: percentReturn >= 0 ? 'success.main' : 'error.main',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {percentReturn >= 0 ? '+' : ''}{percentReturn.toFixed(1)}%
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </>
+    <Show 
+      when={props.option}
+      fallback={
+        <div style={{ 
+          padding: "20px", 
+          "text-align": "center",
+          color: "#666"
+        }}>
+          <p>No option selected</p>
+        </div>
+      }
+    >
+      <div style={{ 
+        padding: "20px", 
+        border: "1px solid #ddd", 
+        "border-radius": "8px",
+        "margin-bottom": "16px",
+        "background-color": "#fff"
+      }}>
+        <div style={{ 
+          display: "flex", 
+          "justify-content": "space-between", 
+          "align-items": "center",
+          "margin-bottom": "20px"
+        }}>
+          <h3 style={{ margin: "0", color: "#1976d2" }}>Option Details</h3>
+          <button
+            onClick={() => props.onBack()}
+            style={{
+              background: "#1976d2",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              "border-radius": "4px",
+              cursor: "pointer",
+              display: "flex",
+              "align-items": "center",
+              gap: "8px"
+            }}
+          >
+            ← Back
+          </button>
+        </div>
+        
+        <div style={{ display: "grid", "grid-template-columns": "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+          <div>
+            <strong>Symbol:</strong> {props.option?.symbol}
+          </div>
+          <div>
+            <strong>Strike:</strong> ${props.option?.strike}
+          </div>
+          <div>
+            <strong>Expiration:</strong> {props.option?.expiration}
+          </div>
+          <div>
+            <strong>Type:</strong> {props.option?.type?.toUpperCase()}
+          </div>
+          <div>
+            <strong>Bid:</strong> ${props.option?.bid}
+          </div>
+          <div>
+            <strong>Ask:</strong> ${props.option?.ask}
+          </div>
+          <div>
+            <strong>Volume:</strong> {props.option?.volume}
+          </div>
+          <div>
+            <strong>Open Interest:</strong> {props.option?.openInterest}
+          </div>
+          <Show when={props.option?.impliedVolatility}>
+            <div>
+              <strong>Implied Volatility:</strong> {(props.option?.impliedVolatility! * 100).toFixed(2)}%
+            </div>
+          </Show>
+        </div>
+      </div>
+    </Show>
   );
 };

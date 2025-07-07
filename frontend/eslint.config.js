@@ -2,8 +2,7 @@ import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import globals from 'globals';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
+import solid from 'eslint-plugin-solid';
 
 export default [
   js.configs.recommended,
@@ -29,8 +28,7 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      'react': react,
-      'react-hooks': reactHooks,
+      'solid': solid,
     },
     rules: {
       // TypeScript rules
@@ -50,20 +48,10 @@ export default [
       '@typescript-eslint/no-empty-interface': 'off',
       '@typescript-eslint/interface-name-prefix': 'off',
       
-      // React rules
-      'react/react-in-jsx-scope': 'off', // Not needed with React 17+
-      'react/prop-types': 'off', // Using TypeScript for prop validation
-      'react/jsx-uses-react': 'off',
-      'react/jsx-uses-vars': 'error',
-      
-      // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
+      // SolidJS rules
+      'solid/reactivity': 'warn',
+      'solid/no-destructure': 'warn',
+      'solid/jsx-no-script-url': 'error',
     },
   },
   {

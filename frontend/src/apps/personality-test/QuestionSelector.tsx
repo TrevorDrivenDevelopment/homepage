@@ -1,260 +1,270 @@
-import { Box, Button, Container, Typography } from '@mui/material';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { MBTICalculatorFactory } from './calculation';
-import { CalculationResult } from './calculation/interfaces';
-import { questions, mbtiTypes } from './calculation/mbtiData';
+import { Component, For, Show } from 'solid-js';
+import { createTheme, ThemeProvider } from '@suid/material/styles';
+import { 
+  Container, 
+  Typography, 
+  Card, 
+  CardContent, 
+  Button, 
+  LinearProgress, 
+  Box,
+  Stack,
+  Grid,
+  useMediaQuery,
+  useTheme
+} from '@suid/material';
+import QuestionCard from './components/QuestionCard';
 import CurrentScores from './components/CurrentScores';
+import TopTypesDisplay from './components/TopTypesDisplay';
 import FunctionStackEditor from './components/FunctionStackEditor';
 import MBTIReference from './components/MBTIReference';
-import QuestionCard from './components/QuestionCard';
-import TopTypesDisplay from './components/TopTypesDisplay';
-import { defaultGridColors, MBTI_STYLES } from './theme/mbtiTheme';
-import { CognitiveFunction, CognitiveFunctionName, CognitiveFunctionType, FunctionScores, Response, TypeResult, MBTIType } from './types';
+import { usePersonalityTest } from './hooks/usePersonalityTest';
 
-const QuestionSelector: React.FC = () => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [responses, setResponses] = useState<Response[]>([]);
-  const [isComplete, setIsComplete] = useState(false);
-  const [functionStack, setFunctionStack] = useState<CognitiveFunction[]>([
-    { introverted: CognitiveFunctionName.NI, extroverted: CognitiveFunctionName.NE, isExtroverted: false, isAnimating: false },
-    { introverted: CognitiveFunctionName.SI, extroverted: CognitiveFunctionName.SE, isExtroverted: true, isAnimating: false },
-    { introverted: CognitiveFunctionName.TI, extroverted: CognitiveFunctionName.TE, isExtroverted: false, isAnimating: false },
-    { introverted: CognitiveFunctionName.FI, extroverted: CognitiveFunctionName.FE, isExtroverted: true, isAnimating: false },
-  ]);
+interface QuestionSelectorProps {
+  onNavigate?: (_page: string) => void;
+}
 
-  // Initialize MBTI Calculator
-  const calculator = useMemo(() => MBTICalculatorFactory.createAccurateCalculator(), []);
+const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
+  // Create dark theme to match the homepage
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+      primary: {
+        main: '#7CE2FF',
+      },
+      secondary: {
+        main: '#4A6E8D',
+      },
+      background: {
+        default: '#1B3A57',
+        paper: '#4A6E8D',
+      },
+      text: {
+        primary: '#ffffff',
+        secondary: '#7CE2FF',
+      },
+    },
+  });
 
-  const gridColors = defaultGridColors;
+  const {
+    responses,
+    functionStack,
+    showEditStack,
+    functionScores,
+    enhancedFunctionScores,
+    currentType,
+    closestTypes,
+    isTestComplete,
+    progressPercentage,
+    updateResponse,
+    updateFunctionStack,
+    resetTest,
+    toggleEditStack,
+    questions
+  } = usePersonalityTest();
 
-  // Function to calculate MBTI type from function stack
-  const getTypeFromFunctionStack = useCallback((stack: CognitiveFunction[]): MBTIType | null => {
-    // Get the actual function names from the stack
-    const stackFunctions = stack.map(func => 
-      func.isExtroverted ? func.extroverted : func.introverted
-    );
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(() => theme.breakpoints.up('md'));
 
-    // Find the matching MBTI type
-    for (const [type, info] of Object.entries(mbtiTypes)) {
-      if (JSON.stringify(info.functions) === JSON.stringify(stackFunctions)) {
-        return type as MBTIType;
-      }
-    }
-    return null;
-  }, []);
-
-  // Calculate current MBTI result using the calculator
-  const currentResult = useMemo((): CalculationResult | null => {
-    if (responses.length === 0) return null;
+  // Function to handle question answers without scrolling
+  const handleQuestionAnswer = (questionId: string, value: boolean | null) => {
+    // Store current scroll position
+    const currentScrollY = window.scrollY;
     
-    try {
-      return calculator.calculate(responses);
-    } catch (error) {
-      return null;
-    }
-  }, [responses, calculator]);
-
-  const getCurrentFunctionScores = useMemo((): FunctionScores => {
-    if (!currentResult) {
-      return {
-        [CognitiveFunctionType.INTUITION]: 0,
-        [CognitiveFunctionType.SENSING]: 0,
-        [CognitiveFunctionType.THINKING]: 0,
-        [CognitiveFunctionType.FEELING]: 0
-      };
-    }
-
-    // Convert DetailedFunctionScores to FunctionScores format
-    const detailedScores = currentResult.scores;
-    return {
-      [CognitiveFunctionType.INTUITION]: detailedScores.Ne - detailedScores.Ni,
-      [CognitiveFunctionType.SENSING]: detailedScores.Se - detailedScores.Si,
-      [CognitiveFunctionType.THINKING]: detailedScores.Te - detailedScores.Ti,
-      [CognitiveFunctionType.FEELING]: detailedScores.Fe - detailedScores.Fi
-    };
-  }, [currentResult]);
-
-  // Get top types from calculation result
-  const topTypes = useMemo((): TypeResult[] => {
-    if (!isComplete || !currentResult || !currentResult.alternativeTypes) return [];
+    updateResponse(questionId, value);
     
-    // Convert TypeMatchResult to TypeResult format
-    return currentResult.alternativeTypes.slice(0, 3).map((matchResult: any, index: number) => ({
-      type: matchResult.type,
-      score: matchResult.score,
-      match: index === 0 ? 'Primary Type' : `${Math.round(matchResult.confidence)}% match`
-    }));
-  }, [currentResult, isComplete]);
-
-  // The current MBTI should be based on the current function stack (if edited) or quiz result
-  const getCurrentMBTI = useMemo((): string => {
-    if (!isComplete) return 'XXXX';
-    
-    // If test is complete, first try to get type from current function stack
-    const typeFromStack = getTypeFromFunctionStack(functionStack);
-    if (typeFromStack) {
-      return typeFromStack;
-    }
-    
-    // Fallback to quiz result if stack doesn't match any type
-    if (currentResult) {
-      return currentResult.type;
-    }
-    
-    return 'XXXX';
-  }, [currentResult, isComplete, functionStack, getTypeFromFunctionStack]);
-
-  const updateFunctionStackFromScores = useCallback(() => {
-    if (responses.length >= questions.length && currentResult) {
-      setFunctionStack(currentResult.stack);
-    }
-  }, [responses, currentResult]);
-
-  useEffect(() => {
-    if (isComplete) {
-      updateFunctionStackFromScores();
-    }
-  }, [isComplete, updateFunctionStackFromScores]);
-
-  const handleResponse = (value: boolean | null) => {
-    const newResponses = responses.filter(r => r.questionIndex !== currentQuestionIndex);
-    newResponses.push({ questionIndex: currentQuestionIndex, value });
-    
-    setResponses(newResponses);
-    
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      setIsComplete(true);
-    }
+    // Restore scroll position after state update
+    requestAnimationFrame(() => {
+      window.scrollTo(0, currentScrollY);
+    });
   };
-
-  const handleToggleFunction = (index: number) => {
-    const newStack = [...functionStack];
-    newStack[index].isExtroverted = !newStack[index].isExtroverted;
-    setFunctionStack(newStack);
-    // Type will automatically update via getCurrentMBTI useMemo dependency on functionStack
-  };
-
-  const handleSwapFunctions = (index1: number, index2: number) => {
-    const newStack = [...functionStack];
-    
-    // Add animation state
-    newStack[index1].isAnimating = true;
-    newStack[index2].isAnimating = true;
-    setFunctionStack([...newStack]);
-    
-    // Perform the swap after a brief delay
-    setTimeout(() => {
-      [newStack[index1], newStack[index2]] = [newStack[index2], newStack[index1]];
-      setFunctionStack([...newStack]);
-      
-      // Remove animation state after swap
-      setTimeout(() => {
-        newStack[index1].isAnimating = false;
-        newStack[index2].isAnimating = false;
-        setFunctionStack([...newStack]);
-        // Type will automatically update via getCurrentMBTI useMemo dependency on functionStack
-      }, 100);
-    }, 150);
-  };
-
-  const resetTest = () => {
-    setCurrentQuestionIndex(0);
-    setResponses([]);
-    setIsComplete(false);
-    setFunctionStack([
-      { introverted: CognitiveFunctionName.NI, extroverted: CognitiveFunctionName.NE, isExtroverted: false, isAnimating: false },
-      { introverted: CognitiveFunctionName.SI, extroverted: CognitiveFunctionName.SE, isExtroverted: true, isAnimating: false },
-      { introverted: CognitiveFunctionName.TI, extroverted: CognitiveFunctionName.TE, isExtroverted: false, isAnimating: false },
-      { introverted: CognitiveFunctionName.FI, extroverted: CognitiveFunctionName.FE, isExtroverted: true, isAnimating: false },
-    ]);
-  };
-
-  const currentQuestion = questions[currentQuestionIndex];
-  const currentMBTI = getCurrentMBTI;
-  const functionScores = getCurrentFunctionScores;
 
   return (
-    <Container className="App">
-      <header className="App-header">
-        <Typography variant="h5" component="h1" gutterBottom>
-          Myers-Briggs Function Stack Explorer
-        </Typography>
-        <Link to="/" style={{ color: gridColors.linkColor, textDecoration: 'none' }}>
-          ← Back to Home
-        </Link>
-      </header>
-
-      <Box sx={{ mt: 3 }}>
-        {!isComplete ? (
-          <>
-            <QuestionCard
-              question={currentQuestion}
-              onResponse={handleResponse}
-              questionNumber={currentQuestionIndex + 1}
-              totalQuestions={questions.length}
-              gridColors={gridColors}
-            />
-            
-            {/* Show current scores if there are responses */}
-            {responses.length > 0 && (
-              <CurrentScores
-                scores={functionScores}
-                gridColors={gridColors}
-                title="Current Function Preferences"
-              />
-            )}
-          </>
-        ) : (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6">
-                Your Type: {currentMBTI}
-              </Typography>
+    <ThemeProvider theme={darkTheme}>
+      <div style={{ 
+        "background-color": "#1B3A57",
+        color: "#ffffff",
+        "min-height": "100vh",
+        padding: "20px 0"
+      }}>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <Show when={props.onNavigate}>
+            <Box sx={{ mb: 3, textAlign: 'center' }}>
               <Button 
-                onClick={resetTest} 
-                variant="outlined" 
-                sx={MBTI_STYLES.outlinedButton}
+                variant="text" 
+                onClick={() => props.onNavigate?.('applications')}
+                sx={{ color: '#7CE2FF', textDecoration: 'underline' }}
               >
-                Retake Test
+                ← Back to Applications
               </Button>
             </Box>
+          </Show>
+          
+          <Typography variant="h3" component="h1" gutterBottom align="center" sx={{ color: '#ffffff' }}>
+            MBTI Personality Test
+          </Typography>
+          
+          <Typography variant="h6" component="p" align="center" sx={{ mb: 4, color: '#7CE2FF' }}>
+            Based on Cognitive Functions Theory
+          </Typography>
 
-            {/* Show final scores */}
-            <CurrentScores
-              scores={functionScores}
-              gridColors={gridColors}
-              title="Final Function Scores"
-            />
-
-            {/* Show top types */}
-            {topTypes.length > 0 && (
-              <TopTypesDisplay
-                topTypes={topTypes}
-                currentType={currentMBTI}
-                gridColors={gridColors}
+          {/* Progress Bar */}
+          <Card sx={{ mb: 4, backgroundColor: '#4A6E8D', border: '1px solid #4A6E8D' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#ffffff' }}>
+                Progress: {progressPercentage()}% Complete
+              </Typography>
+              <LinearProgress 
+                variant="determinate" 
+                value={progressPercentage()} 
+                sx={{ 
+                  height: 8, 
+                  borderRadius: 4,
+                  backgroundColor: '#1B3A57',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: '#7CE2FF'
+                  }
+                }}
               />
-            )}
+              <Typography variant="body2" sx={{ mt: 1, color: '#7CE2FF' }}>
+                {responses().filter(r => r.value !== null).length} of {questions.length} questions answered
+              </Typography>
+            </CardContent>
+          </Card>
 
-            {/* Function Stack Editor */}
-            <FunctionStackEditor
-              functionStack={functionStack}
-              onToggleFunction={handleToggleFunction}
-              onSwapFunctions={handleSwapFunctions}
-              gridColors={gridColors}
-            />
+          {/* Main Content with Responsive Layout */}
+          <Grid container spacing={3}>
+            {/* Main Content */}
+            <Grid item xs={12} md={8}>
+              {/* Control Buttons - only show when there are responses */}
+              <Show when={responses().length > 0}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 4 }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={toggleEditStack}
+                    color={showEditStack() ? 'secondary' : 'primary'}
+                    sx={{
+                      borderColor: showEditStack() ? '#4A6E8D' : '#7CE2FF',
+                      color: showEditStack() ? '#4A6E8D' : '#7CE2FF',
+                      '&:hover': {
+                        backgroundColor: '#4A6E8D',
+                        color: '#ffffff'
+                      }
+                    }}
+                  >
+                    {showEditStack() ? 'Use Calculated Stack' : 'Edit Function Stack'}
+                  </Button>
+                  
+                  <Button 
+                    variant="outlined" 
+                    color="error" 
+                    onClick={resetTest}
+                    sx={{
+                      borderColor: '#ff6b6b',
+                      color: '#ff6b6b',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderColor: '#ffffff'
+                      }
+                    }}
+                  >
+                    Reset Test
+                  </Button>
+                </Box>
+              </Show>
 
-            {/* MBTI Reference */}
-            <MBTIReference
-              currentType={currentMBTI}
-              gridColors={gridColors}
-            />
-          </>
-        )}
-      </Box>
-    </Container>
+              {/* Questions */}
+              <Typography variant="h4" component="h2" gutterBottom sx={{ color: '#ffffff' }}>
+                Questions
+              </Typography>
+              
+              <Stack spacing={3} sx={{ mb: 4 }}>
+                <For each={questions}>
+                  {(question) => {
+                    const response = () => responses().find(r => r.questionId === question.id);
+                    return (
+                      <QuestionCard
+                        question={question}
+                        selectedValue={response()?.value ?? null}
+                        onAnswer={(value) => handleQuestionAnswer(question.id, value)}
+                      />
+                    );
+                  }}
+                </For>
+              </Stack>
+
+              {/* Mobile/Tablet sections - only show when not desktop */}
+              <Show when={!isDesktop() && responses().length > 0}>
+                <Stack spacing={3} sx={{ mb: 4 }}>
+                  <TopTypesDisplay 
+                    topTypes={closestTypes()}
+                    currentType={currentType()}
+                    isComplete={isTestComplete()}
+                  />
+                  
+                  <Show when={showEditStack()}>
+                    <FunctionStackEditor 
+                      functionStack={functionStack()}
+                      onStackChange={updateFunctionStack}
+                    />
+                  </Show>
+                  
+                  <CurrentScores 
+                    scores={functionScores()}
+                    enhancedScores={enhancedFunctionScores()}
+                  />
+                </Stack>
+              </Show>
+
+              {/* Reference */}
+              <MBTIReference 
+                currentType={currentType}
+                gridColors={{}}
+              />
+            </Grid>
+
+            {/* Sticky Sidebar - only show on desktop */}
+            <Show when={isDesktop()}>
+              <Grid item md={4}>
+                <Box
+                  sx={{
+                    position: 'sticky',
+                    top: '20px',
+                    maxHeight: 'calc(100vh - 40px)',
+                    overflowY: 'auto'
+                  }}
+                >
+                  <Show when={responses().length > 0}>
+                    <Stack spacing={3}>
+                      {/* Current Best Matches in sidebar */}
+                      <TopTypesDisplay 
+                        topTypes={closestTypes()}
+                        currentType={currentType()}
+                        isComplete={isTestComplete()}
+                      />
+                      
+                      {/* Function Stack Editor in sidebar when active */}
+                      <Show when={showEditStack()}>
+                        <FunctionStackEditor 
+                          functionStack={functionStack()}
+                          onStackChange={updateFunctionStack}
+                        />
+                      </Show>
+                      
+                      {/* Function Preferences in sidebar */}
+                      <CurrentScores 
+                        scores={functionScores()}
+                        enhancedScores={enhancedFunctionScores()}
+                      />
+                    </Stack>
+                  </Show>
+                </Box>
+              </Grid>
+            </Show>
+          </Grid>
+        </Container>
+      </div>
+    </ThemeProvider>
   );
 };
 

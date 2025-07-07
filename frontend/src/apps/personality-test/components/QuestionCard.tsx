@@ -1,97 +1,128 @@
-import { Box, Button, Paper, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
-import { Question } from '../types';
-import { GridColors, MBTI_COLORS, MBTI_STYLES } from '../theme/mbtiTheme';
+import { Component } from 'solid-js';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Button, 
+  ButtonGroup,
+  Chip,
+  Box
+} from '@suid/material';
+import { Question } from '../types/mbti';
 
 interface QuestionCardProps {
   question: Question;
-  onResponse: (value: boolean | null) => void;
-  questionNumber: number;
-  totalQuestions: number;
-  gridColors: GridColors;
+  selectedValue: boolean | null;
+  onAnswer: (_value: boolean | null) => void;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({
-  question,
-  onResponse,
-  questionNumber,
-  totalQuestions,
-  gridColors
-}) => {
-  // Randomize which option appears first and gets which color
-  const buttonLayout = useMemo(() => {
-    const isExtrovertedFirst = Math.random() < 0.5;
-    return {
-      isExtrovertedFirst,
-      firstColor: isExtrovertedFirst ? MBTI_COLORS.buttonGreen : MBTI_COLORS.buttonBlue,
-      firstHoverColor: isExtrovertedFirst ? MBTI_COLORS.buttonGreenHover : MBTI_COLORS.buttonBlueHover,
-      secondColor: isExtrovertedFirst ? MBTI_COLORS.buttonBlue : MBTI_COLORS.buttonGreen,
-      secondHoverColor: isExtrovertedFirst ? MBTI_COLORS.buttonBlueHover : MBTI_COLORS.buttonGreenHover,
-      firstText: isExtrovertedFirst ? question.extroverted : question.introverted,
-      secondText: isExtrovertedFirst ? question.introverted : question.extroverted,
-      firstValue: isExtrovertedFirst ? true : false,
-      secondValue: isExtrovertedFirst ? false : true
-    };
-  }, [question.extroverted, question.introverted]);
+const QuestionCard: Component<QuestionCardProps> = (props) => {
+  const getButtonVariant = (option: boolean | null) => {
+    return props.selectedValue === option ? 'contained' : 'outlined';
+  };
 
+  // Fixed colors to prevent changes when other questions are answered
   return (
-    <>
-      <Typography variant="h6" gutterBottom>
-        Question {questionNumber} of {totalQuestions}
-      </Typography>
-      
-      <Paper sx={{ ...MBTI_STYLES.panel, mb: 3 }}>
-        <Typography variant="h6" sx={{ 
-          mb: 3, 
-          textAlign: 'center',
-          color: MBTI_COLORS.textPrimary,
-          fontWeight: 'bold',
-          fontSize: '1.3rem',
-          lineHeight: 1.4
-        }}>
-          {question.text}
-        </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexDirection: { xs: 'column', sm: 'row' } }}>
-          <Button
-            variant="contained"
-            onClick={() => onResponse(buttonLayout.firstValue)}
-            sx={buttonLayout.isExtrovertedFirst ? MBTI_STYLES.questionButtonGreen : MBTI_STYLES.questionButtonBlue}
-          >
-            {buttonLayout.firstText}
-          </Button>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: { xs: 'auto', sm: '100px' } }}>
-            <Button
-              variant="outlined"
-              onClick={() => onResponse(null)}
-              sx={{ 
-                ...MBTI_STYLES.outlinedButton,
-                minWidth: 'auto',
-                px: 2,
-                whiteSpace: 'nowrap'
-              }}
-            >
-              I'm unsure
-            </Button>
-          </Box>
-          
-          <Button
-            variant="contained"
-            onClick={() => onResponse(buttonLayout.secondValue)}
-            sx={buttonLayout.isExtrovertedFirst ? MBTI_STYLES.questionButtonBlue : MBTI_STYLES.questionButtonGreen}
-          >
-            {buttonLayout.secondText}
-          </Button>
-        </Box>
-        
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="body2" sx={MBTI_STYLES.secondaryText}>
-            Choose the option that resonates more with you, or "I'm unsure" if you're unsure
+    <Card sx={{ 
+      mb: 2,
+      backgroundColor: '#4A6E8D',
+      border: '1px solid #4A6E8D'
+    }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Typography variant="h6" component="h3" sx={{ flex: 1, color: '#ffffff' }}>
+            {props.question.text}
           </Typography>
+          <Chip 
+            label={props.question.functionType}
+            size="small"
+            variant="outlined"
+            sx={{ 
+              ml: 2,
+              borderColor: '#7CE2FF',
+              color: '#7CE2FF',
+              backgroundColor: '#1B3A57'
+            }}
+          />
         </Box>
-      </Paper>
-    </>
+        
+        <ButtonGroup 
+          orientation="vertical" 
+          variant="outlined" 
+          fullWidth
+          sx={{ gap: 1 }}
+        >
+          <Button
+            variant={getButtonVariant(true)}
+            onClick={() => props.onAnswer(true)}
+            sx={{ 
+              p: 2, 
+              textAlign: 'left',
+              justifyContent: 'flex-start',
+              textTransform: 'none',
+              backgroundColor: props.selectedValue === true ? '#4caf50' : '#1B3A57', // Green when selected
+              borderColor: '#7CE2FF',
+              color: props.selectedValue === true ? '#ffffff' : '#ffffff',
+              '&:hover': {
+                backgroundColor: props.selectedValue === true ? '#4caf50' : '#4A6E8D',
+                borderColor: '#ffffff'
+              }
+            }}
+          >
+            <Typography variant="body1">
+              A) {props.question.optionA}
+            </Typography>
+          </Button>
+          
+          <Button
+            variant={getButtonVariant(null)}
+            onClick={() => props.onAnswer(null)}
+            sx={{ 
+              p: 1, 
+              textAlign: 'center',
+              textTransform: 'none',
+              backgroundColor: props.selectedValue === null ? '#ff9800' : '#1B3A57', // Orange when selected
+              borderColor: '#7CE2FF',
+              color: props.selectedValue === null ? '#1B3A57' : '#ffffff',
+              '&:hover': {
+                backgroundColor: props.selectedValue === null ? '#ff9800' : '#4A6E8D',
+                borderColor: '#ffffff'
+              }
+            }}
+          >
+            <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+              I'm unsure
+            </Typography>
+          </Button>
+          
+          <Button
+            variant={getButtonVariant(false)}
+            onClick={() => props.onAnswer(false)}
+            sx={{ 
+              p: 2, 
+              textAlign: 'left',
+              justifyContent: 'flex-start',
+              textTransform: 'none',
+              backgroundColor: props.selectedValue === false ? '#2196f3' : '#1B3A57', // Blue when selected
+              borderColor: '#7CE2FF',
+              color: props.selectedValue === false ? '#ffffff' : '#ffffff',
+              '&:hover': {
+                backgroundColor: props.selectedValue === false ? '#2196f3' : '#4A6E8D',
+                borderColor: '#ffffff'
+              }
+            }}
+          >
+            <Typography variant="body1">
+              B) {props.question.optionB}
+            </Typography>
+          </Button>
+        </ButtonGroup>
+        
+        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#7CE2FF' }}>
+          Category: {props.question.category}
+        </Typography>
+      </CardContent>
+    </Card>
   );
 };
 

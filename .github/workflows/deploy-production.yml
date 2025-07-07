@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  BUN_VERSION: '1.2.17'
+  BUN_VERSION: '1.2.18'
   AWS_REGION: 'us-east-2'
 
 jobs:

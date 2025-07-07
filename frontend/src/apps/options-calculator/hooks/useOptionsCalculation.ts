@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { createMemo } from 'solid-js';
 import { OptionQuote, StockQuote } from '../enhancedOptionsService';
 import { roundMidpointUp, roundToCents, calculateTargetPrices } from '../utils/optionsCalculationUtils';
 import { ManualOptionProfile, OptionResult } from './useManualOptions';
@@ -25,7 +25,7 @@ export const useOptionsCalculation = ({
   manualResults,
 }: UseOptionsCalculationProps) => {
   
-  const getTargetPrices = useMemo(() => {
+  const getTargetPrices = createMemo(() => {
     const currentPrice = useManualData 
       ? parseFloat(manualSecurityPrice) 
       : stockQuote?.price || 0;
@@ -34,7 +34,7 @@ export const useOptionsCalculation = ({
   }, [useManualData, manualSecurityPrice, stockQuote?.price, percentageIncrements]);
 
   // Calculate best call options for each percentage increase
-  const getBestCallsAtEachPercentage = useMemo(() => {
+  const getBestCallsAtEachPercentage = createMemo(() => {
     if (useManualData || !stockQuote || callsChain.length === 0) return new Map();
     
     const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));
@@ -72,7 +72,7 @@ export const useOptionsCalculation = ({
   }, [useManualData, stockQuote, callsChain, percentageIncrements, investmentAmount]);
 
   // Calculate best put options for each percentage decrease
-  const getBestPutsAtEachPercentage = useMemo(() => {
+  const getBestPutsAtEachPercentage = createMemo(() => {
     if (useManualData || !stockQuote || putsChain.length === 0) return new Map();
     
     const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));
@@ -110,7 +110,7 @@ export const useOptionsCalculation = ({
   }, [useManualData, stockQuote, putsChain, percentageIncrements, investmentAmount]);
 
   // Calculate best manual options for each percentage increase
-  const getBestManualOptionsAtEachPercentage = useMemo(() => {
+  const getBestManualOptionsAtEachPercentage = createMemo(() => {
     if (!useManualData || manualResults.size === 0) return new Map();
     
     const percentages = percentageIncrements.split(',').map(p => parseFloat(p.trim()));

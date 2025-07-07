@@ -1,8 +1,4 @@
-import { Box, Container, Link, Typography } from '@mui/material';
-import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { getAssetPath } from '../utils/assetPath';
-import { defaultGridColors } from './personality-test/theme/mbtiTheme';
+import { For } from 'solid-js';
 
 interface ApplicationItem {
   title: string;
@@ -29,46 +25,74 @@ const applications: ApplicationItem[] = [
   },
 ];
 
-const PersonalApplications: React.FC = () => {
-  const gridColors = defaultGridColors;
+/* eslint-disable @typescript-eslint/no-unused-vars */
+interface PersonalApplicationsProps {
+  onNavigate: (page: string) => void;
+}
 
-  interface ApplicationItemComponentProps {
-    item: ApplicationItem;
-    gridColors: typeof defaultGridColors;
-  }
+const PersonalApplications = (props: PersonalApplicationsProps) => {
+  const panelColor = '#4A6E8D';
+  const linkColor = '#7CE2FF';
 
-  const ApplicationItemComponent: React.FC<ApplicationItemComponentProps> = ({ item, gridColors }) => (
-    <Box
-      sx={{
+  const ApplicationItemComponent = (itemProps: { item: ApplicationItem; onNavigate: PersonalApplicationsProps['onNavigate'] }) => (
+    <div
+      style={{
         display: 'flex',
-        flexDirection: 'column'
+        "flex-direction": 'column',
+        padding: '16px',
+        "background-color": panelColor,
+        "border-radius": '8px',
+        "min-height": '100px'
       }}
     >
-      <Typography variant="h6" component="h2" gutterBottom style={{ display: 'flex', alignItems: 'center' }}>
-        <img src={getAssetPath(item.icon)} alt={item.title} style={{ width: '30px', marginRight: '8px' }} />
-        {item.title}
-      </Typography>
-      <Typography variant="body1" gutterBottom>
-        {item.description}{' '}
-        <Link component={RouterLink} to={item.linkUrl} sx={{ color: gridColors.linkColor }}>
-          {item.linkText}
-        </Link>
-      </Typography>
-    </Box>
+      <h2 style={{ display: 'flex', "align-items": 'center', margin: '0 0 16px 0' }}>
+        <img src={itemProps.item.icon} alt={itemProps.item.title} style={{ width: '30px', "margin-right": '8px' }} />
+        {itemProps.item.title}
+      </h2>
+      <p style={{ margin: '0' }}>
+        {itemProps.item.description}{' '}
+        <span 
+          onClick={() => {
+            console.log('Application clicked, navigating to:', itemProps.item.linkUrl);
+            if (itemProps.item.linkUrl === '/questions') {
+              itemProps.onNavigate('personality-test');
+            } else if (itemProps.item.linkUrl === '/options-calculator') {
+              itemProps.onNavigate('options-calculator');
+            }
+          }}
+          style={{ color: linkColor, cursor: 'pointer', "text-decoration": 'underline' }}
+        >
+          {itemProps.item.linkText}
+        </span>
+      </p>
+    </div>
   );
 
   return (
-    <Container className="App">
-      <header className="App-header">
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {applications.map((item, index) => (
-            <Box key={index} sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' } }}>
-              <ApplicationItemComponent item={item} gridColors={gridColors} />
-            </Box>
-          ))}
-        </Box>
+    <div style={{ color: '#ffffff' }}>
+      <header>
+        <h1 style={{ color: '#ffffff', "text-align": 'center', "margin-bottom": '40px' }}>
+          Personal Applications
+        </h1>
       </header>
-    </Container>
+      
+      <div style={{ display: 'flex', "flex-wrap": 'wrap', gap: '16px' }}>
+        <For each={applications}>{(item) => (
+          <div style={{ flex: '1 1 calc(50% - 8px)', "min-width": '300px' }}>
+            <ApplicationItemComponent item={item} onNavigate={props.onNavigate} />
+          </div>
+        )}</For>
+      </div>
+      
+      <div style={{ "margin-top": '40px', "text-align": 'center' }}>
+        <span 
+          onClick={() => props.onNavigate('home')}
+          style={{ color: linkColor, cursor: 'pointer', "text-decoration": 'underline' }}
+        >
+          ← Back to Home
+        </span>
+      </div>
+    </div>
   );
 };
 

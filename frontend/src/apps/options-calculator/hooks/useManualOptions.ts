@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { createSignal } from 'solid-js';
 
 export interface ManualOptionProfile {
   strike: number;
@@ -24,30 +24,30 @@ export interface OptionResult extends ManualOptionProfile {
 }
 
 export const useManualOptions = () => {
-  const [manualSecurityPrice, setManualSecurityPrice] = useState<string>('100');
-  const [manualOptionEntries, setManualOptionEntries] = useState<ManualOptionEntry[]>([
+  const [manualSecurityPrice, setManualSecurityPrice] = createSignal<string>('100');
+  const [manualOptionEntries, setManualOptionEntries] = createSignal<ManualOptionEntry[]>([
     { id: '1', strike: '', bid: '', ask: '', price: '' }
   ]);
-  const [manualResults, setManualResults] = useState<Map<number, OptionResult[]>>(new Map());
-  const [bestManualOptions, setBestManualOptions] = useState<{
+  const [manualResults, setManualResults] = createSignal<Map<number, OptionResult[]>>(new Map());
+  const [bestManualOptions, setBestManualOptions] = createSignal<{
     best?: OptionResult;
     secondBest?: OptionResult;
   }>({});
-  const [csvUploadError, setCsvUploadError] = useState<string | null>(null);
+  const [csvUploadError, setCsvUploadError] = createSignal<string | null>(null);
 
   const addManualOptionEntry = () => {
     const newId = (Date.now() + Math.random()).toString();
-    setManualOptionEntries([...manualOptionEntries, { id: newId, strike: '', bid: '', ask: '', price: '' }]);
+    setManualOptionEntries([...manualOptionEntries(), { id: newId, strike: '', bid: '', ask: '', price: '' }]);
   };
 
   const removeManualOptionEntry = (id: string) => {
-    if (manualOptionEntries.length > 1) {
-      setManualOptionEntries(manualOptionEntries.filter(entry => entry.id !== id));
+    if (manualOptionEntries().length > 1) {
+      setManualOptionEntries(manualOptionEntries().filter(entry => entry.id !== id));
     }
   };
 
   const updateManualOptionEntry = (id: string, field: keyof ManualOptionEntry, value: string) => {
-    setManualOptionEntries(manualOptionEntries.map(entry => 
+    setManualOptionEntries(manualOptionEntries().map(entry => 
       entry.id === id ? { ...entry, [field]: value } : entry
     ));
   };
@@ -56,7 +56,7 @@ export const useManualOptions = () => {
     try {
       const options: ManualOptionProfile[] = [];
       
-      for (const entry of manualOptionEntries) {
+      for (const entry of manualOptionEntries()) {
         const strike = parseFloat(entry.strike);
         const bid = parseFloat(entry.bid);
         const ask = parseFloat(entry.ask);
@@ -127,7 +127,7 @@ export const useManualOptions = () => {
   };
 
   const handleCsvUpload = (
-    event: React.ChangeEvent<HTMLInputElement>, 
+    event: Event & { currentTarget: HTMLInputElement; target: HTMLInputElement }, 
     calculateCallback: (entries: ManualOptionEntry[]) => void
   ) => {
     const file = event.target.files?.[0];

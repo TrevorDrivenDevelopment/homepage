@@ -4,7 +4,7 @@ node_modules
 build
 backend/dist
 backend/cdk.out
-# public directory is needed for React build process
+# public directory contains static assets
 # static assets are in public/static/
 
 # Environment files
