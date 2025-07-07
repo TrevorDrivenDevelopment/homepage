@@ -87,7 +87,7 @@ const CurrentScores: Component<CurrentScoresProps> = (props) => {
                     height: 6,
                     borderRadius: 3,
                     backgroundColor: '#1B3A57',
-                    '& .MuiLinearProgress-bar': {
+                    '& .suid-linear-progress-bar': {
                       backgroundColor: getProgressColor(score, functionType),
                       borderRadius: 3
                     }

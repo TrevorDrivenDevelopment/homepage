@@ -45,10 +45,10 @@ export const DataSourceToggle = (props: DataSourceToggleProps) => {
               onChange={(e, checked) => props.setUseManualData(checked)}
               color="primary"
               sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
+                '& .suid-switch-base.suid-checked': {
                   color: '#7CE2FF',
                 },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                '& .suid-switch-base.suid-checked + .suid-switch-track': {
                   backgroundColor: '#7CE2FF',
                 },
               }}
@@ -73,7 +73,7 @@ export const DataSourceToggle = (props: DataSourceToggleProps) => {
                 backgroundColor: '#1B3A57',
                 borderColor: '#ff6b6b',
                 color: '#ffffff',
-                '& .MuiAlert-icon': {
+                '& .suid-alert-icon': {
                   color: '#ff6b6b'
                 }
               }}>
@@ -121,7 +121,7 @@ export const DataSourceToggle = (props: DataSourceToggleProps) => {
                 backgroundColor: '#1B3A57',
                 borderColor: '#7CE2FF',
                 color: '#ffffff',
-                '& .MuiAlert-icon': {
+                '& .suid-alert-icon': {
                   color: '#7CE2FF'
                 }
               }}>

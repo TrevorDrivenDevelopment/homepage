@@ -1,5 +1,3 @@
-import { createTheme, Theme } from '@mui/material/styles';
-
 // Color palette for the MBTI personality test
 export const MBTI_COLORS = {
   // Primary theme colors
@@ -136,10 +134,10 @@ export const MBTI_STYLES = {
   
   // Switch styles
   switchComponent: {
-    '& .MuiSwitch-switchBase.Mui-checked': {
+    '& .suid-switch-base.suid-checked': {
       color: MBTI_COLORS.primary,
     },
-    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    '& .suid-switch-base.suid-checked + .suid-switch-track': {
       backgroundColor: MBTI_COLORS.primary,
     },
   },
@@ -185,48 +183,6 @@ export const MBTI_STYLES = {
     justifyContent: 'center',
   },
 } as const;
-
-// Create MUI theme with custom colors
-export const createMBTITheme = (): Theme => {
-  return createTheme({
-    palette: {
-      mode: 'dark',
-      primary: {
-        main: MBTI_COLORS.primary,
-      },
-      secondary: {
-        main: MBTI_COLORS.panelPrimary,
-      },
-      background: {
-        default: '#1B3A57',
-        paper: MBTI_COLORS.panelPrimary,
-      },
-      text: {
-        primary: MBTI_COLORS.textPrimary,
-        secondary: MBTI_COLORS.textSecondary,
-      },
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          contained: {
-            '&:hover': {
-              transform: 'translateY(-1px)',
-              transition: MBTI_ANIMATIONS.transition.fast,
-            },
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            backgroundImage: 'none',
-          },
-        },
-      },
-    },
-  });
-};
 
 // Utility functions for common styling operations
 export const getAnimatedStyles = (isAnimating: boolean) => ({

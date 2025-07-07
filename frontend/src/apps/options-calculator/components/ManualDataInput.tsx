@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { For } from 'solid-js';
 import {
   Box,
   Card,
@@ -42,13 +42,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
           inputProps={{ step: 0.01, min: 0 }}
           sx={{ 
             minWidth: 150,
-            '& .MuiInputLabel-root': { color: '#7CE2FF' },
-            '& .MuiInputBase-input': { color: '#ffffff' },
-            '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-            '& .MuiOutlinedInput-root': {
+            '& .suid-input-label-root': { color: '#7CE2FF' },
+            '& .suid-input-base-input': { color: '#ffffff' },
+            '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+            '& .suid-outlined-input-root': {
               '& fieldset': { borderColor: '#4A6E8D' },
               '&:hover fieldset': { borderColor: '#7CE2FF' },
-              '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+              '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
             }
           }}
           helperText="Current stock price"
@@ -61,13 +61,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
           size="small"
           sx={{ 
             minWidth: 150,
-            '& .MuiInputLabel-root': { color: '#7CE2FF' },
-            '& .MuiInputBase-input': { color: '#ffffff' },
-            '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-            '& .MuiOutlinedInput-root': {
+            '& .suid-input-label-root': { color: '#7CE2FF' },
+            '& .suid-input-base-input': { color: '#ffffff' },
+            '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+            '& .suid-outlined-input-root': {
               '& fieldset': { borderColor: '#4A6E8D' },
               '&:hover fieldset': { borderColor: '#7CE2FF' },
-              '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+              '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
             }
           }}
           helperText="Total investment budget"
@@ -80,13 +80,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
           size="small"
           sx={{ 
             minWidth: 200,
-            '& .MuiInputLabel-root': { color: '#7CE2FF' },
-            '& .MuiInputBase-input': { color: '#ffffff' },
-            '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-            '& .MuiOutlinedInput-root': {
+            '& .suid-input-label-root': { color: '#7CE2FF' },
+            '& .suid-input-base-input': { color: '#ffffff' },
+            '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+            '& .suid-outlined-input-root': {
               '& fieldset': { borderColor: '#4A6E8D' },
               '&:hover fieldset': { borderColor: '#7CE2FF' },
-              '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+              '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
             }
           }}
           helperText="Expected stock price changes"
@@ -187,13 +187,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
                 size="small"
                 sx={{ 
                   minWidth: 100,
-                  '& .MuiInputLabel-root': { color: '#7CE2FF' },
-                  '& .MuiInputBase-input': { color: '#ffffff' },
-                  '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-                  '& .MuiOutlinedInput-root': {
+                  '& .suid-input-label-root': { color: '#7CE2FF' },
+                  '& .suid-input-base-input': { color: '#ffffff' },
+                  '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+                  '& .suid-outlined-input-root': {
                     '& fieldset': { borderColor: '#4A6E8D' },
                     '&:hover fieldset': { borderColor: '#7CE2FF' },
-                    '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+                    '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
                   }
                 }}
                 inputProps={{ step: 0.01 }}
@@ -207,13 +207,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
                 size="small"
                 sx={{ 
                   minWidth: 100,
-                  '& .MuiInputLabel-root': { color: '#7CE2FF' },
-                  '& .MuiInputBase-input': { color: '#ffffff' },
-                  '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-                  '& .MuiOutlinedInput-root': {
+                  '& .suid-input-label-root': { color: '#7CE2FF' },
+                  '& .suid-input-base-input': { color: '#ffffff' },
+                  '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+                  '& .suid-outlined-input-root': {
                     '& fieldset': { borderColor: '#4A6E8D' },
                     '&:hover fieldset': { borderColor: '#7CE2FF' },
-                    '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+                    '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
                   }
                 }}
                 inputProps={{ step: 0.01 }}
@@ -227,13 +227,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
                 size="small"
                 sx={{ 
                   minWidth: 100,
-                  '& .MuiInputLabel-root': { color: '#7CE2FF' },
-                  '& .MuiInputBase-input': { color: '#ffffff' },
-                  '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-                  '& .MuiOutlinedInput-root': {
+                  '& .suid-input-label-root': { color: '#7CE2FF' },
+                  '& .suid-input-base-input': { color: '#ffffff' },
+                  '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+                  '& .suid-outlined-input-root': {
                     '& fieldset': { borderColor: '#4A6E8D' },
                     '&:hover fieldset': { borderColor: '#7CE2FF' },
-                    '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+                    '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
                   }
                 }}
                 inputProps={{ step: 0.01 }}
@@ -247,13 +247,13 @@ export const ManualDataInput = (props: ManualDataInputProps) => {
                 size="small"
                 sx={{ 
                   minWidth: 120,
-                  '& .MuiInputLabel-root': { color: '#7CE2FF' },
-                  '& .MuiInputBase-input': { color: '#ffffff' },
-                  '& .MuiFormHelperText-root': { color: '#7CE2FF' },
-                  '& .MuiOutlinedInput-root': {
+                  '& .suid-input-label-root': { color: '#7CE2FF' },
+                  '& .suid-input-base-input': { color: '#ffffff' },
+                  '& .suid-form-helper-text-root': { color: '#7CE2FF' },
+                  '& .suid-outlined-input-root': {
                     '& fieldset': { borderColor: '#4A6E8D' },
                     '&:hover fieldset': { borderColor: '#7CE2FF' },
-                    '&.Mui-focused fieldset': { borderColor: '#7CE2FF' }
+                    '&.suid-focused fieldset': { borderColor: '#7CE2FF' }
                   }
                 }}
                 inputProps={{ step: 0.01 }}

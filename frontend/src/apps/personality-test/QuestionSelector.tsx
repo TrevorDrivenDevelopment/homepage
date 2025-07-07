@@ -121,7 +121,7 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                   height: 8, 
                   borderRadius: 4,
                   backgroundColor: '#1B3A57',
-                  '& .MuiLinearProgress-bar': {
+                  '& .suid-linear-progress-bar': {
                     backgroundColor: '#7CE2FF'
                   }
                 }}

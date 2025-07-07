@@ -129,7 +129,7 @@ const TopTypesDisplay: Component<TopTypesDisplayProps> = (props) => {
                       height: 6,
                       borderRadius: 3,
                       backgroundColor: '#4A6E8D',
-                      '& .MuiLinearProgress-bar': {
+                      '& .suid-linear-progress-bar': {
                         backgroundColor: '#7CE2FF'
                       }
                     }}
