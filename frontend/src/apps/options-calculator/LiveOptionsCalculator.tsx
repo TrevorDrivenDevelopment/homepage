@@ -1,5 +1,6 @@
 import { Show, createSignal } from 'solid-js';
 import { createTheme, ThemeProvider } from '@suid/material/styles';
+import { Alert, Typography } from '@suid/material';
 import { LiveDataControls } from './components/LiveDataControls';
 import { DataSourceToggle } from './components/DataSourceToggle';
 import { ManualDataInput } from './components/ManualDataInput';
@@ -312,6 +313,35 @@ const LiveOptionsCalculator = (props: LiveOptionsCalculatorProps) => {
           </span>
         </div>
       </Show>
+      
+      {/* Disclaimer Banner */}
+      <Alert 
+       severity="warning"
+        sx={{ 
+          mb: 3,
+          backgroundColor: '#4A6E8D',
+          border: '2px solid #7CE2FF',
+          borderRadius: '8px',
+          '& .suid-alert-icon': {
+            color: '#7CE2FF'
+          },
+          '& .suid-alert-message': {
+            color: '#ffffff'
+          }
+        }}
+      >
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1, color: '#7CE2FF' }}>
+          Disclaimer - No Warranty Implied
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#ffffff', lineHeight: 1.5 }}>
+          This calculator is provided for educational and informational purposes only. 
+          It does not constitute financial advice. Options trading involves substantial risk 
+          and may not be suitable for all investors. Past performance does not guarantee future results. 
+          Please consult with a qualified financial advisor before making investment decisions. 
+          The creators of this tool provide no warranty and accept no liability for any losses 
+          that may arise from its use.
+        </Typography>
+      </Alert>
       
       <div style={{ 
         "margin-bottom": "24px",
