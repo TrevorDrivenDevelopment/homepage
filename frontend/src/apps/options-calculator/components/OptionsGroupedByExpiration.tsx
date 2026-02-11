@@ -1,6 +1,7 @@
 import { createSignal, For, Show, createMemo } from 'solid-js';
 import { OptionQuote, StockQuote } from '../enhancedOptionsService';
 import { OptionsTable } from './OptionsTable';
+import { roundMidpointUp } from '../utils/optionsCalculationUtils';
 
 interface OptionsGroupedByExpirationProps {
   options: OptionQuote[];
@@ -59,12 +60,6 @@ export const OptionsGroupedByExpiration = (props: OptionsGroupedByExpirationProp
       day: 'numeric',
       year: 'numeric'
     });
-  };
-
-  // Helper function for rounding midpoint up (same as in useOptionsCalculation)
-  const roundMidpointUp = (bid: number, ask: number): number => {
-    const midpoint = (bid + ask) / 2;
-    return Math.ceil(midpoint * 100) / 100;
   };
 
   // Calculate best options for a specific expiration date group using the same logic as global calculation

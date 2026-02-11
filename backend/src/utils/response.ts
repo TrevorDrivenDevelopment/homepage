@@ -22,19 +22,19 @@ export function createResponse(
   };
 }
 
+interface ErrorResponseBody {
+  success: false;
+  error: string;
+  timestamp: string;
+  details?: string;
+}
+
 export function createErrorResponse(
   statusCode: number,
   message: string,
   error?: unknown
 ): APIGatewayProxyResult {
   console.error('API Error:', { statusCode, message, error });
-  
-  interface ErrorResponseBody {
-    success: false;
-    error: string;
-    timestamp: string;
-    details?: string;
-  }
 
   const responseBody: ErrorResponseBody = {
     success: false,

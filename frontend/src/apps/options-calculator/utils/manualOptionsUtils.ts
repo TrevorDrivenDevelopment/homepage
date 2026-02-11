@@ -1,11 +1,5 @@
 import { ManualOptionEntry, ManualOptionProfile, OptionResult } from '../hooks/useManualOptions';
-
-export const roundToCents = (input: number): number => Math.round((input * 100)) / 100;
-
-export const roundMidpointUp = (bid: number, ask: number): number => {
-  const midpoint = (bid + ask) / 2;
-  return Math.ceil(midpoint * 100) / 100;
-};
+import { roundToCents, roundMidpointUp } from './optionsCalculationUtils';
 
 export const parseManualOptionsFromEntries = (entries: ManualOptionEntry[]): ManualOptionProfile[] => {
   try {

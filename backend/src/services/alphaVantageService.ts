@@ -10,6 +10,21 @@ export class AlphaVantageService {
     this.apiKey = apiKey;
   }
 
+  /**
+   * Check for common Alpha Vantage error responses and throw appropriate errors
+   */
+  private checkForApiError(data: Record<string, unknown>): void {
+    if (data['Error Message']) {
+      throw new Error(`Alpha Vantage Error: ${data['Error Message']}`);
+    }
+    if (data['Note']) {
+      throw new Error(`Alpha Vantage Rate Limit: ${data['Note']}`);
+    }
+    if (data['Information']) {
+      throw new Error(`Alpha Vantage Info: ${data['Information']}`);
+    }
+  }
+
   async getStockQuote(symbol: string): Promise<StockQuote> {
     if (!this.apiKey) {
       throw new Error('Alpha Vantage API key not configured');
@@ -71,15 +86,7 @@ export class AlphaVantageService {
       console.log('❌ No Global Quote data found in response');
       
       // Check for common Alpha Vantage error responses
-      if (response.data['Error Message']) {
-        throw new Error(`Alpha Vantage Error: ${response.data['Error Message']}`);
-      }
-      if (response.data['Note']) {
-        throw new Error(`Alpha Vantage Rate Limit: ${response.data['Note']}`);
-      }
-      if (response.data['Information']) {
-        throw new Error(`Alpha Vantage Info: ${response.data['Information']}`);
-      }
+      this.checkForApiError(response.data);
       
       throw new Error(`No data found for symbol: ${symbol}`);
     }
@@ -120,16 +127,8 @@ export class AlphaVantageService {
     console.log('📋 Overview response data keys:', Object.keys(response.data));
 
     // Handle potential errors in overview response
-    if (response.data['Error Message']) {
-      console.log('⚠️ Overview API error, using fallback values:', response.data['Error Message']);
-      return { week52High: undefined, week52Low: undefined };
-    }
-    if (response.data['Note']) {
-      console.log('⚠️ Overview API rate limit, using fallback values:', response.data['Note']);
-      return { week52High: undefined, week52Low: undefined };
-    }
-    if (response.data['Information']) {
-      console.log('⚠️ Overview API info, using fallback values:', response.data['Information']);
+    if (response.data['Error Message'] || response.data['Note'] || response.data['Information']) {
+      console.log('⚠️ Overview API error, using fallback values');
       return { week52High: undefined, week52Low: undefined };
     }
 
@@ -171,15 +170,7 @@ export class AlphaVantageService {
       console.log('📋 Response data keys:', Object.keys(response.data));
       
       // Check for common Alpha Vantage error responses
-      if (response.data['Error Message']) {
-        throw new Error(`Alpha Vantage Error: ${response.data['Error Message']}`);
-      }
-      if (response.data['Note']) {
-        throw new Error(`Alpha Vantage Rate Limit: ${response.data['Note']}`);
-      }
-      if (response.data['Information']) {
-        throw new Error(`Alpha Vantage Info: ${response.data['Information']}`);
-      }
+      this.checkForApiError(response.data);
 
       const optionsData = response.data.data;
       

@@ -1,15 +1,19 @@
 export interface Question {
   id: string;
   text: string;
-  optionA: string; // Extroverted version
-  optionB: string; // Introverted version
-  functionType: 'Ni/Ne' | 'Si/Se' | 'Ti/Te' | 'Fi/Fe';
-  category: 'function-preference' | 'function-order';
+  optionA: string; // First displayed option
+  optionB: string; // Second displayed option
+  functionType?: 'Ni/Ne' | 'Si/Se' | 'Ti/Te' | 'Fi/Fe'; // Omitted for attention checks
+  category: 'function-preference' | 'function-order' | 'attention-check' | 'ei-orientation';
+  reversed?: boolean; // When true, A=introverted side, B=extroverted side; scoring is inverted
+  discriminationTier?: number; // 1=high, 2=medium, 3=low - adaptive question ordering
+  consistencyPairId?: string; // Links semantically similar questions for consistency checking
+  attentionCheckExpectedValue?: number; // Expected Likert value for attention check items
 }
 
 export interface Response {
   questionId: string;
-  value: boolean | null; // true = option A (extroverted), false = option B (introverted), null = unsure
+  value: number; // Likert scale: -2 (strongly B), -1 (slightly B), 0 (neutral), 1 (slightly A), 2 (strongly A)
 }
 
 export interface CognitiveFunction {

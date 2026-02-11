@@ -1,126 +1,110 @@
-import { Component } from 'solid-js';
+import { Component, For } from 'solid-js';
 import { 
   Card, 
   CardContent, 
   Typography, 
-  Button, 
-  ButtonGroup,
-  Chip,
+  Button,
   Box
 } from '@suid/material';
 import { Question } from '../types/mbti';
 
 interface QuestionCardProps {
   question: Question;
-  selectedValue: boolean | null;
-  onAnswer: (_value: boolean | null) => void;
+  selectedValue: number | undefined; // undefined = unanswered
+  onAnswer: (_value: number) => void;
+  isOptional?: boolean; // Greyed out when dimension has sufficient confidence
 }
 
-const QuestionCard: Component<QuestionCardProps> = (props) => {
-  const getButtonVariant = (option: boolean | null) => {
-    return props.selectedValue === option ? 'contained' : 'outlined';
-  };
+const likertOptions = [
+  { value: 2, label: 'Strongly A', shortLabel: 'SA' },
+  { value: 1, label: 'Slightly A', shortLabel: 'A' },
+  { value: 0, label: 'Neutral', shortLabel: '—' },
+  { value: -1, label: 'Slightly B', shortLabel: 'B' },
+  { value: -2, label: 'Strongly B', shortLabel: 'SB' },
+];
 
-  // Fixed colors to prevent changes when other questions are answered
+const getLikertColor = (value: number, isSelected: boolean): string => {
+  if (!isSelected) return '#1B3A57';
+  switch (value) {
+    case 2: return '#2e7d32';  // Deep green
+    case 1: return '#66bb6a';  // Light green
+    case 0: return '#757575';  // Grey
+    case -1: return '#42a5f5'; // Light blue
+    case -2: return '#1565c0'; // Deep blue
+    default: return '#1B3A57';
+  }
+};
+
+const QuestionCard: Component<QuestionCardProps> = (props) => {
   return (
     <Card sx={{ 
       mb: 2,
       backgroundColor: '#4A6E8D',
-      border: '1px solid #4A6E8D'
+      border: '1px solid #4A6E8D',
+      opacity: props.isOptional ? 0.65 : 1,
+      transition: 'opacity 0.3s ease'
     }}>
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Typography variant="h6" component="h3" sx={{ flex: 1, color: '#ffffff' }}>
-            {props.question.text}
-          </Typography>
-          <Chip 
-            label={props.question.functionType}
-            size="small"
-            variant="outlined"
-            sx={{ 
-              ml: 2,
-              borderColor: '#7CE2FF',
-              color: '#7CE2FF',
-              backgroundColor: '#1B3A57'
+        {/* Question text — no function type or category labels */}
+        <Typography variant="h6" component="h3" sx={{ mb: 2, color: '#ffffff' }}>
+          {props.question.text}
+        </Typography>
+        
+        {/* Option A description */}
+        <Typography variant="body2" sx={{ mb: 1, color: '#7CE2FF', fontWeight: 'bold' }}>
+          A) {props.question.optionA}
+        </Typography>
+        
+        {/* 5-point Likert scale */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 0.5, sm: 1 }, 
+          justifyContent: 'center',
+          my: 1.5,
+          flexWrap: 'wrap'
+        }}>
+          <For each={likertOptions}>
+            {(option) => {
+              const isSelected = () => props.selectedValue === option.value;
+              return (
+                <Button
+                  variant={isSelected() ? 'contained' : 'outlined'}
+                  onClick={() => props.onAnswer(option.value)}
+                  size="small"
+                  sx={{ 
+                    minWidth: { xs: '52px', sm: '80px' },
+                    px: { xs: 0.5, sm: 1.5 },
+                    py: 1,
+                    textTransform: 'none',
+                    fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                    backgroundColor: getLikertColor(option.value, isSelected()),
+                    borderColor: isSelected() ? 'transparent' : '#7CE2FF',
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: getLikertColor(option.value, true),
+                      opacity: 0.85,
+                      borderColor: '#ffffff'
+                    }
+                  }}
+                >
+                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>{option.label}</Box>
+                  <Box sx={{ display: { xs: 'block', sm: 'none' } }}>{option.shortLabel}</Box>
+                </Button>
+              );
             }}
-          />
+          </For>
         </Box>
         
-        <ButtonGroup 
-          orientation="vertical" 
-          variant="outlined" 
-          fullWidth
-          sx={{ gap: 1 }}
-        >
-          <Button
-            variant={getButtonVariant(true)}
-            onClick={() => props.onAnswer(true)}
-            sx={{ 
-              p: 2, 
-              textAlign: 'left',
-              justifyContent: 'flex-start',
-              textTransform: 'none',
-              backgroundColor: props.selectedValue === true ? '#4caf50' : '#1B3A57', // Green when selected
-              borderColor: '#7CE2FF',
-              color: props.selectedValue === true ? '#ffffff' : '#ffffff',
-              '&:hover': {
-                backgroundColor: props.selectedValue === true ? '#4caf50' : '#4A6E8D',
-                borderColor: '#ffffff'
-              }
-            }}
-          >
-            <Typography variant="body1">
-              A) {props.question.optionA}
-            </Typography>
-          </Button>
-          
-          <Button
-            variant={getButtonVariant(null)}
-            onClick={() => props.onAnswer(null)}
-            sx={{ 
-              p: 1, 
-              textAlign: 'center',
-              textTransform: 'none',
-              backgroundColor: props.selectedValue === null ? '#ff9800' : '#1B3A57', // Orange when selected
-              borderColor: '#7CE2FF',
-              color: props.selectedValue === null ? '#1B3A57' : '#ffffff',
-              '&:hover': {
-                backgroundColor: props.selectedValue === null ? '#ff9800' : '#4A6E8D',
-                borderColor: '#ffffff'
-              }
-            }}
-          >
-            <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-              I'm unsure
-            </Typography>
-          </Button>
-          
-          <Button
-            variant={getButtonVariant(false)}
-            onClick={() => props.onAnswer(false)}
-            sx={{ 
-              p: 2, 
-              textAlign: 'left',
-              justifyContent: 'flex-start',
-              textTransform: 'none',
-              backgroundColor: props.selectedValue === false ? '#2196f3' : '#1B3A57', // Blue when selected
-              borderColor: '#7CE2FF',
-              color: props.selectedValue === false ? '#ffffff' : '#ffffff',
-              '&:hover': {
-                backgroundColor: props.selectedValue === false ? '#2196f3' : '#4A6E8D',
-                borderColor: '#ffffff'
-              }
-            }}
-          >
-            <Typography variant="body1">
-              B) {props.question.optionB}
-            </Typography>
-          </Button>
-        </ButtonGroup>
-        
-        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#7CE2FF' }}>
-          Category: {props.question.category}
+        {/* Option B description */}
+        <Typography variant="body2" sx={{ mt: 1, color: '#7CE2FF', fontWeight: 'bold' }}>
+          B) {props.question.optionB}
         </Typography>
+
+        {props.isOptional && (
+          <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#ff9800', fontStyle: 'italic' }}>
+            Optional — enough data collected for this dimension
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );

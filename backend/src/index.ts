@@ -122,8 +122,6 @@ server.listen(PORT, () => {
   console.log('  - GET  /api/options/stock/{symbol}');
   console.log('  - GET  /api/options/chain/{symbol}');
   console.log('  - POST /api/calculator/options');
-  console.log('  - POST /api/portfolio/analyze');
-  console.log('  - GET  /api/portfolio/risk-metrics');
   console.log('\n💡 Use Ctrl+C to stop the server');
 });
 

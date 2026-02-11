@@ -2,7 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -25,8 +24,7 @@ export class HomepageStack extends cdk.Stack {
     const alphaVantageApiKey = props?.alphaVantageApiKey || this.node.tryGetContext('alphaVantageApiKey') || '';
     const marketDataApiKey = props?.marketDataApiKey || this.node.tryGetContext('marketDataApiKey') || '';
 
-    // Backend source path (relative to backend directory)
-    const backendPath = path.join(__dirname, '../../src');
+    const distPath = path.join(__dirname, '../../dist');
 
     // Common Lambda function props
     const commonLambdaProps = {
@@ -39,7 +37,67 @@ export class HomepageStack extends cdk.Stack {
       },
     };
 
-    // Create API Gateway
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    /** Create a Lambda with standard naming and config. */
+    const createLambda = (
+      constructId: string,
+      handlerName: string,
+      extraEnv?: Record<string, string>,
+    ): lambda.Function => {
+      return new lambda.Function(this, constructId, {
+        ...commonLambdaProps,
+        functionName: `homepage-${handlerName}-${environment}`,
+        code: lambda.Code.fromAsset(distPath),
+        handler: `handlers/${handlerName}.handler`,
+        ...(extraEnv && {
+          environment: { ...commonLambdaProps.environment, ...extraEnv },
+        }),
+      });
+    };
+
+    /** Create an SSM parameter if the value is non-empty; returns undefined otherwise. */
+    const createSsmParam = (
+      constructId: string,
+      paramName: string,
+      value: string,
+      description: string,
+    ): ssm.StringParameter | undefined => {
+      if (!value) return undefined;
+      return new ssm.StringParameter(this, constructId, {
+        parameterName: `/homepage/${environment}/${paramName}`,
+        stringValue: value,
+        description,
+      });
+    };
+
+    /** Grant SSM read access from a parameter to one or more Lambdas. */
+    const grantSsmAccess = (
+      param: ssm.StringParameter | undefined,
+      ...functions: lambda.Function[]
+    ): void => {
+      if (!param) return;
+      functions.forEach(fn => param.grantRead(fn));
+    };
+
+    /** Wire a Lambda to an API Gateway path and return the leaf resource. */
+    const addApiRoute = (
+      parent: apigateway.IResource,
+      pathParts: string[],
+      method: string,
+      handler: lambda.Function,
+      options?: { apiKeyRequired?: boolean },
+    ): apigateway.Resource => {
+      let resource: apigateway.IResource = parent;
+      for (const part of pathParts) {
+        resource = resource.addResource(part);
+      }
+      resource.addMethod(method, new apigateway.LambdaIntegration(handler), options);
+      return resource as apigateway.Resource;
+    };
+
+    // ── API Gateway ─────────────────────────────────────────────────────
+
     const api = new apigateway.RestApi(this, 'HomepageApi', {
       restApiName: `homepage-api-${environment}`,
       description: 'Homepage Backend API',
@@ -59,135 +117,63 @@ export class HomepageStack extends cdk.Stack {
       },
     });
 
-    // Create API Key for securing endpoints
+    // API Key + Usage Plan
     const apiKey = new apigateway.ApiKey(this, 'HomepageApiKey', {
       apiKeyName: `homepage-api-key-${environment}`,
       description: 'API Key for Homepage API endpoints',
     });
 
-    // Create Usage Plan
     const usagePlan = new apigateway.UsagePlan(this, 'HomepageUsagePlan', {
       name: `homepage-usage-plan-${environment}`,
       description: 'Usage plan for Homepage API',
-      throttle: {
-        rateLimit: 5,    // requests per second
-        burstLimit: 10,   // max concurrent requests
-      },
-      quota: {
-        limit: 1000,      // requests per month
-        period: apigateway.Period.MONTH,
-      },
-      apiStages: [{
-        api: api,
-        stage: api.deploymentStage,
-      }],
+      throttle: { rateLimit: 5, burstLimit: 10 },
+      quota: { limit: 1000, period: apigateway.Period.MONTH },
+      apiStages: [{ api, stage: api.deploymentStage }],
     });
-
-    // Associate API Key with Usage Plan
     usagePlan.addApiKey(apiKey);
 
-    // Store the API key in SSM Parameter Store
-    new ssm.StringParameter(this, 'HomepageApiKeyParam', {
-      parameterName: `/homepage/${environment}/api-key`,
-      stringValue: apiKey.keyId,
-      description: 'Homepage API Key ID',
-    });
+    // ── SSM Parameters ──────────────────────────────────────────────────
 
-    // Store API keys in SSM Parameter Store (if provided)
-    let alphaVantageParam: ssm.StringParameter | undefined;
-    if (alphaVantageApiKey) {
-      alphaVantageParam = new ssm.StringParameter(this, 'AlphaVantageApiKey', {
-        parameterName: `/homepage/${environment}/alpha-vantage-api-key`,
-        stringValue: alphaVantageApiKey,
-        description: 'Alpha Vantage API key for stock data',
-      });
-    }
+    createSsmParam('HomepageApiKeyParam', 'api-key', apiKey.keyId, 'Homepage API Key ID');
 
-    let marketDataParam: ssm.StringParameter | undefined;
-    if (marketDataApiKey) {
-      marketDataParam = new ssm.StringParameter(this, 'MarketDataApiKey', {
-        parameterName: `/homepage/${environment}/market-data-api-key`,
-        stringValue: marketDataApiKey,
-        description: 'Market Data API key',
-      });
-    }
+    const alphaVantageParam = createSsmParam(
+      'AlphaVantageApiKey', 'alpha-vantage-api-key', alphaVantageApiKey, 'Alpha Vantage API key for stock data',
+    );
+    const marketDataParam = createSsmParam(
+      'MarketDataApiKey', 'market-data-api-key', marketDataApiKey, 'Market Data API key',
+    );
 
-    // Health Check Lambda
-    const healthFunction = new lambda.Function(this, 'HealthFunction', {
-      ...commonLambdaProps,
-      functionName: `homepage-health-${environment}`,
-      code: lambda.Code.fromAsset(path.join(backendPath, '../dist')),
-      handler: 'handlers/health.handler',
-    });
+    // ── Lambda Functions ────────────────────────────────────────────────
 
-    // Options Data Lambda
-    const optionsFunction = new lambda.Function(this, 'OptionsFunction', {
-      ...commonLambdaProps,
-      functionName: `homepage-options-${environment}`,
-      code: lambda.Code.fromAsset(path.join(backendPath, '../dist')),
-      handler: 'handlers/options.handler',
-      environment: {
-        ...commonLambdaProps.environment,
-        ALPHA_VANTAGE_API_KEY: alphaVantageApiKey,
-      },
-    });
+    const healthFunction     = createLambda('HealthFunction',     'health');
+    const optionsFunction    = createLambda('OptionsFunction',    'options', { ALPHA_VANTAGE_API_KEY: alphaVantageApiKey });
+    const calculatorFunction = createLambda('CalculatorFunction', 'calculator');
 
-    // Calculator Lambda (create file if it doesn't exist)
-    const calculatorFunction = new lambda.Function(this, 'CalculatorFunction', {
-      ...commonLambdaProps,
-      functionName: `homepage-calculator-${environment}`,
-      code: lambda.Code.fromAsset(path.join(backendPath, '../dist')),
-      handler: 'handlers/calculator.handler',
-    });
+    // SSM access grants
+    grantSsmAccess(alphaVantageParam, optionsFunction);
+    grantSsmAccess(marketDataParam,   optionsFunction, calculatorFunction);
 
-    // Grant SSM parameter access to functions that need it
-    if (alphaVantageParam) {
-      alphaVantageParam.grantRead(optionsFunction);
-    }
-    if (marketDataParam) {
-      marketDataParam.grantRead(optionsFunction);
-      marketDataParam.grantRead(calculatorFunction);
-    }
+    // ── Route Wiring ────────────────────────────────────────────────────
 
-    // API Gateway integrations
-    const apiIntegration = api.root.addResource('api');
+    const apiRoot = api.root.addResource('api');
+    const secured = { apiKeyRequired: true };
 
-    // Health endpoint (no API key required)
-    const healthIntegration = new apigateway.LambdaIntegration(healthFunction);
-    apiIntegration.addResource('health').addMethod('GET', healthIntegration);
+    // Health (public)
+    addApiRoute(apiRoot, ['health'], 'GET', healthFunction);
 
-    // Options endpoints (API key required)
-    const optionsResource = apiIntegration.addResource('options');
-    const optionsIntegration = new apigateway.LambdaIntegration(optionsFunction);
-    
-    const stockResource = optionsResource
-      .addResource('stock')
-      .addResource('{symbol}');
-    stockResource.addMethod('GET', optionsIntegration, {
-      apiKeyRequired: true,
-    });
-    
-    const chainResource = optionsResource
-      .addResource('chain')
-      .addResource('{symbol}');
-    chainResource.addMethod('GET', optionsIntegration, {
-      apiKeyRequired: true,
-    });
+    // Options (secured)
+    const optionsResource = apiRoot.addResource('options');
+    addApiRoute(optionsResource, ['stock', '{symbol}'], 'GET', optionsFunction, secured);
+    addApiRoute(optionsResource, ['chain', '{symbol}'], 'GET', optionsFunction, secured);
 
-    // Calculator endpoints (API key required)
-    const calculatorResource = apiIntegration.addResource('calculator');
-    const calculatorIntegration = new apigateway.LambdaIntegration(calculatorFunction);
-    calculatorResource
-      .addResource('options')
-      .addMethod('POST', calculatorIntegration, {
-        apiKeyRequired: true,
-      });
+    // Calculator (secured)
+    addApiRoute(apiRoot, ['calculator', 'options'], 'POST', calculatorFunction, secured);
 
-    // Store outputs
+    // ── Outputs ─────────────────────────────────────────────────────────
+
     this.apiUrl = api.url;
     this.apiId = api.restApiId;
 
-    // CloudFormation outputs
     new cdk.CfnOutput(this, 'ApiGatewayUrl', {
       value: api.url,
       description: 'API Gateway endpoint URL',
@@ -211,7 +197,6 @@ export class HomepageStack extends cdk.Stack {
       description: 'Deployment environment',
     });
 
-    // Add tags to all resources
     cdk.Tags.of(this).add('Project', 'Homepage');
     cdk.Tags.of(this).add('Environment', environment);
     cdk.Tags.of(this).add('ManagedBy', 'CDK');

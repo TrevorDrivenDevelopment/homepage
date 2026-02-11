@@ -1,4 +1,4 @@
-import { Response, CognitiveFunction, FunctionScores, TypeResult } from './types/mbti';
+import { Response, CognitiveFunction, FunctionScores, TypeResult, Question } from './types/mbti';
 import { questions, mbtiTypes } from './data/mbtiData';
 
 // Constants for scoring weights
@@ -18,39 +18,43 @@ const MATCH_THRESHOLDS = {
   PARTIAL: 30
 };
 
+// Helper: get effective Likert score accounting for reversed items
+const getEffectiveScore = (response: Response, question: Question): number => {
+  // Positive = extroverted preference, Negative = introverted preference
+  return question.reversed ? -response.value : response.value;
+};
+
+// Helper: filter to only cognitive function questions (skip attention checks)
+const getCognitiveFunctionQuestions = () => 
+  questions.filter(q => q.category !== 'attention-check' && q.functionType);
+
 export const calculateFunctionScores = (responses: Response[]): FunctionScores => {
   const functionScores: FunctionScores = { 'Ni/Ne': 0, 'Si/Se': 0, 'Ti/Te': 0, 'Fi/Fe': 0 };
   
   responses.forEach(response => {
     const question = questions.find(q => q.id === response.questionId);
-    if (!question || response.value === null) return;
+    if (!question || !question.functionType || question.category === 'attention-check') return;
     
-    if (response.value) {
-      functionScores[question.functionType] += 1; // Extroverted version
-    } else {
-      functionScores[question.functionType] -= 1; // Introverted version
-    }
+    const effectiveScore = getEffectiveScore(response, question);
+    functionScores[question.functionType] += effectiveScore;
   });
   
   return functionScores;
 };
 
-// Enhanced function scoring that weighs order questions more heavily
+// Enhanced function scoring — all cognitive function questions weighted equally.
+// Previously order questions had inflated weight, but this caused well-developed
+// auxiliary functions to outscore the true dominant. E/I disambiguation is now
+// handled separately via direct E/I orientation questions.
 export const calculateEnhancedFunctionScores = (responses: Response[]): FunctionScores => {
   const functionScores: FunctionScores = { 'Ni/Ne': 0, 'Si/Se': 0, 'Ti/Te': 0, 'Fi/Fe': 0 };
   
   responses.forEach(response => {
     const question = questions.find(q => q.id === response.questionId);
-    if (!question || response.value === null) return;
+    if (!question || !question.functionType || question.category === 'attention-check') return;
     
-    // Weight function-order questions more heavily for determining dominance
-    const weight = question.category === 'function-order' ? 2 : 1;
-    
-    if (response.value) {
-      functionScores[question.functionType] += weight; // Extroverted version
-    } else {
-      functionScores[question.functionType] -= weight; // Introverted version
-    }
+    const effectiveScore = getEffectiveScore(response, question);
+    functionScores[question.functionType] += effectiveScore;
   });
   
   return functionScores;
@@ -129,29 +133,155 @@ export const calculateMBTIFromStack = (functionStack: CognitiveFunction[]): stri
 };
 
 export const calculateMBTIFromResponses = (responses: Response[]): string => {
-  if (responses.length < questions.length) return 'XXXX';
+  // Use the stack-based approach which is theoretically correct
+  // E/I is determined by the attitude of the dominant function, not a majority vote
+  const stack = calculateFunctionStackFromResponses(responses);
+  return calculateMBTIFromStack(stack);
+};
+
+// ===== Consistency & Confidence Utilities =====
+
+export interface DimensionConfidence {
+  dimension: string;
+  score: number;
+  maxPossible: number;
+  clarity: number; // 0-100%
+  label: string;
+  answeredCount: number;
+  sufficient: boolean;
+}
+
+export const calculateDimensionConfidence = (responses: Response[]): DimensionConfidence[] => {
+  const cogQuestions = getCognitiveFunctionQuestions();
+  const dimensions: Array<'Ni/Ne' | 'Si/Se' | 'Ti/Te' | 'Fi/Fe'> = ['Ni/Ne', 'Si/Se', 'Ti/Te', 'Fi/Fe'];
+  const enhancedScores = calculateEnhancedFunctionScores(responses);
   
-  const functionScores = calculateFunctionScores(responses);
+  return dimensions.map(dim => {
+    const dimQuestions = cogQuestions.filter(q => q.functionType === dim);
+    const answeredCount = dimQuestions.filter(q => responses.some(r => r.questionId === q.id)).length;
+    
+    // Max possible score: sum of (weight * 2) for all questions in this dimension
+    const maxPossible = dimQuestions.reduce((sum, _q) => {
+      return sum + 2; // max Likert = 2 per question, all weighted equally
+    }, 0);
+    
+    const score = enhancedScores[dim];
+    const clarity = maxPossible > 0 ? Math.round((Math.abs(score) / maxPossible) * 100) : 0;
+    
+    let label: string;
+    if (clarity >= 60) label = 'Very clear';
+    else if (clarity >= 35) label = 'Clear';
+    else if (clarity >= 15) label = 'Slight';
+    else label = 'Undifferentiated';
+    
+    const sufficient = answeredCount >= 5 && clarity >= 20;
+    
+    return { dimension: dim, score, maxPossible, clarity, label, answeredCount, sufficient };
+  });
+};
+
+export const isTestConfidenceSufficient = (responses: Response[]): boolean => {
+  const confidence = calculateDimensionConfidence(responses);
+  return confidence.every(d => d.sufficient);
+};
+
+export interface ConsistencyResult {
+  pairId: string;
+  questionIds: string[];
+  isConsistent: boolean;
+  deviation: number; // 0 = perfectly consistent, higher = worse
+}
+
+export const calculateConsistency = (responses: Response[]): { results: ConsistencyResult[]; overallScore: number } => {
+  // Find all consistency pairs
+  const pairMap = new Map<string, Question[]>();
+  for (const q of questions) {
+    if (q.consistencyPairId) {
+      const existing = pairMap.get(q.consistencyPairId) || [];
+      existing.push(q);
+      pairMap.set(q.consistencyPairId, existing);
+    }
+  }
   
-  // Count extroverted vs introverted preferences
-  const extrovertedCount = Object.values(functionScores).filter(score => score > 0).length;
-  const e_i = extrovertedCount >= 2 ? 'E' : 'I';
+  const results: ConsistencyResult[] = [];
   
-  // Determine preferences based on absolute scores
-  const sensingScore = Math.abs(functionScores['Si/Se']);
-  const intuitionScore = Math.abs(functionScores['Ni/Ne']);
-  const s_n = intuitionScore >= sensingScore ? 'N' : 'S';
+  for (const [pairId, pairedQuestions] of pairMap) {
+    if (pairedQuestions.length < 2) continue;
+    
+    const answeredPair = pairedQuestions.filter(q => responses.some(r => r.questionId === q.id));
+    if (answeredPair.length < 2) continue;
+    
+    // Compare effective scores of paired questions (they should agree in direction)
+    const scores = answeredPair.map(q => {
+      const resp = responses.find(r => r.questionId === q.id)!;
+      return getEffectiveScore(resp, q);
+    });
+    
+    // Check if they agree in direction (both positive or both negative)
+    const allSameDirection = scores.every(s => s >= 0) || scores.every(s => s <= 0);
+    const maxDeviation = Math.max(...scores) - Math.min(...scores);
+    
+    results.push({
+      pairId,
+      questionIds: answeredPair.map(q => q.id),
+      isConsistent: allSameDirection,
+      deviation: maxDeviation
+    });
+  }
   
-  const thinkingScore = Math.abs(functionScores['Ti/Te']);
-  const feelingScore = Math.abs(functionScores['Fi/Fe']);
-  const t_f = thinkingScore >= feelingScore ? 'T' : 'F';
+  const overallScore = results.length > 0 
+    ? Math.round((results.filter(r => r.isConsistent).length / results.length) * 100)
+    : 100;
   
-  // Determine J/P based on stronger function type
-  const perceivingStrength = Math.max(sensingScore, intuitionScore);
-  const judgingStrength = Math.max(thinkingScore, feelingScore);
-  const j_p = judgingStrength > perceivingStrength ? 'J' : 'P';
+  return { results, overallScore };
+};
+
+// ===== E/I Orientation =====
+
+export interface EIOrientation {
+  score: number;      // negative = introverted, positive = extroverted
+  label: 'Introvert' | 'Extrovert' | 'Undetermined';
+  answeredCount: number;
+  confidence: number; // 0-100
+}
+
+export const calculateEIOrientation = (responses: Response[]): EIOrientation => {
+  const eiQuestions = questions.filter(q => q.category === 'ei-orientation');
+  let score = 0;
+  let answeredCount = 0;
   
-  return e_i + s_n + t_f + j_p;
+  for (const q of eiQuestions) {
+    const resp = responses.find(r => r.questionId === q.id);
+    if (!resp) continue;
+    answeredCount++;
+    score += getEffectiveScore(resp, q);
+  }
+  
+  const maxPossible = answeredCount * 2; // each question contributes up to ±2
+  const confidence = maxPossible > 0 ? Math.round((Math.abs(score) / maxPossible) * 100) : 0;
+  
+  let label: 'Introvert' | 'Extrovert' | 'Undetermined';
+  if (answeredCount === 0 || confidence < 15) {
+    label = 'Undetermined';
+  } else {
+    label = score > 0 ? 'Extrovert' : 'Introvert';
+  }
+  
+  return { score, label, answeredCount, confidence };
+};
+
+export const checkAttentionCheck = (responses: Response[]): { passed: boolean; checked: boolean } => {
+  const attentionQuestions = questions.filter(q => q.category === 'attention-check');
+  const answered = attentionQuestions.filter(q => responses.some(r => r.questionId === q.id));
+  
+  if (answered.length === 0) return { passed: true, checked: false };
+  
+  const allPassed = answered.every(q => {
+    const resp = responses.find(r => r.questionId === q.id);
+    return resp && resp.value === q.attentionCheckExpectedValue;
+  });
+  
+  return { passed: allPassed, checked: true };
 };
 
 const calculateStackMatchScore = (candidateStack: string[], currentStack: string[]): number => {
@@ -255,6 +385,7 @@ const calculateFunctionStrengths = (functionScores: FunctionScores) => {
 
 export const calculateFunctionStackFromResponses = (responses: Response[]): CognitiveFunction[] => {
   const enhancedScores = calculateEnhancedFunctionScores(responses);
+  const eiOrientation = calculateEIOrientation(responses);
   const functionStack = createDefaultFunctionStack();
   
   // Set function orientations based on enhanced responses
@@ -263,14 +394,49 @@ export const calculateFunctionStackFromResponses = (responses: Response[]): Cogn
   functionStack[2].isExtroverted = enhancedScores['Ti/Te'] > 0; // Ti vs Te
   functionStack[3].isExtroverted = enhancedScores['Fi/Fe'] > 0; // Fi vs Fe
   
-  // Use MBTI-theory based ordering instead of simple strength ordering
-  return orderFunctionsByMBTIRules(functionStack, enhancedScores);
+  // Use MBTI-theory based ordering with E/I disambiguation
+  return orderFunctionsByMBTIRules(functionStack, enhancedScores, eiOrientation);
 };
 
 // More sophisticated function stack ordering based on MBTI theory
-const orderFunctionsByMBTIRules = (functionStack: CognitiveFunction[], functionScores: FunctionScores): CognitiveFunction[] => {
+// Uses E/I orientation from direct questions to disambiguate when the top two
+// functions form a valid dom/aux pair but the score-based dominant has the
+// wrong attitude (e.g. INTP scoring higher on Ne than Ti).
+const orderFunctionsByMBTIRules = (
+  functionStack: CognitiveFunction[], 
+  functionScores: FunctionScores,
+  eiOrientation?: EIOrientation
+): CognitiveFunction[] => {
   // Calculate which functions are strongest
   const functionStrengths = calculateFunctionStrengths(functionScores);
+  
+  // E/I disambiguation: when the top-scoring function's attitude conflicts
+  // with direct E/I orientation answers, check if swapping the top two
+  // functions would produce a valid dom/aux pair with the correct attitude.
+  if (eiOrientation && eiOrientation.label !== 'Undetermined' && functionStrengths.length >= 2) {
+    const topFunc = functionStack[functionStrengths[0].index];
+    const topIsExtroverted = topFunc.isExtroverted;
+    const eiSaysExtroverted = eiOrientation.label === 'Extrovert';
+    
+    // Conflict: E/I orientation disagrees with the dominant function's attitude
+    if (topIsExtroverted !== eiSaysExtroverted) {
+      const secondFunc = functionStack[functionStrengths[1].index];
+      
+      // Check if the second function has the correct attitude
+      if (secondFunc.isExtroverted === eiSaysExtroverted) {
+        // Verify they form a valid dom/aux pair (opposite perceiving/judging)
+        const topName = topFunc.isExtroverted ? topFunc.extroverted : topFunc.introverted;
+        const secondName = secondFunc.isExtroverted ? secondFunc.extroverted : secondFunc.introverted;
+        const topIsPerceiving = ['Ni', 'Ne', 'Si', 'Se'].includes(topName);
+        const secondIsPerceiving = ['Ni', 'Ne', 'Si', 'Se'].includes(secondName);
+        
+        if (topIsPerceiving !== secondIsPerceiving) {
+          // Valid swap: second function becomes dominant with correct E/I attitude
+          [functionStrengths[0], functionStrengths[1]] = [functionStrengths[1], functionStrengths[0]];
+        }
+      }
+    }
+  }
   
   // Get the strongest function as dominant
   const dominantFunction = functionStack[functionStrengths[0].index];
@@ -311,13 +477,14 @@ const orderFunctionsByMBTIRules = (functionStack: CognitiveFunction[], functionS
     return isSameType && func.isExtroverted === dominantFunction.isExtroverted;
   });
   
-  // Inferior is what's left
-  const inferiorFunction = remainingAfterAux.find(f => f !== tertiaryFunction);
+  // Resolve actual tertiary and inferior, ensuring no duplicates
+  const actualTertiary = tertiaryFunction || remainingAfterAux[0];
+  const actualInferior = remainingAfterAux.find(f => f !== actualTertiary) || remainingAfterAux[1];
   
   return [
     dominantFunction,
     auxiliaryFunction,
-    tertiaryFunction || remainingAfterAux[0],
-    inferiorFunction || remainingAfterAux[1]
+    actualTertiary,
+    actualInferior
   ];
 };

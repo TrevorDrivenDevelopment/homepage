@@ -138,16 +138,3 @@ export const fetchOptionsChain = async (symbol: string, customUrl?: string, apiK
     throw new Error(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
-
-// Legacy compatibility export - placeholder that requires real API configuration
-export const optionsService = {
-  fetchStockQuote: () => {
-    throw new Error('Direct service calls are not supported. Use custom API endpoints with fetchStockQuote(symbol, customUrl, apiKey).');
-  },
-  fetchOptionsChain: () => {
-    throw new Error('Direct service calls are not supported. Use custom API endpoints with fetchOptionsChain(symbol, customUrl, apiKey).');
-  },
-  isUsingBackend: () => false,
-  getApiUrl: () => '',
-  checkBackendHealth: () => Promise.resolve({ healthy: false, message: 'Backend service disabled for safety. Use custom API endpoints only.' })
-};

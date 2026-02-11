@@ -1,4 +1,5 @@
 import { For } from 'solid-js';
+import { A } from '@solidjs/router';
 
 interface ApplicationItem {
   title: string;
@@ -13,7 +14,7 @@ const applications: ApplicationItem[] = [
     title: '16 personalities test',
     icon: '/static/github.png',
     linkText: 'MBTI test',
-    linkUrl: '/questions',
+    linkUrl: '/personality-test',
     description: 'Explore your personality with the',
   },
   {
@@ -25,16 +26,11 @@ const applications: ApplicationItem[] = [
   },
 ];
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-interface PersonalApplicationsProps {
-  onNavigate: (page: string) => void;
-}
-
-const PersonalApplications = (props: PersonalApplicationsProps) => {
+const ApplicationItemComponent = (itemProps: { item: ApplicationItem }) => {
   const panelColor = '#4A6E8D';
   const linkColor = '#7CE2FF';
 
-  const ApplicationItemComponent = (itemProps: { item: ApplicationItem; onNavigate: PersonalApplicationsProps['onNavigate'] }) => (
+  return (
     <div
       style={{
         display: 'flex',
@@ -51,22 +47,19 @@ const PersonalApplications = (props: PersonalApplicationsProps) => {
       </h2>
       <p style={{ margin: '0' }}>
         {itemProps.item.description}{' '}
-        <span 
-          onClick={() => {
-            console.log('Application clicked, navigating to:', itemProps.item.linkUrl);
-            if (itemProps.item.linkUrl === '/questions') {
-              itemProps.onNavigate('personality-test');
-            } else if (itemProps.item.linkUrl === '/options-calculator') {
-              itemProps.onNavigate('options-calculator');
-            }
-          }}
+        <A 
+          href={itemProps.item.linkUrl}
           style={{ color: linkColor, cursor: 'pointer', "text-decoration": 'underline' }}
         >
           {itemProps.item.linkText}
-        </span>
+        </A>
       </p>
     </div>
   );
+};
+
+const PersonalApplications = () => {
+  const linkColor = '#7CE2FF';
 
   return (
     <div style={{ color: '#ffffff' }}>
@@ -79,18 +72,18 @@ const PersonalApplications = (props: PersonalApplicationsProps) => {
       <div style={{ display: 'flex', "flex-wrap": 'wrap', gap: '16px' }}>
         <For each={applications}>{(item) => (
           <div style={{ flex: '1 1 calc(50% - 8px)', "min-width": '300px' }}>
-            <ApplicationItemComponent item={item} onNavigate={props.onNavigate} />
+            <ApplicationItemComponent item={item} />
           </div>
         )}</For>
       </div>
       
       <div style={{ "margin-top": '40px', "text-align": 'center' }}>
-        <span 
-          onClick={() => props.onNavigate('home')}
+        <A 
+          href="/"
           style={{ color: linkColor, cursor: 'pointer', "text-decoration": 'underline' }}
         >
           ← Back to Home
-        </span>
+        </A>
       </div>
     </div>
   );

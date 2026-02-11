@@ -1,4 +1,5 @@
 import { Show, createSignal } from 'solid-js';
+import { A } from '@solidjs/router';
 import { createTheme, ThemeProvider } from '@suid/material/styles';
 import { Alert, Typography } from '@suid/material';
 import { LiveDataControls } from './components/LiveDataControls';
@@ -35,7 +36,7 @@ interface OptionResult {
 }
 
 interface LiveOptionsCalculatorProps {
-  onNavigate?: (page: string) => void;
+  /* Router provides these automatically */
 }
 
 const LiveOptionsCalculator = (props: LiveOptionsCalculatorProps) => {
@@ -298,21 +299,19 @@ const LiveOptionsCalculator = (props: LiveOptionsCalculatorProps) => {
         color: "#ffffff",
         "min-height": "100vh"
       }}>
-      <Show when={props.onNavigate}>
-        <div style={{ "margin-bottom": "20px", "text-align": "center" }}>
-          <span 
-            onClick={() => props.onNavigate?.('applications')}
-            style={{ 
-              color: '#7CE2FF', 
-              cursor: 'pointer', 
-              "text-decoration": 'underline',
-              "font-size": "16px"
-            }}
-          >
-            ← Back to Applications
-          </span>
-        </div>
-      </Show>
+      <div style={{ "margin-bottom": "20px", "text-align": "center" }}>
+        <A 
+          href="/applications"
+          style={{ 
+            color: '#7CE2FF', 
+            cursor: 'pointer', 
+            "text-decoration": 'underline',
+            "font-size": "16px"
+          }}
+        >
+          ← Back to Applications
+        </A>
+      </div>
       
       {/* Disclaimer Banner */}
       <Alert 

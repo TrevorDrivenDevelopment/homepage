@@ -24,10 +24,11 @@ export default defineConfig({
     distPath: {
       root: '../build',
     },
-    assetPrefix: './',
+    assetPrefix: '/',
   },
   server: {
     port: 3000,
+    historyApiFallback: true,
   },
   dev: {
     assetPrefix: '/',
@@ -46,7 +47,7 @@ export default defineConfig({
         rules: [
           {
             test: /\.(jsx|tsx)$/,
-            exclude: /node_modules\/(?!@suid)/,
+            exclude: /node_modules\/(?!@suid|@solidjs)/,
             use: [
               {
                 loader: 'babel-loader',

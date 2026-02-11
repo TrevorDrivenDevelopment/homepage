@@ -1,1 +1,1 @@
-export { default } from './OptionsCalculator';
+export { default } from './LiveOptionsCalculator';

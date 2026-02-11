@@ -1,4 +1,5 @@
-import { Component, For, Show } from 'solid-js';
+import { Component, For, Show, createSignal } from 'solid-js';
+import { A } from '@solidjs/router';
 import { createTheme, ThemeProvider } from '@suid/material/styles';
 import { 
   Container, 
@@ -11,7 +12,8 @@ import {
   Stack,
   Grid,
   useMediaQuery,
-  useTheme
+  useTheme,
+  Alert
 } from '@suid/material';
 import QuestionCard from './components/QuestionCard';
 import CurrentScores from './components/CurrentScores';
@@ -20,11 +22,7 @@ import FunctionStackEditor from './components/FunctionStackEditor';
 import MBTIReference from './components/MBTIReference';
 import { usePersonalityTest } from './hooks/usePersonalityTest';
 
-interface QuestionSelectorProps {
-  onNavigate?: (_page: string) => void;
-}
-
-const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
+const QuestionSelector: Component = () => {
   // Create dark theme to match the homepage
   const darkTheme = createTheme({
     palette: {
@@ -56,18 +54,26 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
     closestTypes,
     isTestComplete,
     progressPercentage,
+    dimensionConfidence,
+    confidenceSufficient,
+    consistency,
+    attentionCheck,
     updateResponse,
     updateFunctionStack,
     resetTest,
     toggleEditStack,
+    exportResults,
+    importResults,
     questions
   } = usePersonalityTest();
+
+  const [importMessage, setImportMessage] = createSignal<{ text: string; severity: 'success' | 'error' } | null>(null);
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(() => theme.breakpoints.up('md'));
 
   // Function to handle question answers without scrolling
-  const handleQuestionAnswer = (questionId: string, value: boolean | null) => {
+  const handleQuestionAnswer = (questionId: string, value: number) => {
     // Store current scroll position
     const currentScrollY = window.scrollY;
     
@@ -79,6 +85,14 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
     });
   };
 
+  // Check if a question's dimension has sufficient confidence (for adaptive "optional" marking)
+  const isQuestionOptional = (question: typeof questions[0]): boolean => {
+    if (!question.functionType || question.category === 'attention-check' || question.category === 'ei-orientation') return false;
+    const conf = dimensionConfidence();
+    const dimConf = conf.find(d => d.dimension === question.functionType);
+    return dimConf?.sufficient === true && (question.discriminationTier || 0) >= 3;
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <div style={{ 
@@ -88,25 +102,67 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
         padding: "20px 0"
       }}>
         <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Show when={props.onNavigate}>
-            <Box sx={{ mb: 3, textAlign: 'center' }}>
-              <Button 
-                variant="text" 
-                onClick={() => props.onNavigate?.('applications')}
-                sx={{ color: '#7CE2FF', textDecoration: 'underline' }}
-              >
-                ← Back to Applications
-              </Button>
-            </Box>
-          </Show>
+          <Box sx={{ mb: 3, textAlign: 'center' }}>
+            <A 
+              href="/applications"
+              style={{ color: '#7CE2FF', "text-decoration": 'underline', "font-size": '14px' }}
+            >
+              ← Back to Applications
+            </A>
+          </Box>
           
           <Typography variant="h3" component="h1" gutterBottom align="center" sx={{ color: '#ffffff' }}>
             MBTI Personality Test
           </Typography>
           
-          <Typography variant="h6" component="p" align="center" sx={{ mb: 4, color: '#7CE2FF' }}>
+          <Typography variant="h6" component="p" align="center" sx={{ mb: 2, color: '#7CE2FF' }}>
             Based on Cognitive Functions Theory
           </Typography>
+
+          {/* Empirical validity disclaimer */}
+          <Box sx={{ maxWidth: 700, mx: 'auto', mb: 4 }}>
+            <Typography variant="body2" align="center" sx={{ color: 'rgba(255,255,255,0.6)', fontStyle: 'italic', fontSize: '0.8rem' }}>
+              This test is based on Jungian cognitive function theory. While widely used for self-reflection, 
+              the MBTI framework has limited empirical validation compared to models like the Big Five. 
+              Results should be viewed as a starting point for self-understanding, not a definitive classification.
+            </Typography>
+          </Box>
+
+          {/* Import status message */}
+          <Show when={importMessage()}>
+            <Box sx={{ maxWidth: 700, mx: 'auto', mb: 3 }}>
+              <Alert 
+                severity={importMessage()!.severity}
+                sx={{ 
+                  backgroundColor: importMessage()!.severity === 'success' 
+                    ? 'rgba(76, 175, 80, 0.15)' 
+                    : 'rgba(244, 67, 54, 0.15)',
+                  color: importMessage()!.severity === 'success' ? '#66bb6a' : '#ef5350'
+                }}
+              >
+                {importMessage()!.text}
+              </Alert>
+            </Box>
+          </Show>
+
+          {/* Attention check warning */}
+          <Show when={attentionCheck().checked && !attentionCheck().passed}>
+            <Box sx={{ maxWidth: 700, mx: 'auto', mb: 3 }}>
+              <Alert severity="warning" sx={{ backgroundColor: 'rgba(255, 152, 0, 0.15)', color: '#ff9800' }}>
+                Attention check failed — please read each question carefully for accurate results.
+              </Alert>
+            </Box>
+          </Show>
+
+          {/* Consistency warning */}
+          <Show when={consistency().results.length > 0 && consistency().overallScore < 50}>
+            <Box sx={{ maxWidth: 700, mx: 'auto', mb: 3 }}>
+              <Alert severity="info" sx={{ backgroundColor: 'rgba(33, 150, 243, 0.15)', color: '#42a5f5' }}>
+                Some of your answers appear inconsistent ({consistency().overallScore}% consistency). 
+                This is normal — consider revisiting questions where you felt unsure.
+              </Alert>
+            </Box>
+          </Show>
 
           {/* Progress Bar */}
           <Card sx={{ mb: 4, backgroundColor: '#4A6E8D', border: '1px solid #4A6E8D' }}>
@@ -127,7 +183,8 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                 }}
               />
               <Typography variant="body2" sx={{ mt: 1, color: '#7CE2FF' }}>
-                {responses().filter(r => r.value !== null).length} of {questions.length} questions answered
+                {responses().length} of {questions.length} questions answered
+                {confidenceSufficient() && ' — results are reliable, remaining questions are optional'}
               </Typography>
             </CardContent>
           </Card>
@@ -136,6 +193,42 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
           <Grid container spacing={3}>
             {/* Main Content */}
             <Grid item xs={12} md={8}>
+              {/* Import button - always visible */}
+              <Show when={responses().length === 0}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 4 }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => {
+                      setImportMessage(null);
+                      importResults()
+                        .then(({ imported, skipped, total }) => {
+                          const msg = skipped > 0
+                            ? `Imported ${imported} of ${total} responses (${skipped} skipped — questions no longer exist).`
+                            : `Imported ${imported} responses successfully.`;
+                          setImportMessage({ text: msg, severity: 'success' });
+                          setTimeout(() => setImportMessage(null), 8000);
+                        })
+                        .catch((err: Error) => {
+                          if (err.message !== 'Import cancelled') {
+                            setImportMessage({ text: err.message, severity: 'error' });
+                            setTimeout(() => setImportMessage(null), 8000);
+                          }
+                        });
+                    }}
+                    sx={{
+                      borderColor: '#42a5f5',
+                      color: '#42a5f5',
+                      '&:hover': {
+                        backgroundColor: 'rgba(66, 165, 245, 0.1)',
+                        borderColor: '#ffffff'
+                      }
+                    }}
+                  >
+                    Import Previous Results (JSON)
+                  </Button>
+                </Box>
+              </Show>
+
               {/* Control Buttons - only show when there are responses */}
               <Show when={responses().length > 0}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 4 }}>
@@ -155,6 +248,52 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                     {showEditStack() ? 'Use Calculated Stack' : 'Edit Function Stack'}
                   </Button>
                   
+                  <Button 
+                    variant="outlined" 
+                    onClick={exportResults}
+                    sx={{
+                      borderColor: '#4caf50',
+                      color: '#4caf50',
+                      '&:hover': {
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        borderColor: '#ffffff'
+                      }
+                    }}
+                  >
+                    Export Results (JSON)
+                  </Button>
+
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => {
+                      setImportMessage(null);
+                      importResults()
+                        .then(({ imported, skipped, total }) => {
+                          const msg = skipped > 0
+                            ? `Imported ${imported} of ${total} responses (${skipped} skipped — questions no longer exist).`
+                            : `Imported ${imported} responses successfully.`;
+                          setImportMessage({ text: msg, severity: 'success' });
+                          setTimeout(() => setImportMessage(null), 8000);
+                        })
+                        .catch((err: Error) => {
+                          if (err.message !== 'Import cancelled') {
+                            setImportMessage({ text: err.message, severity: 'error' });
+                            setTimeout(() => setImportMessage(null), 8000);
+                          }
+                        });
+                    }}
+                    sx={{
+                      borderColor: '#42a5f5',
+                      color: '#42a5f5',
+                      '&:hover': {
+                        backgroundColor: 'rgba(66, 165, 245, 0.1)',
+                        borderColor: '#ffffff'
+                      }
+                    }}
+                  >
+                    Import Results (JSON)
+                  </Button>
+
                   <Button 
                     variant="outlined" 
                     color="error" 
@@ -178,6 +317,11 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                 Questions
               </Typography>
               
+              <Typography variant="body2" sx={{ mb: 2, color: 'rgba(255,255,255,0.6)' }}>
+                For each question, indicate how strongly you prefer option A or option B.
+                Questions are presented in adaptive order — the most informative questions appear first.
+              </Typography>
+              
               <Stack spacing={3} sx={{ mb: 4 }}>
                 <For each={questions}>
                   {(question) => {
@@ -185,8 +329,9 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                     return (
                       <QuestionCard
                         question={question}
-                        selectedValue={response()?.value ?? null}
+                        selectedValue={response()?.value}
                         onAnswer={(value) => handleQuestionAnswer(question.id, value)}
+                        isOptional={isQuestionOptional(question)}
                       />
                     );
                   }}
@@ -212,6 +357,9 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                   <CurrentScores 
                     scores={functionScores()}
                     enhancedScores={enhancedFunctionScores()}
+                    dimensionConfidence={dimensionConfidence()}
+                    confidenceSufficient={confidenceSufficient()}
+                    currentType={currentType()}
                   />
                 </Stack>
               </Show>
@@ -255,6 +403,9 @@ const QuestionSelector: Component<QuestionSelectorProps> = (props) => {
                       <CurrentScores 
                         scores={functionScores()}
                         enhancedScores={enhancedFunctionScores()}
+                        dimensionConfidence={dimensionConfidence()}
+                        confidenceSufficient={confidenceSufficient()}
+                        currentType={currentType()}
                       />
                     </Stack>
                   </Show>

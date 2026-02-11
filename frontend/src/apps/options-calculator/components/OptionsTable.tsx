@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@suid/material';
 import { OptionQuote, StockQuote } from '../enhancedOptionsService';
+import { roundMidpointUp } from '../utils/optionsCalculationUtils';
 
 interface OptionsTableProps {
   options: OptionQuote[];
@@ -23,10 +24,6 @@ interface OptionsTableProps {
 }
 
 export const OptionsTable = (props: OptionsTableProps) => {
-  const roundMidpointUp = (bid: number, ask: number): number => {
-    const midpoint = (bid + ask) / 2;
-    return Math.ceil(midpoint * 100) / 100;
-  };
 
   const getMoneyness = (option: OptionQuote, stockPrice: number, type: 'call' | 'put') => {
     if (type === 'call') {
