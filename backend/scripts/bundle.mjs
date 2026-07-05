@@ -7,7 +7,7 @@ const outDir = 'dist';
 
 // Get all handler files
 const handlerFiles = readdirSync(handlersDir)
-  .filter(file => file.endsWith('.ts'))
+  .filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts'))
   .map(file => file.replace('.ts', ''));
 
 console.log('📦 Bundling Lambda handlers:', handlerFiles);
