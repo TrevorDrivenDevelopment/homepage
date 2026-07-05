@@ -1,13 +1,14 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { createSuccessResponse, createErrorResponse } from '../utils/response';
+import { log } from '../utils/logger';
 
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Portfolio handler called:', { 
-    path: event.path, 
+  log.debug('Portfolio handler called', {
+    path: event.path,
     method: event.httpMethod,
-    body: event.body 
+    body: event.body,
   });
 
   // Handle CORS preflight
@@ -26,7 +27,7 @@ export const handler = async (
 
     return createErrorResponse(404, 'Endpoint not found');
   } catch (error) {
-    console.error('Portfolio handler error:', error);
+    log.error('Portfolio handler error', error);
     return createErrorResponse(500, 'Internal server error', error);
   }
 };
@@ -40,7 +41,7 @@ async function handlePortfolioAnalysis(
 
   try {
     const portfolioData = JSON.parse(event.body);
-    console.log('Analyzing portfolio:', portfolioData);
+    log.debug('Analyzing portfolio', portfolioData);
     
     // Basic portfolio analysis logic
     const analysis = {
@@ -55,7 +56,7 @@ async function handlePortfolioAnalysis(
 
     return createSuccessResponse(analysis);
   } catch (error) {
-    console.error('Portfolio analysis error:', error);
+    log.error('Portfolio analysis error', error);
     return createErrorResponse(400, 'Invalid request format', error);
   }
 }
@@ -63,7 +64,7 @@ async function handlePortfolioAnalysis(
 async function handleRiskMetrics(
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
-  console.log('Calculating risk metrics for request:', event.requestContext?.requestId);
+  log.debug('Calculating risk metrics for request', event.requestContext?.requestId);
   
   try {
     const riskMetrics = {
@@ -77,7 +78,7 @@ async function handleRiskMetrics(
 
     return createSuccessResponse(riskMetrics);
   } catch (error) {
-    console.error('Risk metrics error:', error);
+    log.error('Risk metrics error', error);
     return createErrorResponse(500, 'Failed to calculate risk metrics', error);
   }
 }

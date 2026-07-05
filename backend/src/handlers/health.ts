@@ -2,11 +2,12 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { createSuccessResponse } from '../utils/response';
 import { HealthCheckResponse } from '../types/api';
 import { AlphaVantageService } from '../services/alphaVantageService';
+import { log } from '../utils/logger';
 
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Health check called');
+  log.debug('Health check called');
 
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {

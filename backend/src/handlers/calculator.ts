@@ -1,14 +1,15 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { createSuccessResponse, createErrorResponse } from '../utils/response';
 import { CalculationRequest, CalculationResult, ManualOptionProfile, OptionResult } from '../types/api';
+import { log } from '../utils/logger';
 
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Calculator handler called:', { 
-    path: event.path, 
+  log.debug('Calculator handler called', {
+    path: event.path,
     method: event.httpMethod,
-    body: event.body 
+    body: event.body,
   });
 
   // Handle CORS preflight
@@ -23,7 +24,7 @@ export const handler = async (
 
     return createErrorResponse(404, 'Endpoint not found');
   } catch (error) {
-    console.error('Calculator handler error:', error);
+    log.error('Calculator handler error', error);
     return createErrorResponse(500, 'Internal server error', error);
   }
 };
@@ -49,7 +50,7 @@ async function handleOptionsCalculation(
     
     return createSuccessResponse(results);
   } catch (error) {
-    console.error('Options calculation error:', error);
+    log.error('Options calculation error', error);
     return createErrorResponse(400, 'Invalid request format or calculation error', error);
   }
 }

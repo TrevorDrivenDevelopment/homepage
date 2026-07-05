@@ -13,8 +13,9 @@ export const API_CONFIG = {
       HISTORICAL_OPTIONS: 'HISTORICAL_OPTIONS',
     },
     RATE_LIMIT: {
-      FREE_TIER: 5, // 5 API requests per minute
-      PREMIUM: 75,  // 75 API requests per minute
+      FREE_TIER_PER_DAY: 25,     // 25 API requests per day
+      FREE_TIER_PER_SEC: 1,      // 1 request per second
+      PREMIUM_PER_MIN: 75,       // 75 API requests per minute (lowest premium)
     },
   },
 } as const;
@@ -29,4 +30,11 @@ export const TIMEOUT_CONFIG = {
   STOCK_QUOTE: 10000,    // 10 seconds
   OPTIONS_CHAIN: 15000,  // 15 seconds
   MARKET_DATA: 10000,    // 10 seconds
+} as const;
+
+// Cache TTL configurations (in milliseconds)
+export const CACHE_TTL = {
+  STOCK_QUOTE: 5 * 60 * 1000,       // 5 minutes — prices change during trading
+  COMPANY_OVERVIEW: 24 * 60 * 60 * 1000, // 24 hours — 52-week range rarely changes
+  OPTIONS_CHAIN: 10 * 60 * 1000,    // 10 minutes — options data is less volatile
 } as const;

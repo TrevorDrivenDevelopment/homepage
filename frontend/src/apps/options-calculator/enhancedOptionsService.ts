@@ -1,6 +1,11 @@
 // Enhanced options service - PRODUCTION VERSION - NO MOCK DATA
 // This service only uses real API endpoints provided by the user
 
+// NOTE: `OptionQuote`/`StockQuote` here are duplicated (with minor variations) from
+// backend/src/types/api.ts. There is currently no shared types package in this monorepo,
+// so keep both in sync manually when the API contract changes. Consider extracting a
+// shared `packages/shared-types` workspace if this drift becomes a recurring problem.
+
 export interface OptionQuote {
   symbol: string;
   strike: number;

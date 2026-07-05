@@ -103,10 +103,15 @@ const determineJudgingPerceiving = (functionStack: CognitiveFunction[]): string 
   const auxiliaryFunction = functionStack[1];
   const isJudgingFunction = ['Ti', 'Te', 'Fi', 'Fe'].includes(auxiliaryFunction.introverted);
   
+  // J/P reflects the category (Judging vs Perceiving) of whichever function
+  // is extraverted. For E types the dominant is extraverted, so J/P follows
+  // the dominant's category (opposite of the auxiliary's category). For I
+  // types the auxiliary is extraverted, so J/P follows the auxiliary's
+  // category directly.
   if (functionStack[0].isExtroverted) {
-    return isJudgingFunction ? 'J' : 'P';
-  } else {
     return isJudgingFunction ? 'P' : 'J';
+  } else {
+    return isJudgingFunction ? 'J' : 'P';
   }
 };
 

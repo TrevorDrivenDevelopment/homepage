@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { log } from './logger';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
@@ -34,7 +35,7 @@ export function createErrorResponse(
   message: string,
   error?: unknown
 ): APIGatewayProxyResult {
-  console.error('API Error:', { statusCode, message, error });
+  log.error('API Error', { statusCode, message, error });
 
   const responseBody: ErrorResponseBody = {
     success: false,

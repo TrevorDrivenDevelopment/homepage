@@ -17,8 +17,14 @@ export const calculateTargetPrices = (
   );
 };
 
+interface PerformanceOptionInput {
+  strike: number;
+  actualInvestment: number;
+  shares: number;
+}
+
 export const calculatePerformanceForOption = (
-  option: any,
+  option: PerformanceOptionInput,
   sellPrices: number[],
   percentageIncrements: string
 ) => {

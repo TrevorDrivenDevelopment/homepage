@@ -9,37 +9,50 @@
 import './config/env';
 
 import { createServer } from 'http';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { handler as healthHandler } from './handlers/health';
 import { handler as optionsHandler } from './handlers/options';
 import { handler as calculatorHandler } from './handlers/calculator';
 
+type LambdaHandler = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>;
+
 const PORT = process.env.PORT || 8080;
 
 // Simple router for local development
-const routes = {
+const routes: Record<string, LambdaHandler> = {
   '/api/health': healthHandler,
   '/api/options/stock': optionsHandler,
   '/api/options/chain': optionsHandler,
-  '/api/calculator/options': calculatorHandler
+  '/api/calculator/options': calculatorHandler,
 };
 
 // Mock API Gateway event for local development
-function createMockEvent(req: any): any {
+interface MinimalIncomingMessage {
+  url?: string;
+  method?: string;
+  headers: Record<string, string | string[] | undefined>;
+}
+
+function createMockEvent(req: MinimalIncomingMessage): APIGatewayProxyEvent {
   const url = new URL(req.url || '', `http://localhost:${PORT}`);
-  
+
   return {
-    httpMethod: req.method,
+    httpMethod: req.method || 'GET',
     path: url.pathname,
     pathParameters: extractPathParameters(url.pathname),
     queryStringParameters: Object.fromEntries(url.searchParams),
-    headers: req.headers,
+    multiValueQueryStringParameters: null,
+    headers: req.headers as Record<string, string>,
+    multiValueHeaders: {},
     body: null,
     isBase64Encoded: false,
+    stageVariables: null,
+    resource: '',
     requestContext: {
       requestId: Date.now().toString(),
-      httpMethod: req.method,
+      httpMethod: req.method || 'GET',
       path: url.pathname,
-    },
+    } as APIGatewayProxyEvent['requestContext'],
   };
 }
 
@@ -71,7 +84,7 @@ const server = createServer(async (req, res) => {
   }
 
   const url = new URL(req.url || '', `http://localhost:${PORT}`);
-  let handler = null;
+  let handler: LambdaHandler | null = null;
   
   // Find matching route
   for (const [route, routeHandler] of Object.entries(routes)) {

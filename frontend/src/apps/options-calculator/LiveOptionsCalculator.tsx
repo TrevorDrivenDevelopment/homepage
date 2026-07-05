@@ -12,6 +12,7 @@ import { ApiDocumentation } from './components/ApiDocumentation';
 import { LiveOptionsChain } from './components/LiveOptionsChain';
 import { ErrorModal } from './components/ErrorModal';
 import { calculateManualOptionsResults, validateManualInputs, parseManualOptionsFromEntries } from './utils/manualOptionsUtils';
+import { parseOptionsCsv } from './utils/csvOptionsParser';
 import { calculatePerformanceForOption } from './utils/optionsCalculationUtils';
 import { useLiveData } from './hooks/useLiveData';
 
@@ -152,80 +153,31 @@ const LiveOptionsCalculator = (props: LiveOptionsCalculatorProps) => {
     if (!file) return;
 
     setCsvUploadError(null);
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string;
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        if (lines.length < 2) {
-          setCsvUploadError('CSV must contain at least a header row and one data row');
+        const result = parseOptionsCsv(text);
+
+        if (result.error) {
+          setCsvUploadError(result.error);
           return;
         }
 
-        const header = lines[0].toLowerCase().split(',').map(h => h.trim());
-        const requiredColumns = ['strike price', 'bid', 'ask'];
-        
-        // Check for required columns
-        const missingColumns = requiredColumns.filter(col => 
-          !header.some(h => h.includes(col.split(' ')[0]))
-        );
-        
-        if (missingColumns.length > 0) {
-          setCsvUploadError(`Missing required columns: ${missingColumns.join(', ')}`);
-          return;
-        }
-
-        // Find column indices
-        const strikeIndex = header.findIndex(h => h.includes('strike'));
-        const bidIndex = header.findIndex(h => h.includes('bid'));
-        const askIndex = header.findIndex(h => h.includes('ask'));
-        const priceIndex = header.findIndex(h => h.includes('price') && !h.includes('strike'));
-
-        const newEntries: ManualOptionEntry[] = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim());
-          
-          if (values.length < Math.max(strikeIndex, bidIndex, askIndex) + 1) {
-            setCsvUploadError(`Row ${i + 1} has insufficient columns`);
-            return;
-          }
-
-          const strike = values[strikeIndex];
-          const bid = values[bidIndex];
-          const ask = values[askIndex];
-          const price = priceIndex >= 0 ? values[priceIndex] : '';
-
-          if (!strike || !bid || !ask) {
-            setCsvUploadError(`Row ${i + 1} is missing required data (strike, bid, or ask)`);
-            return;
-          }
-
-          newEntries.push({
-            id: (Date.now() + Math.random() + i).toString(),
-            strike,
-            bid,
-            ask,
-            price: price || ''
-          });
-        }
-
-        setManualOptionEntries(newEntries);
+        setManualOptionEntries(result.entries);
         setCsvUploadError(null);
-        
+
         // Reset the file input
         event.target.value = '';
-        
+
         // Automatically trigger calculation
         calculateOptions();
-        
       } catch (error) {
         setCsvUploadError('Error parsing CSV file. Please check the format.');
       }
     };
-    
+
     reader.readAsText(file);
   };
 

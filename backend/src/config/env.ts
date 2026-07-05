@@ -20,6 +20,8 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME && !process.env.AWS_EXECUTION_ENV) {
     console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
     console.log(`   - PORT: ${process.env.PORT || 'undefined'}`);
     console.log(`   - CORS_ORIGIN: ${process.env.CORS_ORIGIN || 'undefined'}`);
+    // Note: this file only runs in local dev (guarded above), so console.log here is fine
+    // and intentionally not routed through the shared logger to avoid a circular/early-load issue.
   } catch (error) {
     console.warn('⚠️  Could not load dotenv:', error);
   }

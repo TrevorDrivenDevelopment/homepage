@@ -1,6 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { createSuccessResponse, createErrorResponse, getPathParameter } from '../utils/response';
 import { AlphaVantageService } from '../services/alphaVantageService';
+import { RateLimitError } from '../utils/rateLimiter';
+import { log } from '../utils/logger';
 import { OptionQuote, OptionsChainResponse } from '../types/api';
 
 const alphaVantageService = new AlphaVantageService(
@@ -10,10 +12,10 @@ const alphaVantageService = new AlphaVantageService(
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Options handler called:', { 
-    path: event.path, 
+  log.debug('Options handler called', {
+    path: event.path,
     method: event.httpMethod,
-    pathParameters: event.pathParameters 
+    pathParameters: event.pathParameters,
   });
 
   // Handle CORS preflight
@@ -37,25 +39,27 @@ export const handler = async (
       return createErrorResponse(404, 'Endpoint not found');
     }
   } catch (error) {
-    console.error('Options handler error:', error);
+    log.error('Options handler error', error);
     return createErrorResponse(500, 'Internal server error');
   }
 };
 
 async function handleStockQuote(symbol: string): Promise<APIGatewayProxyResult> {
   try {
-    console.log('🔍 Fetching stock quote for:', symbol);
-    console.log('🔑 Alpha Vantage API Key configured:', !!process.env.ALPHA_VANTAGE_API_KEY);
+    log.debug('Fetching stock quote', { symbol, apiKeyConfigured: !!process.env.ALPHA_VANTAGE_API_KEY });
     
     if (!alphaVantageService.isConfigured()) {
       return createErrorResponse(503, 'Alpha Vantage API service not configured');
     }
 
     const stockQuote = await alphaVantageService.getStockQuote(symbol);
-    console.log('✅ Successfully fetched real stock quote for', symbol);
+    log.debug('Successfully fetched stock quote', { symbol });
     return createSuccessResponse(stockQuote);
   } catch (error) {
-    console.error('❌ Stock quote error:', error);
+    log.error('Stock quote error', error);
+    if (error instanceof RateLimitError) {
+      return createErrorResponse(429, 'Alpha Vantage rate limit reached. Please try again later.');
+    }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return createErrorResponse(500, `Failed to fetch stock quote: ${errorMessage}`);
   }
@@ -63,9 +67,11 @@ async function handleStockQuote(symbol: string): Promise<APIGatewayProxyResult> 
 
 async function handleOptionsChain(symbol: string): Promise<APIGatewayProxyResult> {
   try {
-    console.log('🔍 Fetching options chain for:', symbol);
-    console.log('🔑 Alpha Vantage API Key configured:', !!process.env.ALPHA_VANTAGE_API_KEY);
-    console.log('🔧 Alpha Vantage service configured:', alphaVantageService.isConfigured());
+    log.debug('Fetching options chain', {
+      symbol,
+      apiKeyConfigured: !!process.env.ALPHA_VANTAGE_API_KEY,
+      serviceConfigured: alphaVantageService.isConfigured(),
+    });
     
     if (!alphaVantageService.isConfigured()) {
       return createErrorResponse(503, 'Alpha Vantage API service not configured');
@@ -79,8 +85,9 @@ async function handleOptionsChain(symbol: string): Promise<APIGatewayProxyResult
     try {
       optionsChain = await alphaVantageService.getOptionsChain(symbol);
     } catch (optionsError) {
-      console.log('⚠️ Options data not available:', optionsError instanceof Error ? optionsError.message : 'Unknown error');
-      console.log('📋 Returning empty options chain with stock data only');
+      log.debug('Options data not available, returning empty options chain with stock data only', {
+        error: optionsError instanceof Error ? optionsError.message : 'Unknown error',
+      });
       // Continue with empty options chain - this is expected for Alpha Vantage
     }
 
@@ -96,11 +103,18 @@ async function handleOptionsChain(symbol: string): Promise<APIGatewayProxyResult
       expirationDates,
     };
 
-    console.log('✅ Successfully fetched options response for', symbol);
-    console.log(`📊 Calls: ${calls.length}, Puts: ${puts.length}, Stock Price: $${stockQuote.price}`);
+    log.debug('Successfully fetched options response', {
+      symbol,
+      calls: calls.length,
+      puts: puts.length,
+      stockPrice: stockQuote.price,
+    });
     return createSuccessResponse(response);
   } catch (error) {
-    console.error('❌ Options chain error:', error);
+    log.error('Options chain error', error);
+    if (error instanceof RateLimitError) {
+      return createErrorResponse(429, 'Alpha Vantage rate limit reached. Please try again later.');
+    }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return createErrorResponse(500, `Failed to fetch options chain: ${errorMessage}`);
   }

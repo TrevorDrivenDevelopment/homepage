@@ -1,3 +1,9 @@
+// NOTE: `StockQuote` and `OptionQuote` are duplicated (with minor variations) in
+// frontend/src/apps/options-calculator/enhancedOptionsService.ts. There is currently
+// no shared types package in this monorepo, so keep both in sync manually when the
+// API contract changes. Consider extracting a shared `packages/shared-types` workspace
+// if this drift becomes a recurring problem.
+
 export interface StockQuote {
   symbol: string;
   price: number;
